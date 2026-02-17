@@ -30,7 +30,7 @@ __pycache__/
 *.bbl-SAVE-ERROR*
 
 # Generated PDFs (keep assets like logo.pdf and any PDFs inside image/)
-*.pdf
+
 !logo.pdf
 !image/**/*.pdf
 
