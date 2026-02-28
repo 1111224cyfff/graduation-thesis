@@ -244,13 +244,59 @@ Yang 等\cite{8FY5FXQ3}采用 Mask R-CNN 对人员与障碍物进行语义分割
 
 双 LiDAR 的布置遵循“\textbf{盲区互补 + 结构遮挡规避 + 振动冲击可控}”的原则。考虑吊钩端作业时吊钩块与吊具、钢丝绳及吊物本体会对传感器视场造成遮挡，本文采用两台 LiDAR 在盒体两侧/上下错位布置，并设置不同俯仰角：一台侧重覆盖吊钩下方与近距离区域，另一台侧重覆盖侧向与远端区域，从而在吊钩摆动与回转工况下仍能保持对 3\textasciitilde5 m 近场范围的连续观测。
 
+在具体布置角度上，两台 Mid-360 采用\textbf{左右对称}安装，并将扫描平面相对于水平面设置为\textbf{约 $37^{\circ}$ 俯仰角}，以增强对吊钩下方近场区域的覆盖并降低吊钩块/吊具对水平视场的遮挡影响。对称布置有助于在左右遮挡不均或局部反射异常时提供冗余观测，从而提升融合点云的连续性与稳定性。
+
 工业相机与 LiDAR 共同面向主要作业区域布置，视场方向尽量与 LiDAR 的高密度点云覆盖区重叠，以提高“\textbf{点云候选—图像验证}”的有效关联率。安装结构上通过刚性支架与减振连接件降低高频振动对外参稳定性的影响，并通过限位设计避免传感器在摆动极值位置与吊钩结构发生碰撞。
 
-\subsection{吊钩端一体化盒体设计}\label{ux540aux94a9ux7aefux4e00ux4f53ux5316ux76d2ux4f53ux8bbeux8ba1}
+相机采用\textbf{垂直向下}的安装方式，对吊钩下方作业面进行俯视拍摄。一方面该视角与“人员接近吊钩端”的风险模式更一致，便于在遮挡较少的区域获得人员目标；另一方面也有利于在预警输出中提供直观可解释的可视化依据。为避免镜头被吊具遮挡或被扬尘污染，相机安装位置与窗口开孔在结构设计阶段进行约束，并预留必要的防护与清洁维护空间。
+
+从工程约束角度看，上述布置主要服务于四类目标：\textbf{（1）视场覆盖}：双雷达不同俯仰方向的覆盖互补，减小遮挡盲区；\textbf{（2）外参稳定}：刚性安装基准 + 防松限位，抑制振动引起的微小位姿漂移；\textbf{（3）安装安全与可靠性}：在摆动极值与冲击条件下避免与吊钩结构干涉，并降低设备损伤风险；\textbf{（4）供电与走线}：尽量缩短外露线缆长度，线束固定与应力释放满足吊钩端长期振动工况。
+
+\subsection{吊钩端一体化盒体设计（SolidWorks）}\label{ux540aux94a9ux7aefux4e00ux4f53ux5316ux76d2ux4f53ux8bbeux8ba1}
 
 为满足施工现场工程化部署需求，吊钩端感知系统采用一体化盒体进行集成，重点解决\textbf{振动冲击、防尘防水、线缆可靠性、供电与通信稳定性}等问题。盒体结构上为传感器提供刚性安装基座并设置防松与限位结构，降低长期运行导致的相对位姿漂移；外壳采用密封与防尘设计，关键接口使用防水接头与应力释放结构，减少线缆在摆动与摩擦环境下的疲劳破坏风险。
 
 在系统集成方面，将传感器、供电转换模块与计算/通信模块集中布置，减少外露走线长度；网络侧通过统一交换/桥接方式管理相机与雷达的数据流，算法侧基于 ROS 建立标准话题发布与 TF 广播，实现数据采集、融合、定位、识别与预警模块的解耦与可维护性。盒体内部预留散热与维护空间，便于现场更换传感器或调整安装角度。
+
+为实现上述集成目标，本文基于 SolidWorks 完成吊钩下方传感器平台的结构设计与装配验证，其设计流程可概括为：\textbf{需求定义（视场覆盖、抗振防护、供电与走线、维护更换）}→\textbf{总体方案（上/下盖两体式盒体与传感器布置）}→\textbf{细化建模（安装基准、窗口开孔、接口位置、紧固与限位结构）}→\textbf{装配与干涉检查（摆动极值与可维护空间）}→\textbf{布局与可靠性校核（重心、线束应力释放、散热通道）}。该流程保证结构设计与算法所需“外参稳定、时空对齐一致性”在工程层面能够长期维持。
+
+在结构实现上，吊钩端平台采用\textbf{上盖+下盖}的两体式盒体方案：下盖承担传感器与支架的主要安装基准，上盖用于防护与密封，并与下盖形成封闭腔体以容纳电源与计算单元。盒体内部集成\textbf{电池、NVIDIA Jetson 边缘计算模块、走线与固定件}等部件，所有供电与信号线缆均在盒体内完成布线与应力释放，外部仅保留必要的充电/调试接口，从而降低施工现场线缆外露导致的钩挂、磨损与进水风险。
+
+内部布局遵循“\textbf{重心靠近吊点、线束最短路径、热源隔离与可维护}”的原则：电池与边缘计算模块布置在盒体内部，尽量靠近结构中心区域，以减小摆动时的惯性矩并降低偏载；线束采用分区走线与扎带/卡扣固定，关键连接处增加余量并布置应力释放结构，避免长期振动导致接插件松动；对 Jetson 等发热部件预留散热通道与维护空间，以满足长时间在线运行的稳定性要求。该一体化平台使得传感器布置、外参稳定性与工程防护在结构层面协同设计，为后续定位建图、雷视关联与预警算法提供可靠的数据输入基础。
+
+为便于论文展示与复现实验平台，本文在本小节预留 SolidWorks 结构设计示意图位置（见图\ref{fig:sw_platform_overall}--图\ref{fig:sw_platform_layout}），后续可将渲染图/工程图导出并替换占位框。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.88\textwidth}{\centering SolidWorks 吊钩下方传感器平台整体外观渲染图（待插入）\\
+  建议文件：\texttt{word/media/sw\_platform\_overall.png}}}
+  \caption{吊钩下方一体化传感器平台整体外观示意（SolidWorks）}
+  \label{fig:sw_platform_overall}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.88\textwidth}{\centering 上盖/下盖与主要部件装配关系或爆炸图（待插入）\\
+  建议文件：\texttt{word/media/sw\_platform\_exploded.png}}}
+  \caption{平台上盖、下盖与主要部件装配关系示意（SolidWorks）}
+  \label{fig:sw_platform_exploded}
+\end{figure}
+
+为进一步说明盒体内部的空间布局与走线组织方式，本节同样预留“内部布局示意图”位置，如图\ref{fig:sw_platform_layout}所示。该图建议体现：电池与 Jetson 的安装位置、线束走向与应力释放点、传感器接口位置、散热与维护开口等关键信息。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.88\textwidth}{\centering 盒体内部布局与走线示意图（待插入）\\
+  建议文件：\texttt{word/media/sw\_platform\_layout.png}}}
+  \caption{盒体内部布局与走线示意（SolidWorks）}
+  \label{fig:sw_platform_layout}
+\end{figure}
+
+后续插图替换方式：将上述占位框内的内容替换为
+\begin{quote}
+\verb|\includegraphics[width=0.88\textwidth]{word/media/xxx.png}|
+\end{quote}
+并将 SolidWorks 导出的图片文件放入 \texttt{word/media/} 目录即可。
 
 \section{多传感器外参标定}\label{ux591aux4f20ux611fux5668ux5916ux53c2ux6807ux5b9a}
 
@@ -258,31 +304,493 @@ Yang 等\cite{8FY5FXQ3}采用 Mask R-CNN 对人员与障碍物进行语义分割
 
 相机内参标定用于获取焦距、主点与畸变参数，保证图像去畸变与点云到图像投影的几何一致性。本文采用平面棋盘格标定板采集多组不同距离、不同姿态的标定图像，基于张正友标定法求解相机内参矩阵 $\mathbf{K}$ 及径向/切向畸变系数。标定完成后，使用重投影误差对标定质量进行评价，并将去畸变后的图像作为后续工人检测与雷视关联的输入。
 
+\subsubsection{标定原理与成像模型}
+
+本文采用针孔成像模型描述三维点到像素点的投影关系。设空间点在相机坐标系下为 $\mathbf{P}_c=[X\;Y\;Z]^{\mathsf{T}}$，其在归一化成像平面上的坐标为 $\mathbf{p}_n=[x\;y]^{\mathsf{T}}$，则
+\begin{equation}
+\label{eq:camera_projection}
+\begin{bmatrix}
+x \\
+y \\
+1
+\end{bmatrix}
+= \frac{1}{Z}
+\begin{bmatrix}
+X \\
+Y \\
+Z
+\end{bmatrix},\qquad
+s\begin{bmatrix}
+u \\
+v \\
+1
+\end{bmatrix}
+= \mathbf{K}
+\begin{bmatrix}
+x \\
+y \\
+1
+\end{bmatrix},
+\end{equation}
+其中 $(u,v)$ 为像素坐标，$s$ 为尺度因子，相机内参矩阵 $\mathbf{K}$ 定义为
+\begin{equation}
+\label{eq:intrinsic_matrix}
+\mathbf{K}=
+\begin{bmatrix}
+f_x & 0 & c_x \\
+0 & f_y & c_y \\
+0 & 0 & 1
+\end{bmatrix},
+\end{equation}
+式中 $f_x,f_y$ 为像素单位的等效焦距，$(c_x,c_y)$ 为主点坐标。若以棋盘格平面作为世界坐标系 $\{w\}$ 的参考，则相机外参（标定时每张图像对应一组）可写为旋转矩阵 $\mathbf{R}$ 与平移向量 $\mathbf{t}$，有
+\begin{equation}
+\label{eq:extrinsic_matrix}
+s\begin{bmatrix}
+u \\
+v \\
+1
+\end{bmatrix}
+=\mathbf{K}\,[\mathbf{R}\;|\;\mathbf{t}]\begin{bmatrix}
+X_w \\
+Y_w \\
+Z_w \\
+1
+\end{bmatrix}.
+\end{equation}
+张正友标定法利用平面标定板在不同姿态下产生的多组单应性（Homography）约束，从而在无需精密三维标定场的条件下同时估计 $\mathbf{K}$ 与畸变参数，工程上具有实现简单、精度可靠等优点。
+
+实际镜头通常存在畸变，本文采用径向畸变与切向畸变的组合模型。令 $r^2=x^2+y^2$，则畸变后的归一化坐标 $(x_d,y_d)$ 可表示为
+\begin{equation}
+\label{eq:distortion_model}
+\left\{
+\begin{aligned}
+x_d &= x\left(1+k_1 r^2+k_2 r^4+k_3 r^6\right)+2p_1xy+p_2\left(r^2+2x^2\right),\\
+y_d &= y\left(1+k_1 r^2+k_2 r^4+k_3 r^6\right)+p_1\left(r^2+2y^2\right)+2p_2xy,
+\end{aligned}
+\right.
+\end{equation}
+其中 $k_1,k_2,k_3$ 为径向畸变系数，$p_1,p_2$ 为切向畸变系数。将 $(x_d,y_d)$ 代入式\eqref{eq:camera_projection}即可得到带畸变的像素坐标预测值。
+
+\subsubsection{标定过程（MATLAB 实现）}
+
+本文相机内参标定使用 MATLAB（Computer Vision Toolbox）完成，采用棋盘格标定板进行数据采集与参数求解。为便于论文复现与工程落地，标定流程按“\textbf{数据采集—角点提取—参数估计—误差评估—参数导出}”组织如下。
+
+\textbf{（1）标定板准备与参数设置}：选用平面棋盘格标定板，记录方格边长 $L$（mm），并确保标定板平整、角点清晰。$L$ 将用于将角点在棋盘平面上的坐标从“格点单位”转换为物理尺度，从而得到合理的焦距与外参尺度。
+
+\textbf{（2）采集多姿态标定图像}：固定相机焦距与曝光等关键参数，采集不少于 $15\sim25$ 张棋盘格图像，覆盖不同距离、不同俯仰/偏航角与不同画面位置，避免棋盘始终位于图像中心或姿态变化过小。图像采集示意与样例帧位置在文中预留，如图\ref{fig:cam_calib_setup}所示。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.88\textwidth}{\centering 标定数据采集现场/摆放示意图（待插入）\\
+  建议内容：相机、棋盘格标定板、不同姿态与距离的采集方式\\
+  建议文件：\texttt{word/media/cam\_calib\_setup.png}}}
+  \caption{相机内参标定的数据采集示意（MATLAB）}
+  \label{fig:cam_calib_setup}
+\end{figure}
+
+\textbf{（3）角点检测与数据筛选}：在 MATLAB 中使用 \texttt{cameraCalibrator} 应用（或调用 \texttt{detectCheckerboardPoints}）自动检测棋盘角点，检查每张图像角点是否完整、是否存在误检，并剔除模糊、强反光或角点缺失严重的样本。角点检测效果与覆盖范围在文中预留示意，如图\ref{fig:cam_calib_corners}所示。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.88\textwidth}{\centering MATLAB 角点检测结果示意（待插入）\\
+  建议内容：原图叠加角点/编号，或校准器界面截图\\
+  建议文件：\texttt{word/media/cam\_calib\_corners.png}}}
+  \caption{棋盘格角点检测与样本覆盖示意}
+  \label{fig:cam_calib_corners}
+\end{figure}
+
+\textbf{（4）参数估计与去畸变验证}：在 MATLAB 中设置方格边长 $L$，调用 \texttt{estimateCameraParameters} 估计 $\mathbf{K}$ 与畸变系数，并自动给出每张图像的外参。完成标定后，可对原图进行去畸变（\texttt{undistortImage}），检查直线结构（如门框、墙角、标定板边缘）是否得到明显矫正，以验证畸变模型合理性。
+
+\textbf{（5）标定质量评价与参数导出}：采用重投影误差衡量标定精度。设第 $i$ 张图像上第 $j$ 个角点的观测像素为 $\mathbf{p}_{ij}$，模型预测像素为 $\hat{\mathbf{p}}_{ij}$，则单点重投影误差为 $\lVert \mathbf{p}_{ij}-\hat{\mathbf{p}}_{ij} \rVert_2$，总体均方根误差（RMSE）定义为
+\begin{equation}
+\label{eq:reproj_error}
+e_{\mathrm{rms}}=\sqrt{\frac{1}{N}\sum_{i=1}^{M}\sum_{j=1}^{n_i}\left\lVert \mathbf{p}_{ij}-\hat{\mathbf{p}}_{ij} \right\rVert_2^2},
+\end{equation}
+其中 $M$ 为图像数量，$n_i$ 为第 $i$ 张图像可用角点数，$N=\sum_i n_i$ 为总角点数。MATLAB 通常同时给出每张图像的重投影误差分布，便于发现离群样本并迭代剔除。误差统计与可视化结果在文中预留，如图\ref{fig:cam_calib_reproj}所示。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.88\textwidth}{\centering 重投影误差统计/可视化结果（待插入）\\
+  建议内容：MATLAB 标定器中的 reprojection error 图或误差直方图\\
+  建议文件：\texttt{word/media/cam\_calib\_reproj.png}}}
+  \caption{相机内参标定的重投影误差评价示意}
+  \label{fig:cam_calib_reproj}
+\end{figure}
+
+最终标定输出包括内参矩阵 $\mathbf{K}$、畸变系数 $\{k_1,k_2,k_3,p_1,p_2\}$ 以及每张标定图像对应的外参 $\{\mathbf{R}_i,\mathbf{t}_i\}$。本文将 $\mathbf{K}$ 与畸变参数用于图像去畸变与“点云到图像”的投影计算，为后续雷视外参标定与跨模态关联提供统一的几何基础。
+
 \subsection{双雷达外参自动标定与精配准}\label{ux53ccux96f7ux8fbeux5916ux53c2ux81eaux52a8ux6807ux5b9aux4e0eux7cbeux914dux51c6}
 
-双雷达外参标定目标是求解两台 Mid-360 坐标系之间的刚体变换 $\mathbf{T}_{2}^{1}$，以便将两路点云统一到同一参考系。本文采用“\textbf{粗配准 + 自动精配准}”的两阶段流程：首先依据盒体结构尺寸与安装姿态给出初值（粗配准），确保两路点云在同一量级的空间范围内重叠；随后在静态场景下采集同步点云，剔除明显动态点后，采用基于点云配准的优化方法（如 ICP/NDT 的变体）对外参进行精配准，使得两路点云在重叠区域的对应误差最小化。
+双雷达外参标定目标是求解两台 Mid-360 坐标系之间的刚体变换 $\mathbf{T}_{2}^{1}$，以便将两路点云统一到同一参考系。本文采用“\textbf{粗配准 + 自动精配准}”的两阶段流程：首先依据盒体结构尺寸与安装姿态给出初值（粗配准），确保两路点云在同一量级的空间范围内重叠；随后采集同步点云并进行自动优化，对外参进行精配准，使得两路点云在环境结构上的几何一致性最优。
 
-为提升稳定性，精配准过程中对近场强反射与离群点进行抑制，并对不同距离区间的点云赋予不同权重，以避免某一局部结构对外参估计造成偏置。最终得到的外参矩阵将用于第3章的点云实时融合与坐标统一。
+本研究的自动精配准部分参考 Livox 开源的多雷达外参自动标定工具实现思路\footnote{Livox\ Automatic\ Calibration\ Tools: \url{https://github.com/Livox-SDK/Livox_automatic_calibration}}，其核心思想可概括为“\textbf{基准雷达先建图，目标雷达逐帧与地图配准并迭代外参，最后用一致性方法得到稳定外参}”。该类方法对外参初值不要求十分精确，但需要\textbf{大致对齐}；同时对数据同步与运动畸变较为敏感，因此采集时应尽量慢速运动、避免急转弯并保证两雷达帧间时间对齐。
+
+\subsubsection{标定原理：建图约束与迭代配准}
+
+记基准雷达坐标系为 $\{l_1\}$，目标雷达坐标系为 $\{l_2\}$，待求外参为
+\begin{equation}
+\label{eq:lidar_lidar_extrinsic}
+\mathbf{T}_{l_2}^{l_1}=
+\begin{bmatrix}
+\mathbf{R} & \mathbf{t}\\
+\mathbf{0}^{\mathsf{T}} & 1
+\end{bmatrix}\in SE(3),
+\end{equation}
+其中 $\mathbf{R}\in SO(3)$，$\mathbf{t}\in \mathbb{R}^3$。自动标定采用“\textbf{先建图后配准}”范式：
+\textbf{（1）基准雷达建图}：用基准雷达的多帧点云在固定参考系 $\{w\}$ 下构建局部/全局地图 $\mathcal{M}$（可理解为将基准雷达作为可靠参考，先得到更稳定的环境几何表示）。
+\textbf{（2）目标雷达配准}：将目标雷达的每帧点云 $\mathcal{P}_k^{(2)}$ 通过当前外参估计变换到基准雷达/世界坐标下，并与地图 $\mathcal{M}$ 进行配准，得到一个小的增量变换 $\Delta \mathbf{T}_k$ 用于修正外参。
+
+在工程实现中，常用 ICP 及其鲁棒变体进行点云配准。参考 Livox 工具实现，配准阶段采用广义 ICP（Generalized ICP, GICP）思想：不仅使用点到点最近邻，而且引入局部协方差来近似点到平面的约束，从而在稀疏或存在噪声的场景下更稳健。其典型优化形式可写为
+\begin{equation}
+\label{eq:gicp_cost}
+\min_{\mathbf{T}}\sum_{i}\left(\mathbf{p}_i-\mathbf{T}\mathbf{q}_i\right)^{\mathsf{T}}\mathbf{C}_i^{-1}\left(\mathbf{p}_i-\mathbf{T}\mathbf{q}_i\right),
+\end{equation}
+其中 $\mathbf{q}_i$ 为源点云（目标雷达帧）中的点，$\mathbf{p}_i$ 为地图中与其对应的匹配点（或局部子地图点），$\mathbf{C}_i$ 为由两侧局部几何估计得到的协方差（权重）矩阵。优化得到的配准变换用于更新外参估计，例如
+\begin{equation}
+\label{eq:extrinsic_update}
+\mathbf{T}_{l_2}^{l_1}\leftarrow \Delta \mathbf{T}_k\,\mathbf{T}_{l_2}^{l_1}.
+\end{equation}
+为避免错误匹配导致外参发散，工程上通常设置配准质量门控（如 fitness score 阈值、最大对应距离、迭代次数上限等），对不可信帧跳过更新或回退到初始猜测。
+
+\subsubsection{一致性与稳健估计：从逐帧结果到最终外参}
+
+逐帧配准得到的是一系列外参估计序列 $\{\mathbf{T}_k\}$，受动态点、遮挡、运动畸变与局部几何退化影响，会存在离群值。参考 Livox 工具的做法，可将外参序列在平移/欧拉角参数空间中进行稳健拟合与一致性筛选：仅保留配准质量较高的帧，将 $x,y,z,\text{roll},\text{pitch},\text{yaw}$ 等参数视为随帧序号变化的观测序列，通过共识机制（如 RANSAC）抑制离群点并求得最终外参 $\hat{\mathbf{T}}$。该步骤的目标是利用“外参为常量”的刚性约束，在长序列数据上获得更稳定、可复现的估计结果。
+
+\subsubsection{标定流程与数据准备（工程实现）}
+
+结合本文吊钩端系统特点与 Livox 工具的要求，双雷达自动标定流程如下。
+
+\textbf{（1）数据采集与同步}：在结构稳定、环境几何丰富（存在平面、立柱、墙角等）的场地采集两雷达数据，尽可能保证两雷达时间对齐；移动采集时尽量慢速运动，降低单帧运动畸变。若存在明显动态目标（人员/车辆），建议在离线阶段进行剔除或仅选取静态时间段。
+
+\textbf{（2）数据转换与分帧}：本文首先使用 ROS 录制两台 LiDAR 的 \texttt{rosbag} 数据，并在离线阶段将 \texttt{rosbag} 按工具要求转换为 PCD 帧序列：以固定时间片（例如每 $100\,\mathrm{ms}$）聚合为一帧点云并导出为 \texttt{.pcd} 文件，同时保证\textbf{基准雷达与目标雷达在同一帧序号上的数据尽可能同步对应}（帧编号/时间戳一一对应）。为贴合 Livox 工具的约定，可将两路 PCD 分别放入 \texttt{Base\_LiDAR\_Frames/} 与 \texttt{Target\_LiDAR\_Frames/}，并采用从 \texttt{100000.pcd} 开始递增的帧命名方式，以便程序按序读取。本文在论文中预留“数据整理示意图/文件结构截图”位置，如图\ref{fig:lidar_calib_dataset}所示。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.88\textwidth}{\centering 双雷达标定数据集整理示意（待插入）\\
+  建议内容：Base/Target 两个帧目录、帧编号对齐方式、Init 外参文件示意\\
+  建议文件：\texttt{word/media/lidar\_calib\_dataset.png}}}
+  \caption{双雷达外参自动标定的数据准备与分帧同步示意}
+  \label{fig:lidar_calib_dataset}
+\end{figure}
+
+\textbf{（3）粗配准外参初值}：本文的粗外参 $\mathbf{T}_0$ 由吊钩端盒体的结构设计模型（安装位姿与孔位基准）计算得到，用于初始化自动标定迭代。工程实现中将该初值\textbf{直接写入配置文件}（例如 \texttt{Init\_Matrix.txt}），程序读取后作为初始猜测参与逐帧配准更新。实践中粗外参不必非常精确，但应保证两路点云在同一场景下存在足够重叠，以提高配准收敛到正确解的概率。
+
+\textbf{（4）基准雷达建图}：用基准雷达帧序列构建地图 $\mathcal{M}$，作为后续配准的参考。为提高建图质量，可对点云进行体素下采样、离群点剔除等预处理，并在必要时对帧间运动畸变进行校正。
+
+\textbf{（5）目标雷达逐帧配准与外参迭代}：将目标雷达每帧点云在当前外参下变换后，与地图（或局部子地图/近邻点集合）进行 GICP 配准，得到增量修正 $\Delta \mathbf{T}_k$ 并更新外参。可同时记录每帧配准的质量指标（例如 fitness score），为后续一致性筛选提供依据。标定过程界面/前后点云叠加效果在文中预留，如图\ref{fig:lidar_calib_overlay}所示。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.88\textwidth}{\centering 标定过程中点云叠加对比（待插入）\\
+  建议内容：红色基准雷达地图、绿色目标雷达配准结果（标定前/后对比）\\
+  建议文件：\texttt{word/media/lidar\_calib\_overlay.png}}}
+  \caption{双雷达自动标定的点云配准效果示意（前后对比）}
+  \label{fig:lidar_calib_overlay}
+\end{figure}
+
+\textbf{（6）一致性拟合与最终外参输出}：对逐帧外参估计序列进行稳健筛选与拟合，输出最终外参 $\hat{\mathbf{T}}_{l_2}^{l_1}$（含旋转/平移、欧拉角或四元数表示）。同时输出标定质量统计（例如有效帧比例、fitness score 分布）用于可解释性验证。该类结果统计图在文中预留，如图\ref{fig:lidar_calib_score}所示。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.88\textwidth}{\centering 配准质量/收敛过程统计（待插入）\\
+  建议内容：fitness score 曲线、有效帧筛选结果或参数收敛曲线\\
+  建议文件：\texttt{word/media/lidar\_calib\_score.png}}}
+  \caption{自动标定过程的质量评估与收敛示意}
+  \label{fig:lidar_calib_score}
+\end{figure}
+
+\subsubsection{工程注意事项}
+
+为确保自动标定结果可靠，需重点满足以下条件：\textbf{（1）双雷达数据尽可能同步}，帧序号应严格对应；\textbf{（2）采集运动尽可能缓慢}并尽量减少急转弯，以降低运动畸变带来的配准偏差；\textbf{（3）环境结构应足够丰富}，避免长时间仅观测单一平面或无纹理区域导致几何退化；\textbf{（4）粗外参应保证大致对齐}，以提高 GICP 收敛到正确极值的概率。最终得到的 $\hat{\mathbf{T}}_{l_2}^{l_1}$ 将用于第3章的点云实时融合与坐标统一。
 
 \subsection{雷达--相机外参标定}\label{ux96f7ux8fbeux76f8ux673aux5916ux53c2ux6807ux5b9a}
 
-雷达—相机外参标定用于建立点云到图像的投影关系，是第4章雷视关联的基础。本文以相机坐标系为参考，通过构建可被相机清晰观测、且在点云中具有显著几何特征的标定目标（例如带角点特征的平面板、反光标记等），同步采集点云与图像数据。在相机侧提取特征点并通过内参完成归一化；在雷达侧提取对应的空间特征点或平面约束，构建跨模态的误差项，求解外参 $\mathbf{T}_{l}^{c}$。
+雷达—相机外参标定用于建立点云到图像的投影关系，是第4章雷视关联的基础。本文采用“\textbf{同一标定目标在雷达坐标系下的 3D 坐标 + 在相机像素平面下的 2D 坐标}”构建约束，通过最小化重投影误差求解外参。该流程参考 Livox 开源工具\footnote{Livox\ Camera-LiDAR\ Calibration: \url{https://github.com/Livox-SDK/livox_camera_lidar_calibration}}的思路：使用标定板角点作为跨模态对应特征，并通过非线性优化获得稳定外参；标定完成后再通过点云投影或点云着色等方式进行结果验证。
 
-标定完成后，可将三维点 $\mathbf{P}_l$ 通过 $\mathbf{T}_{l}^{c}$ 变换到相机坐标系并用投影模型得到像素坐标，用于后续“3D\textrightarrow2D投影门控”和“2D\textrightarrow3D一致性验证”。
+\subsubsection{标定原理：3D--2D 重投影误差最小化}
 
-\section{2.3数据链路与接口规范}\label{ux6570ux636eux94feux8defux4e0eux63a5ux53e3ux89c4ux8303}
+设 LiDAR 坐标系为 $\{l\}$，相机坐标系为 $\{c\}$，待求外参为
+\begin{equation}
+\label{eq:lidar_cam_extrinsic}
+\mathbf{T}_{l}^{c}=
+\begin{bmatrix}
+\mathbf{R}_{l}^{c} & \mathbf{t}_{l}^{c}\\
+\mathbf{0}^{\mathsf{T}} & 1
+\end{bmatrix}\in SE(3).
+\end{equation}
+对于 LiDAR 中观测到的角点三维坐标 $\mathbf{P}_{l}=[X_l\;Y_l\;Z_l]^{\mathsf{T}}$，其在相机坐标系下为
+\begin{equation}
+\label{eq:lidar_to_cam}
+\mathbf{P}_{c}=\mathbf{R}_{l}^{c}\,\mathbf{P}_{l}+\mathbf{t}_{l}^{c}=[X_c\;Y_c\;Z_c]^{\mathsf{T}}.
+\end{equation}
+结合 2.2.1 节求得的相机内参 $\mathbf{K}$（以及畸变模型），像素坐标预测值可写为
+\begin{equation}
+\label{eq:lidar_cam_project}
+\hat{u}=f_x\frac{X_c}{Z_c}+c_x,\qquad
+\hat{v}=f_y\frac{Y_c}{Z_c}+c_y,
+\end{equation}
+其中 $(\hat{u},\hat{v})$ 为由外参+内参得到的理论投影点。若以观测像素为 $(u,v)$，则单个对应点的重投影残差为
+\begin{equation}
+\label{eq:reproj_residual_uv}
+\mathbf{r}=\begin{bmatrix}\hat{u}-u\\\hat{v}-v\end{bmatrix}.
+\end{equation}
+对多个标定姿态与多组角点对应，构建总目标函数
+\begin{equation}
+\label{eq:cam_lidar_cost}
+\min_{\mathbf{R}_{l}^{c},\mathbf{t}_{l}^{c}}\sum_{k}\sum_{i}\left\lVert \mathbf{r}_{k,i}\right\rVert_2^2,
+\end{equation}
+并采用非线性最小二乘（如 Ceres Solver 的 Levenberg--Marquardt）求解。为避免欧拉角奇异与保证旋转约束，工程实现中常用四元数 $\mathbf{q}$ 表示旋转，并在优化中施加单位四元数局部参数化。
+
+Livox 工具中提供两种求解模式：\textbf{getExt1} 仅优化外参（固定内参），适用于相机内参可信的情况；\textbf{getExt2} 可在数据量更充分时同时优化内参中关键分量与外参，用于当重投影误差长期偏大且怀疑内参存在偏差时的补救。
+
+\subsubsection{标定数据获取与流程（与 Livox 工具一致）}
+
+结合本文“先 \texttt{rosbag} 录制、再离线处理”的工程实践，雷达--相机外参标定可按以下步骤完成。
+
+\textbf{（1）标定场景与标定板准备}：选择相对开阔、背景干扰较少的场地，准备大尺寸平面标定板（例如 $1\,\mathrm{m}\times 1.5\,\mathrm{m}$），并在至少 $10$ 组不同距离与姿态下摆放标定板采集数据。参考开源说明，标定时建议保持相机与雷达到标定板的距离在数米量级（例如约 $3\,\mathrm{m}$）以获得更稳定的角点定位精度。图\ref{fig:cam_lidar_board} 预留标定板与采集场景示意。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.88\textwidth}{\centering 标定板摆放与采集场景示意（待插入）\\
+  建议内容：标定板尺寸、不同位置/角度摆放方式、相机与雷达相对位置\\
+  建议文件：\texttt{word/media/cam\_lidar\_board.png}}}
+  \caption{雷达--相机外参标定的场景与标定板摆放示意}
+  \label{fig:cam_lidar_board}
+\end{figure}
+
+\textbf{（2）相机侧角点像素坐标获取}：对每个标定姿态，保存一张清晰照片，并记录对应的四个角点像素坐标 $(u,v)$。参考 Livox 的做法，可使用其提供的交互式角点标注界面（鼠标悬停读取坐标）按固定顺序记录（一般从左上角开始按逆时针顺序），以降低角点顺序错误导致的外参估计失败。角点标注界面/示例在图\ref{fig:cam_lidar_corner_photo} 预留。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.88\textwidth}{\centering 照片角点标注界面/结果截图（待插入）\\
+  建议内容：四角点顺序标注、像素坐标显示区域\\
+  建议文件：\texttt{word/media/cam\_lidar\_corner\_photo.png}}}
+  \caption{相机侧角点像素坐标获取示意}
+  \label{fig:cam_lidar_corner_photo}
+\end{figure}
+
+\textbf{（3）雷达侧角点三维坐标获取}：将包含标定板的 LiDAR 数据以 \texttt{rosbag} 方式录制后，离线转换为 PCD（或直接从 \texttt{rosbag} 读取点云帧）。参考 Livox 工具提供的流程，可批量将 \texttt{rosbag} 转换为 PCD 文件，再用 \texttt{pcl\_viewer -use\_point\_picking} 在点云中拾取标定板四角点的 $\{x,y,z\}$，并保持与照片侧一致的角点顺序。点云拾取与角点定位示意在图\ref{fig:cam_lidar_corner_picking} 预留。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.88\textwidth}{\centering 点云角点拾取（PCL\_Viewer）示意（待插入）\\
+  建议内容：点云中标定板四角点位置、拾取到的 xyz 输出\\
+  建议文件：\texttt{word/media/cam\_lidar\_corner\_picking.png}}}
+  \caption{雷达侧角点三维坐标获取示意}
+  \label{fig:cam_lidar_corner_picking}
+\end{figure}
+
+\textbf{（4）外参初值与非线性优化求解}：将结构设计/安装测量得到的外参初值写入配置文件，使用 getExt1（固定内参，仅优化外参）求解 $\mathbf{T}_{l}^{c}$。优化过程中可观察每次迭代的 cost 变化与最终重投影误差，并对误差异常的数据进行剔除后再优化。
+
+\textbf{（5）结果验证与可视化}：将求得的外参用于点云投影到图像，检查点云边缘/标定板边框与图像几何是否对齐；也可进一步对点云着色并在可视化工具中检查融合效果。论文中预留“投影叠加效果图”位置，如图\ref{fig:cam_lidar_projection} 所示。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.88\textwidth}{\centering 点云投影到照片的对齐效果（待插入）\\
+  建议内容：点云投影叠加在图像上，展示角点/边界对齐情况\\
+  建议文件：\texttt{word/media/cam\_lidar\_projection.png}}}
+  \caption{雷达点云投影到图像的外参验证示意}
+  \label{fig:cam_lidar_projection}
+\end{figure}
+
+通过上述流程获得的 $\mathbf{T}_{l}^{c}$ 将在后续雷视融合中用于 3D 点云投影门控（3D$\rightarrow$2D）与一致性验证（2D$\rightarrow$3D），保证雷达几何信息与视觉语义信息在同一观测空间中可对齐与可解释。
+
+\section{数据链路与接口规范}\label{ux6570ux636eux94feux8defux4e0eux63a5ux53e3ux89c4ux8303}
 
 \subsection{通信链路搭建}\label{ux901aux4fe1ux94feux8defux642dux5efa}
 
-为保证吊钩端多传感器数据的稳定传输，系统采用独立链路接入与统一转发的方式组织网络：双 LiDAR 与工业相机分别通过以太网/USB等接口接入边缘计算单元，由计算单元在本地完成数据采集与缓存，再通过 ROS 话题发布到系统内部总线。工程实现中通过设置固定 IP、合理划分子网与带宽管理策略降低丢包风险；对关键话题（点云、IMU、图像）启用队列长度控制与丢帧策略，确保延迟可控并避免积压造成系统级阻塞。
+为保证吊钩端多传感器数据的稳定传输与可控时延，本文采用“\textbf{独立接入、边缘侧统一采集与转发}”的数据链路组织方式：双 LiDAR 通过以太网接入边缘计算单元（Jetson/工控机等），工业相机通过 USB3.0 接入同一计算单元；计算单元在本地完成驱动接入、数据时间戳标注与必要缓存，再通过 ROS 话题发布到系统内部总线供定位、检测与融合模块订阅。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.90\linewidth}{
+  建议内容：吊钩端边缘计算单元与双 LiDAR（以太网）/相机（USB）连接拓扑；ROS 节点间数据流（点云/IMU/图像）与处理链路（采集→缓存→发布→订阅处理）\\
+  建议文件：\texttt{word/media/data\_link\_topology.pdf}（或 .png）}}
+  \caption{吊钩端多传感器通信链路与数据流拓扑示意}
+  \label{fig:data_link_topology}
+\end{figure}
+
+\subsubsection{链路配置与带宽约束}
+
+在工程实现中，链路稳定性通常受制于\textbf{瞬时带宽、CPU 解码/拷贝开销与缓存积压}。为降低丢包与突发拥塞带来的随机延迟，边缘计算侧可按如下原则进行配置：
+\begin{enumerate}
+\item \textbf{固定 IP 与子网划分}：为每个以太网 LiDAR 配置固定 IP；必要时将传感器置于独立子网，减少广播报文与地址冲突造成的不确定性。
+\item \textbf{接收缓冲与线程调度}：通过合理设置网卡接收缓冲、驱动线程优先级等方式降低丢包概率；同时避免过大的用户态缓存导致端到端延迟不可控。
+\item \textbf{吞吐核算与发布频率约束}：对每类数据源估算单位时间的有效传输量，确保链路峰值不超过接口能力。以话题 $i$ 为例，其平均吞吐可写为
+\begin{equation}
+\bar{B}_i = f_i\,S_i
+\end{equation}
+其中 $f_i$ 为发布频率，$S_i$ 为单帧消息大小；系统总吞吐 $\bar{B}=\sum_i \bar{B}_i$ 需留出裕量以覆盖突发峰值与协议开销。
+\end{enumerate}
+
+\subsubsection{双网口同网段接入与软件桥接}
+
+在双 LiDAR 以太网直连边缘计算单元的场景中，常见工程约束是\textbf{两台雷达出厂/默认配置均处于同一网段}（如 \texttt{192.168.2.x}），且雷达侧的上位机地址（Host IP）固定指向 \texttt{192.168.2.1}。此时若边缘计算单元使用两块物理网卡分别直连两台雷达，一个直接但错误的配置方式是让 \texttt{eth0} 与 \texttt{eth1} 同时声明“本机 IP 均为 \texttt{192.168.2.1/24}”。由于同一主机不能将\textbf{完全相同的 IP 地址稳定绑定到两块接口}，内核会在地址--接口映射、ARP 响应与出站路由选择上产生不确定性，导致两台设备中往往只能稳定访问其中一台，另一台的流量可能被“碰运气”地发往错误接口。这类现象在 Linux 中常被归因于 \textbf{ARP flux} / \textbf{IP address duplication} 问题。
+
+为在\textbf{不改动雷达侧网络配置}的前提下，实现两台雷达稳定收发数据，本文采用\textbf{软件桥接（bridge）}方案：将 \texttt{eth0} 与 \texttt{eth1} 加入同一个软件桥 \texttt{br0}，并把\textbf{唯一的} \texttt{192.168.2.1/24} 配置在 \texttt{br0} 上，同时清空两块物理口的 IP。此时 Linux 会将两块物理口视为二层交换机端口转发，主机对外呈现为一块“虚拟网卡” \texttt{br0}，从而两台雷达都能稳定找到 \texttt{192.168.2.1}。
+
+软件桥接的典型配置命令如下（以 \texttt{eth0}、\texttt{eth1} 为例，需管理员权限执行）：
+\begin{verbatim}
+sudo ip link add br0 type bridge
+sudo ip link set eth0 master br0
+sudo ip link set eth1 master br0
+sudo ip addr flush dev eth0
+sudo ip addr flush dev eth1
+sudo ip addr add 192.168.2.1/24 dev br0
+sudo ip link set eth0 up
+sudo ip link set eth1 up
+sudo ip link set br0 up
+\end{verbatim}
+
+该方案的优点在于：\textbf{（1）不修改雷达侧配置}，仍保持其上位机地址指向 \texttt{192.168.2.1}；\textbf{（2）无需额外交换机}，同时软件桥转发开销较小；\textbf{（3）扩展性好}，后续如需新增以太网设备，仅需将对应接口加入 \texttt{br0} 即可。
+
+\subsubsection{ROS 话题接口与缓存策略}
+
+ROS1 的话题通信采用发布/订阅机制，若生产端速率高于消费端处理能力，队列积压会直接转化为延迟增长，进而破坏融合一致性。因此本文对关键话题采用“\textbf{小队列 + 可丢帧}”策略，使系统尽可能运行在低延迟稳态。设订阅端的平均处理时延为 $T_p$、队列长度为 $Q$，则在持续拥塞时，队列引入的额外排队时延近似为
+\begin{equation}
+T_q \approx (Q-1)\,T_p
+\end{equation}
+因此对点云、图像等大消息应避免设置过大的 $Q$。
+
+为统一工程接口并降低模块耦合，本文将关键数据流抽象为“原始采集话题”和“处理后输出话题”。建议的最小接口集合如表\ref{tab:ros_topics_min}所示（命名可按实际工程替换，原则是保持 \texttt{frame\_id} 与 TF 一致）。
+
+\begin{table}[htbp]
+\centering
+\caption{吊钩端系统建议的最小 ROS 话题接口集合}
+\label{tab:ros_topics_min}
+\begin{tabular}{lll}
+\hline
+\textbf{数据} & \textbf{消息类型} & \textbf{说明} \\
+\hline
+点云（LiDAR1/2） & \texttt{sensor\_msgs/PointCloud2} & 含时间戳与 \texttt{frame\_id}；必要时包含点时间字段用于去畸变 \\
+IMU（内置） & \texttt{sensor\_msgs/Imu} & 角速度/加速度；时间戳用于 LIO 预积分与去畸变 \\
+相机图像 & \texttt{sensor\_msgs/Image} & 原始或压缩传输；与相机内参 \texttt{CameraInfo} 配套 \\
+相机内参 & \texttt{sensor\_msgs/CameraInfo} & 由相机内参标定结果写入并随图像发布 \\
+TF/静态外参 & \texttt{tf2\_msgs/TFMessage} & 运行时发布静态/动态 TF，保证跨模块坐标统一 \\
+\hline
+\end{tabular}
+\end{table}
 
 \subsection{时间同步与延迟补偿}\label{ux65f6ux95f4ux540cux6b65ux4e0eux5ef6ux8fdfux8865ux507f}
 
-多传感器的采样频率与传输延迟存在差异，若不进行时间同步会导致融合误差与关联错误。本文以 ROS 时间戳为统一时间基准，对 LiDAR 点云、内置 IMU 与相机图像进行时间戳对齐：在融合侧采用最近邻匹配或插值方式将不同频率的数据对齐到同一时刻，并通过估计固定延迟（采集+传输+解码）对时间戳进行补偿。对于定位模块，IMU 的高频信息用于约束短时运动并辅助点云去畸变；对于融合关联模块，采用“时间窗门控”抑制跨帧错配。
+多传感器系统中，采样频率、驱动缓存、USB/以太网传输与解码会引入不同程度的时间偏差与延迟。若直接以到达时刻进行融合，容易产生目标关联漂移、点云投影错位与速度估计失真。为此，本文以 \textbf{ROS 时间戳}为统一时间基准，结合“\textbf{同步对齐 + 延迟估计 + 融合门控}”的策略实现跨传感器时间一致性。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.90\linewidth}{
+  建议内容：点云/IMU/图像采样与到达时间轴；标注采集延迟、传输延迟、解码延迟；展示补偿前后对齐关系（同一时刻 t 对齐）\\
+  建议文件：\texttt{word/media/time\_sync\_timeline.pdf}（或 .png）}}
+  \caption{多传感器时间同步与延迟补偿时序示意}
+  \label{fig:time_sync_timeline}
+\end{figure}
+
+\subsubsection{Livox 时间同步机制与配置要点}
+
+针对以太网 LiDAR，除基于主机时间戳的“软件对齐”外，硬件/网络层的统一时钟能够从源头降低跨设备时间漂移。Livox 官方文档给出了多种时间同步方式及其适用场景（见\url{https://livox-wiki-cn.readthedocs.io/zh-cn/latest/tutorials/new_product/common/time_sync.html}）：
+\begin{enumerate}
+\item \textbf{（推荐）PTP/gPTP}：在无 GPS 与 PPS 硬件接入时，通过网络中一个 master 时钟设备，基于 IEEE 1588v2 或 IEEE 802.1AS（gPTP）实现 LiDAR 与其他设备间的时间同步。该方式外部硬件要求最少，适合双 LiDAR 同网段运行的工程部署。
+\item \textbf{GPS（PPS+GPRMC）}：当系统中其他传感器已直接由 GPS 信号同步时，可将 PPS 秒脉冲与 GPS 时间信息（GPRMC/GNRMC）硬件接入 LiDAR，实现统一到 GPS 时钟基准。
+\end{enumerate}
+
+\paragraph{PTP 同步原理（two-step delay request-response）}
+在 PTP v2.0 中，Livox 设备作为 slave，与 master 通过 \texttt{Sync}、\texttt{Follow\_Up}、\texttt{Delay\_Req}、\texttt{Delay\_Resp} 报文交互获得 $t_1,t_2,t_3,t_4$，据此估计链路传输时延与主从时钟偏移。根据文档给出的计算式，可写为
+\begin{equation}
+\text{Delay} = \frac{(t_4-t_1)-(t_3-t_2)}{2}
+\end{equation}
+\begin{equation}
+\text{Offset} = (t_2-t_1)-\text{Delay} = \frac{(t_2-t_1)+(t_3-t_4)}{2}
+\end{equation}
+当 Offset 收敛并维持在较小范围内时，LiDAR 点云时间戳即可视为与 master 时钟对齐。
+
+\paragraph{工程配置与验证建议}
+结合本文的吊钩端系统，时间同步工程化落地时应关注以下要点：
+\begin{enumerate}
+\item \textbf{单一 master}：文档指出 PTP 同步优先级最高（PTP 与 GPS 同时可用时优先使用 PTP），且不支持存在多个主时钟的网络环境，应避免在同一二层网络中出现多个 PTP master。
+\item \textbf{网卡时间戳能力}：若使用主机作为 PTP master，可通过 \texttt{ethtool -T <iface>} 检查网卡是否支持软件/硬件时间戳能力，硬件时间戳通常更有利于同步精度与稳定性。
+\item \textbf{linuxptp 工具链}：可使用 \texttt{ptp4l} 启动 master 时钟功能，并通过 \texttt{phc2sys} 将 PTP 硬件时钟与系统 \texttt{CLOCK\_REALTIME} 对齐，使 LiDAR 时间与主机系统时间保持一致。典型命令示例如下：
+\begin{verbatim}
+sudo ptp4l -i eth0 -l 6 -m
+sudo phc2sys -c eth0 -s CLOCK_REALTIME -O 0
+\end{verbatim}
+\item \textbf{同步状态检查}：可通过抓包观察网络中是否存在 \texttt{Sync}/\texttt{Follow\_Up} 等报文来确认 master 是否工作；在数据层面，文档指出设备点云数据包头中存在 \texttt{timestamp\_type} 字段，若为 1 表示使用 PTP 同步、为 2 表示使用 GPS 同步（时间戳单位为 ns），也可在上位机软件中查看同步类型。
+\end{enumerate}
+
+需要强调的是：时间同步并不能替代上层的“时间戳对齐与延迟补偿”。本文在完成 LiDAR 侧的 PTP/GPS 同步（或无法同步时使用主机时间）后，仍在 ROS 融合侧通过最近邻/插值与固定延迟补偿来保证跨传感器数据在同一参考时刻对齐。
+
+\subsubsection{时间戳对齐与插值}
+
+设 LiDAR 点云帧时间戳为 $t^{l}_k$，相机图像时间戳为 $t^{c}_m$，IMU 测量时间戳序列为 $t^{i}_n$。融合与关联通常需要将不同频率数据对齐到同一参考时刻 $t$。本文采用两类策略：
+\begin{enumerate}
+\item \textbf{最近邻对齐}：对给定 $t$，选择满足 $\lvert t^{s}-t\rvert$ 最小的传感器测量作为对齐样本（$s\in\{l,c,i\}$）。
+\item \textbf{线性插值（用于高频 IMU）}：当需要 IMU 在 $t$ 时刻的值时，在相邻两帧 $(t^{i}_{n}, \mathbf{z}^{i}_{n})$ 与 $(t^{i}_{n+1}, \mathbf{z}^{i}_{n+1})$ 之间进行插值
+\begin{equation}
+\mathbf{z}^{i}(t) = \alpha\,\mathbf{z}^{i}_{n} + (1-\alpha)\,\mathbf{z}^{i}_{n+1},\quad
+\alpha = \frac{t^{i}_{n+1}-t}{t^{i}_{n+1}-t^{i}_{n}}
+\end{equation}
+\end{enumerate}
+对于 LiDAR 点云，若驱动提供\textbf{点时间（每点相对帧起始的偏移）}，则可在定位模块中结合 IMU 进行去畸变（deskew），以减小吊钩摆动与回转造成的运动畸变。
+
+\subsubsection{固定延迟估计与补偿}
+
+对相机与 LiDAR 等异构链路而言，整体时延可粗略分解为
+\begin{equation}
+\Delta = \Delta_{\text{acq}} + \Delta_{\text{tx}} + \Delta_{\text{decode}} + \Delta_{\text{proc}}
+\end{equation}
+其中 $\Delta_{\text{acq}}$ 为曝光/扫描与驱动采集引入的延迟，$\Delta_{\text{tx}}$ 为传输延迟，$\Delta_{\text{decode}}$ 为解码与拷贝开销，$\Delta_{\text{proc}}$ 为消息进入 ROS 后的调度与回调处理开销。本文不在文中给出具体数值，而是将其作为\textbf{可标定/可测量的系统参数}，通过日志时间戳与统计分析得到估计 $\hat{\Delta}$，并在融合侧进行补偿：
+\begin{equation}
+\tilde{t} = t - \hat{\Delta}
+\end{equation}
+其中 $t$ 为原始时间戳，$\tilde{t}$ 为补偿后的有效时间戳。
+
+\subsubsection{时间窗门控与稳态时延约束}
+
+为避免跨帧错配，本文在融合关联中引入时间窗门控：对任意待关联的两条观测，要求其时间差满足
+\begin{equation}
+\lvert t_a - t_b \rvert \le \tau
+\end{equation}
+其中 $\tau$ 为时间窗阈值，由系统的稳态时延与允许的运动误差共同决定。工程上，$\tau$ 过大将引入误关联，过小则会造成有效数据被拒绝；因此需结合驱动发布频率、链路拥塞与处理耗时进行调参。
 
 \subsection{坐标系与 TF 接口规范}\label{ux5750ux6807ux7cfbux4e0e-tf-ux63a5ux53e3ux89c4ux8303}
 
-系统定义吊钩端参考坐标系 $\{h\}$ 作为统一空间参考，并为两台 LiDAR 坐标系 $\{l_1\}$、$\{l_2\}$ 与相机坐标系 $\{c\}$ 建立 TF 关系。外参标定得到的 $\mathbf{T}_{l_2}^{l_1}$、$\mathbf{T}_{l}^{c}$ 等变换在运行时通过 TF 发布，确保各模块在同一坐标系下进行点云融合、投影门控与距离计算。统一的坐标系与接口规范使得定位、目标提取、融合与预警模块可以解耦实现，并便于后续扩展其他传感器或替换算法。
+跨模块的空间一致性依赖于统一的坐标系定义与 TF 发布规范。本文以吊钩端参考坐标系 $\{h\}$ 作为系统统一空间参考（可对应 ROS 中的 \texttt{base\_link}/\texttt{hook\_link}），并为两台 LiDAR 坐标系 $\{l_1\}$、$\{l_2\}$ 与相机坐标系 $\{c\}$ 建立刚体变换关系。外参标定得到的 $\mathbf{T}_{l_2}^{l_1}$、$\mathbf{T}_{l}^{c}$ 等变换在运行时通过 TF 发布，确保定位、点云融合、投影门控与距离计算在同一空间参考下进行。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox{0.90\linewidth}{
+  建议内容：系统 TF 树结构（map/odom/hook\_link 与 lidar1/lidar2/camera/imu 等子坐标系）；标注静态外参与动态位姿来源\\
+  建议文件：\texttt{word/media/tf\_tree\_hook.pdf}（或 .png）}}
+  \caption{吊钩端多传感器 TF 树与坐标系关系示意}
+  \label{fig:tf_tree_hook}
+\end{figure}
+
+\subsubsection{坐标系命名与方向约定}
+
+为避免坐标系混用导致的投影翻转与距离计算错误，本文建议遵循以下约定：
+\begin{enumerate}
+\item \textbf{命名一致}：所有发布的 \texttt{PointCloud2} 与 \texttt{Image} 消息必须正确填写 \texttt{header.frame\_id}，并与 TF 树中的坐标系名称完全一致。
+\item \textbf{右手系与单位}：所有坐标系均采用右手坐标系，长度单位统一为 m；旋转采用四元数或旋转矩阵表示，避免欧拉角在链路中多次转换引入歧义。
+\item \textbf{相机坐标系约定}：相机坐标系 $\{c\}$ 与投影模型保持一致（通常 $x$ 指向右、$y$ 指向下、$z$ 指向前）；若驱动默认坐标系不同，应在 TF 中显式给出转换。
+\end{enumerate}
+
+\subsubsection{静态外参与动态位姿发布}
+
+在运行时，外参应视为静态变换：
+\begin{equation}
+\mathbf{T}_{h}^{l_1},\;\mathbf{T}_{h}^{l_2},\;\mathbf{T}_{h}^{c}\;\text{为常量，且由标定结果给出}
+\end{equation}
+动态位姿（例如 $\mathbf{T}_{\text{map}}^{h}(t)$）由定位模块（LIO-SAM 等）输出，并以一定频率发布。为了保证模块解耦与可维护性，本文建议：
+\begin{enumerate}
+\item \textbf{静态外参使用静态 TF 发布器}（例如 \texttt{static\_transform\_publisher} 或 \texttt{StaticTransformBroadcaster}），避免重复发布造成 TF 树抖动。
+\item \textbf{定位模块只负责发布动态 TF}（如 \texttt{map}$\rightarrow$\texttt{odom}$\rightarrow$\texttt{hook\_link}），感知与融合模块只订阅 TF 查询结果而不自行维护外参。
+\item \textbf{变换链路最短化}：融合时优先通过一条明确的变换链路完成坐标变换，例如
+\begin{equation}
+\mathbf{p}^{h} = \mathbf{T}_{l}^{h}\,\mathbf{p}^{l},\qquad
+\mathbf{p}^{c} = \mathbf{T}_{h}^{c}\,\mathbf{p}^{h}
+\end{equation}
+以减少多次组合带来的数值误差与实现复杂度。
+\end{enumerate}
+
+统一的坐标系与 TF 接口规范使得定位、目标提取、雷视融合与预警模块能够在同一空间参考下协同工作，并为后续增加其他传感器或替换算法提供了清晰的接口边界。
 
 \chapter{基于融合点云的定位与空间危险区域检测方法}\label{ux57faux4e8eux878dux5408ux70b9ux4e91ux7684ux5b9aux4f4dux4e0eux7a7aux95f4ux5371ux9669ux533aux57dfux68c0ux6d4bux65b9ux6cd5}
 

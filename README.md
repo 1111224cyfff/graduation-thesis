@@ -8,6 +8,13 @@ This repository establishes LaTeX template for Tongji Undergraduate Thesis.
 
 Please refer to `main.tex` for usage and `main.pdf` for demonstration.
 
+Project layout (current workflow):
+- Main entry: `main.tex`
+- Thesis body: `chapters/`
+- Figures: `figures/`
+- Bibliography database: `references/`
+- `word/` is kept only as an archive and is no longer referenced by `main.tex`.
+
 ### Downloads
 
 * Click [here](https://github.com/SXKDZ/tongjithesis/releases) to download
@@ -23,6 +30,13 @@ Apache 2.0
 ### 文档
 
 请查阅 `main.tex`以获取相关使用方法，并且查阅 `main.pdf` 查看演示效果。
+
+当前写作目录结构：
+- 编译入口：`main.tex`
+- 正文内容：`chapters/`
+- 图片资源：`figures/`
+- 参考文献库：`references/`
+- `word/` 仅用于存档，不再被 `main.tex` 引用。
 
 ### 下载
 

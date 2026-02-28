@@ -36,6 +36,7 @@ __pycache__/
 
 # Local snapshot of upstream template (not part of current thesis sources)
 origin/
+初版/
 
 # Common temp
 *.tmp
