@@ -1,6 +1,6 @@
 ---
 name: tongji-thesis-writing
-description: Enforce TongjiThesis bachelor thesis writing norms (anti-流水账), strict citations (no fabricated keys), and LaTeX formatting consistent with origin/main.tex.
+description: Enforce TongjiThesis master thesis writing norms (anti-流水账), strict citations (no fabricated keys), and LaTeX formatting consistent with origin/main.tex.
 license: Apache-2.0
 ---
 

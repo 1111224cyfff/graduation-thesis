@@ -1,0 +1,68 @@
+\tongjisetup{
+  %******************************
+  % 注意：
+  %   1. 配置里面不要出现空行
+  %   2. 不需要的配置信息可以删除
+  %******************************
+  % 秘级
+  secretlevel={公开},
+  secretyear={0},
+  %
+  %
+  % 中文信息
+  ctitle={基于雷视融合的塔吊吊装过程动态避障, \\ 与预警方法研究}, % 可手动加入换行符 \\ 控制换行
+  cauthor={陈宇凡},
+  studentnumber={2330894},
+  cdepartment={土木工程学院},
+  csubjectcategory={工学}, % 学科门类
+  cmajorfirst={土木工程}, % 专业学位类别
+  cmajorsecond={土木工程}, % 专业领域
+  cresearchfield={雷视融合感知与安全预警}, % 研究方向
+  csupervisor={卢昱杰 教授},
+  cassosupervisor={}, % 副指导老师/行业导师
+  cjointinstitution={}, % 联合培养单位
+  cdate={\zhdigits{2026}年\zhnumber{2}月}, % 手动指定日期, 否则自动使用当前时间
+  cfunds={}, % 中文版基金信息
+  % 英文信息
+  etitle={Research on Dynamic Obstacle Avoidance and Early Warning Method for Tower Crane Hoisting Process Based on Radar-Vision Fusion},
+  eauthor={Yufan Chen},
+  edepartment={School of Civil Engineering},
+  esubjectcategory={Engineering}, % 学科门类
+  emajorfirst={Civil Engineering}, % 专业学位类别
+  emajorsecond={Civil Engineering}, % 专业领域
+  eresearchfield={Radar-vision fusion perception and safety early warning}, % 研究方向
+  esupervisor={Prof. Yujie Lu},
+  eassosupervisor={}, % 副指导老师/行业导师
+  ejointinstitution={}, % 联合培养单位
+  edate={February, 2026}, % 手动指定日期, 否则自动使用当前时间
+  efunds={} % 英文版基金信息
+}
+
+% 后处理
+\makeatletter
+\define@key{tongji}{cheadingtitlenew}{\cheadingtitlenew{#1}}
+\gdef\cheadingtitlenew#1{\gdef\tongji@cheadingtitlenew{#1}}
+\tongjideletelinebreakcmd{tongji@ctitle}{tongji@posttitle}
+\cheadingtitlenew{\tongji@posttitle}
+\makeatother
+
+% 定义中英文摘要和关键字
+\begin{cabstract}
+  塔式起重机（塔吊）承担了建筑施工中大量的垂直与水平运输任务，其作业过程具有载荷大、作业半径长、人员与设备交叉作业频繁等特点，安全风险长期处于高位。传统塔吊安全管理多依赖司机视野、指挥信号及固定式监控，难以对吊钩端附近的临近人员、临时障碍物以及动态变化的施工环境形成稳定、定量、可闭环的安全感知。
+
+  针对上述问题，本文面向“吊钩端”这一关键危险源位置，构建双激光雷达与工业相机协同的轻量化感知系统，研究雷视融合条件下的空间定位、危险区域检测以及分级预警方法。首先，建立多传感器一体化安装与数据链路，完成相机内参、双雷达外参以及雷达—相机外参标定，并给出时间同步与延迟补偿策略；其次，提出双雷达点云实时融合与坐标统一方法，引入LIO-SAM实现吊钩端位姿估计与静态地图构建，在此基础上通过ROI裁剪、时空对齐和静动态分离实现目标生成与跟踪；最后，针对高风险动态目标（如作业工人）引入视觉侧识别结果，设计雷视一致性关联与置信度融合机制，构建基于距离、相对速度与时间到碰撞（TTC）的风险判定模型，实现静态障碍与动态目标的分级预警与策略输出。
+
+  通过典型施工工况的对比实验，验证了所构建系统在定位精度、目标关联一致性以及实时性与稳定性方面的有效性，可为塔吊吊装过程的动态避障与风险预警提供工程化参考。
+\end{cabstract}
+
+\ckeywords{雷视融合，塔吊吊装，吊钩端感知，动态避障，风险预警}
+
+\begin{eabstract}
+  Tower cranes play a critical role in construction logistics, yet hoisting operations involve high loads and complex, dynamic environments, where workers and equipment often coexist within the working radius. Conventional safety approaches mainly rely on the operator's experience, manual signaling, or fixed surveillance, which lack reliable and quantitative perception around the hook end, leading to insufficient collision avoidance capability and delayed risk response.
+
+  This thesis focuses on hook-end safety perception and proposes a dynamic obstacle avoidance and early warning method based on radar-vision fusion. A compact perception platform integrating dual LiDARs and an industrial camera is designed for hook-end deployment. A complete multi-sensor calibration pipeline is established, including camera intrinsics, LiDAR-LiDAR extrinsics, and LiDAR-camera extrinsics, together with time synchronization and delay compensation. For online perception, a real-time dual-LiDAR point cloud fusion method and unified coordinate transformation are developed. Hook-end localization and mapping are achieved using LIO-SAM, enabling motion compensation and consistent point cloud generation. On this basis, ROI cropping, spatio-temporal alignment, static-dynamic separation, and tracking are applied to produce reliable obstacle hypotheses. For high-risk dynamic objects (e.g., workers), vision-side detection results are fused with LiDAR observations via bidirectional consistency association and confidence fusion. A risk assessment model combining distance, relative velocity, and time-to-collision (TTC) is then proposed to drive a graded warning state machine.
+
+  Experiments under representative hoisting scenarios demonstrate the effectiveness of the proposed system in localization performance, fusion consistency, and real-time stability, providing practical support for intelligent safety management in hoisting operations.
+\end{eabstract}
+
+\ekeywords{Radar-vision fusion, tower crane hoisting, hook-end perception, dynamic obstacle avoidance, risk early warning}
