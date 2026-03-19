@@ -52,9 +52,18 @@ This template enforces GB/T 7714-2015 via `biblatex`.
 - If `.bib` path issues appear, check whether it is relative to the entry file.
 
 ### Images
-For the Word-export pipeline, images typically live under `word/media/` and `main.tex` sets `\\graphicspath{{word/}}`.
+In this repository, figures are expected to live under `figures/` and the entry file `main.tex` sets `\\graphicspath{{figures/}}`.
 
-- If an image is missing, confirm the file exists and the path matches case and extension.
+- When inserting a figure, default to referencing the *same base name* under `figures/` (prefer `.png` or `.pdf`).
+  - You can omit the extension in `\\includegraphics{...}` so LaTeX will pick the matching `.png`/`.pdf` in `figures/`.
+- When a figure file is **newly inserted** or an existing figure file is **replaced**, automatically trigger the figure-cropping workflow before finalizing the LaTeX reference or layout.
+- Default cropping behavior:
+  - If the figure is a PDF, run `tools/crop-figures.ps1` first and use the cropped result under `figures/`.
+  - If the figure is not a PDF (such as `.png`, `.jpg`, `.jpeg`, `.wmf`), first assess whether cropping/conversion is needed; do not silently skip whitespace issues if they will affect layout.
+- Treat cropping as the default repository convention rather than an optional cleanup step whenever the user asks to insert or replace an image.
+- If an image is missing, confirm the file exists under `figures/` and that the base name (including any CJK characters) matches exactly.
+
+If a figure looks too small even with a large `width=...`, it is usually caused by large whitespace margins in the figure file. In this repo, figures are expected to be cropped by default (see `tools/crop-figures.ps1` and the `latex-figure-crop` skill).
 
 ## 5) Keep fixes minimal
 - Change the smallest surface area possible (usually the entry `.tex`).

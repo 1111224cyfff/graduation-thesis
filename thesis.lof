@@ -1,0 +1,26 @@
+\contentsline {figure}{\numberline {1.1}{\ignorespaces 角度测量到绝对位置的映射示意\blx@tocontentsinit {0}\cite {K9J9CXIH}}}{10}{figure.caption.19}%
+\contentsline {figure}{\numberline {1.2}{\ignorespaces 本文技术路线示意图}}{18}{figure.caption.20}%
+\contentsline {figure}{\numberline {2.1}{\ignorespaces 激光雷达 Livox Mid-360}}{20}{figure.caption.21}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces 工业相机 MV-CS016-10UC}}{20}{figure.caption.22}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces 工业镜头 MVL-HF0628M-6MPE}}{20}{figure.caption.23}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces 单个激光雷达视场角示意}}{21}{figure.caption.25}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces 吊钩感知平台传感器探测范围与重叠区域示意}}{22}{figure.caption.26}%
+\contentsline {figure}{\numberline {2.6}{\ignorespaces 吊钩下方一体化传感器平台整体外观示意}}{24}{figure.caption.27}%
+\contentsline {figure}{\numberline {2.7}{\ignorespaces 平台上盖、下盖与主要部件装配关系示意}}{24}{figure.caption.28}%
+\contentsline {figure}{\numberline {2.8}{\ignorespaces 一体化盒体内部关键部件布局与线束走线组织示意}}{25}{figure.caption.29}%
+\contentsline {figure}{\numberline {2.9}{\ignorespaces 相机内参标定的数据采集示意}}{27}{figure.caption.30}%
+\contentsline {figure}{\numberline {2.10}{\ignorespaces 相机内参标定的重投影误差评价示意}}{28}{figure.caption.31}%
+\contentsline {figure}{\numberline {2.11}{\ignorespaces 双雷达外参自动标定数据准备}}{29}{figure.caption.32}%
+\contentsline {figure}{\numberline {2.12}{\ignorespaces 初始矩阵的位置估计}}{30}{figure.caption.33}%
+\contentsline {figure}{\numberline {2.13}{\ignorespaces 双雷达自动标定的点云配准效果示意}}{31}{figure.caption.34}%
+\contentsline {figure}{\numberline {2.14}{\ignorespaces 自动标定过程的结果}}{31}{figure.caption.35}%
+\contentsline {figure}{\numberline {2.15}{\ignorespaces 雷达-相机外参标定数据准备}}{34}{figure.caption.36}%
+\contentsline {figure}{\numberline {2.16}{\ignorespaces 相机侧角点像素坐标获取}}{34}{figure.caption.37}%
+\contentsline {figure}{\numberline {2.17}{\ignorespaces 雷达侧角点三维坐标获取}}{35}{figure.caption.38}%
+\contentsline {figure}{\numberline {2.18}{\ignorespaces 雷达-相机标定效果}}{35}{figure.caption.39}%
+\contentsline {figure}{\numberline {2.19}{\ignorespaces 吊钩端多传感器硬件与通信链路}}{36}{figure.caption.40}%
+\contentsline {figure}{\numberline {2.20}{\ignorespaces PTP 时间同步示意图}}{39}{figure.caption.42}%
+\contentsline {figure}{\numberline {2.21}{\ignorespaces 多传感器时间同步与延迟补偿时序示意}}{41}{figure.caption.43}%
+\contentsline {figure}{\numberline {2.22}{\ignorespaces 系统 TF 树与坐标系关系示意}}{42}{figure.caption.44}%
+\contentsfinish 
+\contentsfinish 
