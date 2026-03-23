@@ -8,7 +8,7 @@ __pycache__/
 .mypy_cache/
 
 # VS Code
-.vscode/
+# .vscode/
 
 # LaTeX build artifacts (latexmk)
 *.aux
