@@ -1,47 +1,43 @@
 
-\item[{{$a, b, c, \ldots$}}] 标量
-\item[{{$\vec{a}, \vec{b}, \vec{c}, \ldots$}}] 向量
-\item[{{$\mat{A}, \mat{B}, \mat{C}, \ldots$}}] 矩阵
-\item[{{$\mathbb{Q}, \mathbb{R}, \mathbb{C}, \ldots$}}] 集合
-\item[{{$\mathcal{D}, \mathcal{E}, \mathcal{F}, \ldots$}}] 概率分布
+\item[{{$\mathbf{K}$}}] 相机内参矩阵
+\item[{{$\mathbf{R}$}}] 旋转矩阵
+\item[{{$\mathbf{t}$}}] 平移向量
+\item[{{$\mathbf{T}_{a}^{b}$}}] 坐标系 $\{a\}$ 到坐标系 $\{b\}$ 的齐次刚体变换矩阵
+\item[{{$\mathbf{p}_L,\mathbf{p}_C$}}] 点在 LiDAR 坐标系与相机坐标系下的坐标表示
+\item[{{$\bar{\mathbf{p}}_i$}}] 第 $i$ 个目标实例点云的三维质心
+\item[{{$\mathbf{x}(t)$}}] 动态目标状态向量
+\item[{{$\mathbf{r}(t)$}}] 吊装构件与动态目标的相对位置向量
+\item[{{$\mathbf{v}_{\mathrm{rel}}(t)$}}] 吊装构件与动态目标的相对速度向量
 
 \item % 隔开一行
 
-% 标量操作
-\item[{{$\im$}}] 虚数单位
-\item[{{$\Re(x)$}}] 复实部
-\item[{{$\Im(x)$}}] 复虚部 
-\item[{{$\overline{x}$}}] 复共轭
-\item[{{$\ceil{x}$}}] 向上取整
-\item[{{$\floor{x}$}}] 向下取整
-\item[{{$x \bmod T$}}] 取余（模）：$a - T\floor{\frac{a}{T}}$
-
-% 矩阵操作
-\item[{{$\mat{I}_{N}$}}] $N$~阶单位矩阵
-\item[{{$\norm{\mat{A}}$}}] 矩阵范数
-\item[{{$\mat{A}\tr$}}] 矩阵的转置
-\item[{{$\mat{A}\ct$}}] 矩阵的共轭转置
-\item[{{$\mat{A}^\dagger$}}] 矩阵的 Moore-Penrose~伪逆
-
-% 集合操作
-\item[{{$\#\mathbb{S}$}}] 集合的势，对于有限集合即为元素的个数
-
-% 函数操作
-\item[{{$\delta(t)$}}] Kronecker delta~函数：$\delta(t) = \begin{cases}
-    1, & t = 0 \\
-    0, & t \neq 0
-\end{cases}$
-\item[{{$f\sps[(n)](x)$}}] 函数的 $n$~阶导数
-\item[{{$\mathcal{F}_{f}(k)$}}] 连续时域、周期函数的 Fourier~级数：$\frac{1}{T}\int_T{f(t)\e^{-\im\frac{2\pi}{T}k t}\dint t}$
-\item[{{$\mathfrak{F}_{f}(\e^{\im\omega T})$}}] 离散时域函数的 Fourier~变换：$\sum_{n=-\infty}^{\infty}{f(n)\e^{-\im n\omega T}}$
-\item[{{$(f \circledast g)(t)$}}] 函数 $f(\tau)$ 与 $f(\tau)$ 的卷积
-
-% 概率分布操作
-\item[{{$\E\mathcal{D}$}}] 概率分布的数学期望
-\item[{{$\Var\mathcal{D}$}}] 概率分布的方差
+\item[{{$\{w\},\{h\},\{l_1\},\{l_2\},\{c\}$}}] 世界坐标系、吊钩端参考坐标系、两台激光雷达坐标系与相机坐标系
+\item[{{$\mathcal{P}_{l_i}(t)$}}] 第 $i$ 台 LiDAR 在时刻 $t$ 采集的原始点云
+\item[{{$\mathcal{P}_f(t)$}}] 双 LiDAR 融合点云
+\item[{{$\Omega$}}] 近场关注区域（ROI）
+\item[{{$\mathcal{B}(t)$}}] 局部滑窗背景点云集合
+\item[{{$\mathcal{C}_t$}}] 时刻 $t$ 的动态目标聚类集合
+\item[{{$\mathcal{S}_t$}}] 时刻 $t$ 的视觉分割实例集合
+\item[{{$M_i,c_i,s_i$}}] 第 $i$ 个分割实例的掩码、类别标签与置信度
+\item[{{$\mathbf{z}_i$}}] 下游融合接口中的目标描述状态
+\item[{{$\mathbf{w}$}}] 风险状态消息
+\item[{{$\mathbf{u}_{\mathrm{adv}}$}}] 控制建议消息
 
 \item % 隔开一行
 
-\item[{{SISO}}] 单输入单输出（Single-Input Single-Output）
-\item[{{MIMO}}] 多输入多输出（Multi-Input Multi-Output）
-\item[{{LTI}}] 线性时不变（Linear Time-Invariant）
+\item[{{$d_{\mathrm{static}}$}}] 吊装构件与静态障碍物之间的最小距离
+\item[{{$d_{\min}^{\mathrm{pred}}$}}] 预测时间窗内的最近接距离
+\item[{{$\gamma(t)$}}] 相对位置与相对速度的接近判据
+\item[{{$T_p$}}] 风险评估的预测时间窗
+\item[{{$L$}}] 预警等级
+
+\item % 隔开一行
+
+\item[{{TTC}}] 碰撞时间（Time-to-Collision）
+\item[{{ROI}}] 感兴趣区域（Region of Interest）
+\item[{{TF}}] ROS 坐标变换树
+\item[{{ROS}}] 机器人操作系统（Robot Operating System）
+\item[{{IMU}}] 惯性测量单元（Inertial Measurement Unit）
+\item[{{LiDAR}}] 激光雷达（Light Detection and Ranging）
+\item[{{LIO-SAM}}] 激光雷达与惯性紧耦合的同步定位与建图方法
+\item[{{YOLO26}}] 本文采用的吊装构件视觉分割模型

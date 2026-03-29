@@ -106,7 +106,7 @@
 
 为满足施工现场工程化部署需求，吊钩端感知系统采用一体化盒体进行集成，重点解决\textbf{振动冲击、防尘防水、线缆可靠性、供电与通信稳定性}等问题。盒体结构上为传感器提供刚性安装基座并设置防松与限位结构，降低长期运行导致的相对位姿漂移；外壳采用密封与防尘设计，关键接口使用防水接头与应力释放结构，减少线缆在摆动与摩擦环境下的疲劳破坏风险。
 
-在系统集成方面，将传感器、供电转换模块与计算/通信模块集中布置，减少外露走线长度；网络侧通过统一交换/桥接方式管理相机与雷达的数据流，算法侧基于 ROS 建立标准话题发布与 TF 广播，实现数据采集、融合、定位、识别与预警模块的解耦与可维护性。盒体内部预留散热与维护空间，便于现场更换传感器或调整安装角度。
+在系统集成方面，将传感器、供电转换模块与计算/通信模块集中布置，减少外露走线长度；网络侧通过统一交换方式管理相机与雷达的数据流，算法侧基于 ROS 建立标准话题发布与 TF 广播，实现数据采集、融合、定位、识别与预警模块的解耦与可维护性。盒体内部预留散热与维护空间，便于现场更换传感器或调整安装角度。
 
 为实现上述集成目标，本文基于 SolidWorks 完成吊钩下方传感器平台的结构设计与装配验证，其设计流程可概括为：\textbf{需求定义（视场覆盖、抗振防护、供电与走线、维护更换）}→\textbf{总体方案（上/下盖两体式盒体与传感器布置）}→\textbf{细化建模（安装基准、窗口开孔、接口位置、紧固与限位结构）}→\textbf{装配与干涉检查（摆动极值与可维护空间）}→\textbf{布局与可靠性校核（重心、线束应力释放、散热通道）}。该流程保证结构设计与算法所需“外参稳定、时空对齐一致性”在工程层面能够长期维持。
 
@@ -239,9 +239,7 @@ e_{\mathrm{rms}}=\sqrt{\frac{1}{N}\sum_{i=1}^{M}\sum_{j=1}^{n_i}\left\lVert \mat
 
 \subsection{双雷达外参自动标定与精配准}\label{ux53ccux96f7ux8fbeux5916ux53c2ux81eaux52a8ux6807ux5b9aux4e0eux7cbeux914dux51c6}
 
-双雷达外参标定目标是求解两台 Mid-360 坐标系之间的刚体变换 $\mathbf{T}_{2}^{1}$，以便将两路点云统一到同一参考系。本文采用“\textbf{粗配准 + 自动精配准}”的两阶段流程：首先依据盒体结构尺寸与安装姿态给出初值（粗配准），确保两路点云在同一量级的空间范围内重叠；随后采集同步点云并进行自动优化，对外参进行精配准，使得两路点云在环境结构上的几何一致性最优。
-
-本研究的自动精配准部分参考 Livox 开源的多雷达外参自动标定工具实现思路\footnote{Livox\ Automatic\ Calibration\ Tools: \url{https://github.com/Livox-SDK/Livox_automatic_calibration}}，其核心思想可概括为“\textbf{基准雷达先建图，目标雷达逐帧与地图配准并迭代外参，最后用一致性方法得到稳定外参}”。该类方法对外参初值不要求十分精确，但需要\textbf{大致对齐}；同时对数据同步与运动畸变较为敏感，因此采集时应尽量慢速运动、避免急转弯并保证两雷达帧间时间对齐。
+双雷达外参标定的目标，是在两台 Mid-360 之间建立稳定、可复用的刚体变换，使两路观测在后续融合、定位与雷视关联中共享统一的空间语义。与仅服务于某一次离线叠加不同，本文求解的外参既要满足自动精配准的收敛需求，也要直接作为运行时融合节点的静态配置参数。因此，本节将双雷达标定明确划分为“\textbf{粗配准初值构造 + 自动精配准优化}”两个阶段：前者负责建立正确的坐标约定并给出可收敛初值，后者负责在真实点云数据上进一步压缩几何残差。
 
 记基准雷达坐标系为 $\{l_1\}$，目标雷达坐标系为 $\{l_2\}$，待求外参为
 \begin{equation}
@@ -252,21 +250,29 @@ e_{\mathrm{rms}}=\sqrt{\frac{1}{N}\sum_{i=1}^{M}\sum_{j=1}^{n_i}\left\lVert \mat
 \mathbf{0}^{\mathsf{T}} & 1
 \end{bmatrix}\in SE(3),
 \end{equation}
-其中 $\mathbf{R}\in SO(3)$，$\mathbf{t}\in \mathbb{R}^3$。自动标定采用“\textbf{先建图后配准}”范式：
+其中 $\mathbf{R}\in SO(3)$，$\mathbf{t}\in \mathbb{R}^3$。对任一点 $\mathbf{p}^{l_2}$，其在 $\{l_1\}$ 中的表达为
+\begin{equation}
+\tilde{\mathbf{p}}^{l_1}=\mathbf{R}_{l_2}^{l_1}\,\mathbf{p}^{l_2}+\mathbf{t}_{l_2}^{l_1}.
+\end{equation}
+这一表达不仅是运行时坐标统一的数学基础，更是粗配准阶段必须先固定下来的坐标约定。本文统一以基准雷达 $\{l_1\}$ 作为双雷达公共参考系；在后续代码实现中，\texttt{body} 与 $\{l_1\}$ 采用同一参考定义，因此本节输出的最终矩阵将直接写入融合节点配置文件，作为静态外参加载，而不在在线阶段重复求解。
 
-该范式包含“建图约束”与“迭代配准”两类关键环节：在固定参考系 $\{w\}$ 下用基准雷达的多帧点云构建局部/全局地图 $\mathcal{M}$，以获得更稳定的环境几何表示；同时将目标雷达的每帧点云 $\mathcal{P}_k^{(2)}$ 通过当前外参估计变换到基准雷达/世界坐标下，并与地图 $\mathcal{M}$ 进行配准，得到增量变换 $\Delta \mathbf{T}_k$ 用于修正外参。工程上常用 ICP 及其鲁棒变体进行点云配准；参考 Livox 工具实现，本文采用广义 ICP（Generalized ICP, GICP）思想，在点到点最近邻基础上引入局部协方差近似点到平面的约束，以提升稀疏或噪声场景下的稳定性，其典型优化形式为
+粗配准阶段的任务不是追求最终精度，而是依据盒体结构设计、安装姿态和孔位基准给出物理上合理的初始位姿，使两路点云在同一场景下具有足够重叠。依据吊钩端一体化结构的 SolidWorks 模型，可得到双雷达安装底座的相对位置和姿态关系，并据此构造初始变换矩阵 $\mathbf{T}_0$。该初值随后被写入自动标定工具的初始化文件，用作后续逐帧配准的起点。由于粗配准阶段已经确定了“目标雷达点如何变换到基准雷达坐标系”的方向约定，自动精配准阶段和第3章运行时融合阶段均沿用同一记号与矩阵方向，从而避免离线标定与在线应用之间的坐标语义不一致。
+
+本研究的自动精配准部分参考 Livox 开源的多雷达外参自动标定工具实现思路\footnote{Livox\ Automatic\ Calibration\ Tools: \url{https://github.com/Livox-SDK/Livox_automatic_calibration}}，其核心思想可概括为“\textbf{基准雷达先建图，目标雷达逐帧与地图配准并迭代外参，最后用一致性方法得到稳定外参}”。该类方法对外参初值不要求十分精确，但要求初值具备正确的空间量级和重叠方向；同时它对时间同步和运动畸变较为敏感，因此采集时应尽量慢速运动、避免急转弯，并保证双雷达帧序列在时间上尽可能对应。
+
+自动标定采用“\textbf{先建图后配准}”范式。该范式包含“建图约束”与“迭代配准”两类关键环节：在固定参考系 $\{w\}$ 下用基准雷达的多帧点云构建局部/全局地图 $\mathcal{M}$，以获得更稳定的环境几何表示；同时将目标雷达的每帧点云 $\mathcal{P}_k^{(2)}$ 通过当前外参估计变换到基准雷达或世界坐标下，并与地图 $\mathcal{M}$ 进行配准，得到增量变换 $\Delta \mathbf{T}_k$ 用于修正外参。工程上常用 ICP 及其鲁棒变体进行点云配准；参考 Livox 工具实现，本文采用广义 ICP（Generalized ICP, GICP）思想，在点到点最近邻基础上引入局部协方差近似点到平面的约束，以提升稀疏或噪声场景下的稳定性，其典型优化形式为
 \begin{equation}
 \label{eq:gicp_cost}
 \min_{\mathbf{T}}\sum_{i}\left(\mathbf{p}_i-\mathbf{T}\mathbf{q}_i\right)^{\mathsf{T}}\mathbf{C}_i^{-1}\left(\mathbf{p}_i-\mathbf{T}\mathbf{q}_i\right),
 \end{equation}
-其中 $\mathbf{q}_i$ 为源点云（目标雷达帧）中的点，$\mathbf{p}_i$ 为地图中与其对应的匹配点（或局部子地图点），$\mathbf{C}_i$ 为由两侧局部几何估计得到的协方差（权重）矩阵。优化得到的配准变换用于更新外参估计，例如
+其中 $\mathbf{q}_i$ 为源点云中的点，$\mathbf{p}_i$ 为地图中与其对应的匹配点（或局部子地图点），$\mathbf{C}_i$ 为由两侧局部几何估计得到的协方差矩阵。优化得到的配准变换用于更新外参估计，例如
 \begin{equation}
 \label{eq:extrinsic_update}
 \mathbf{T}_{l_2}^{l_1}\leftarrow \Delta \mathbf{T}_k\,\mathbf{T}_{l_2}^{l_1}.
 \end{equation}
-为避免错误匹配导致外参发散，工程实现通常设置配准质量门控（如 fitness score 阈值、最大对应距离、迭代次数上限等），对不可信帧跳过更新或回退到初始猜测。逐帧配准会得到外参估计序列 $\{\mathbf{T}_k\}$，其受动态点、遮挡、运动畸变与局部几何退化影响可能出现离群值；参考 Livox 工具的做法，可在平移/欧拉角参数空间对该序列进行稳健拟合与一致性筛选，仅保留配准质量较高的帧，并通过共识机制（如 RANSAC）抑制离群点，最终得到稳定外参 $\hat{\mathbf{T}}$。该步骤利用“外参为常量”的刚性约束，使估计结果在长序列数据上更稳定、可复现。
+为避免错误匹配导致外参发散，工程实现通常设置配准质量门控，例如 fitness score 阈值、最大对应距离和迭代次数上限，对不可信帧跳过更新或回退到初始猜测。逐帧配准会得到外参估计序列 $\{\mathbf{T}_k\}$，其受动态点、遮挡、运动畸变与局部几何退化影响可能出现离群值；参考 Livox 工具的做法，可在平移和欧拉角参数空间对该序列进行稳健拟合与一致性筛选，仅保留配准质量较高的帧，并通过共识机制抑制离群点，最终得到稳定外参 $\hat{\mathbf{T}}$。这一步利用“外参在刚性安装下为常量”的约束，使结果在长序列数据上更稳定、可复现。
 
-结合本文吊钩端系统特点与 Livox 工具的要求，双雷达自动标定在工程上可抽象为“数据采集与帧对齐—粗外参初始化—基准建图—目标逐帧配准迭代—一致性筛选与输出”的离线流水线。数据采集应选择结构稳定且环境几何丰富（存在平面、立柱、墙角等）的场地，并尽可能保证两雷达时间对齐；移动采集时宜慢速运动以降低单帧运动畸变，必要时在离线阶段剔除动态目标或仅选取静态时间段。本文采用 ROS 录制两台 LiDAR 的 \texttt{rosbag} 数据，并在离线阶段按固定时间片（例如每 $100\,\mathrm{ms}$）聚合为点云帧导出为 \texttt{.pcd}，同时确保\textbf{两路点云在帧序号与时间戳层面尽可能一一对应}并保持统一的读取顺序与目录组织方式（例如分别存放于 \texttt{Base\_LiDAR\_Frames/} 与 \texttt{Target\_LiDAR\_Frames/}）。数据整理与帧对齐的示意位置在文中预留，如图\ref{fig:lidar_calib_dataset}所示。
+结合本文吊钩端系统特点与 Livox 工具的要求，双雷达自动标定在工程上可抽象为“数据采集与帧对齐--粗外参初始化--基准建图--目标逐帧配准迭代--一致性筛选与输出”的离线流水线。数据采集应选择结构稳定且环境几何丰富的场地，并尽可能保证两雷达时间对齐；移动采集时宜慢速运动以降低单帧运动畸变，必要时在离线阶段剔除动态目标或仅选取静态时间段。本文采用 ROS 录制两台 LiDAR 的 \texttt{rosbag} 数据，并在离线阶段按固定时间片导出为 \texttt{.pcd} 帧，同时确保\textbf{两路点云在帧序号与时间戳层面尽可能一一对应}，并保持统一的读取顺序与目录组织方式。数据整理与帧对齐的示意如图\ref{fig:lidar_calib_dataset}所示。
 
 \begin{figure}[htbp]
   \centering
@@ -297,7 +303,8 @@ dataset
   \caption{双雷达外参自动标定数据准备}
   \label{fig:lidar_calib_dataset}
 \end{figure}
-粗配准外参 $\mathbf{T}_0$ 可由吊钩端盒体的结构设计模型（安装位姿与孔位基准）计算得到，并在工程实现中\textbf{写入配置文件}（如 \texttt{Init\_Matrix.txt}）作为初始猜测参与逐帧配准更新。该初值不必十分精确，但应保证两路点云在同一场景下具有足够重叠，以提高配准收敛到正确解的概率。依据设计的SolidWorks模型，可以得到理想状态的双雷达底座中心点间的距离，如图\ref{fig:lidar_calib_estimate}所示，经过矩阵变换后的初值矩阵如式\eqref{eq:lidar_init_guess}所示。
+
+粗配准外参 $\mathbf{T}_0$ 可由吊钩端盒体的结构设计模型和安装位姿计算得到，并在工程实现中写入初始化配置文件，作为逐帧配准更新的初始猜测。该初值不必达到最终标定精度，但必须保证两路点云在同一场景下具有足够重叠，以提高 GICP 收敛到正确极值的概率。依据 SolidWorks 设计模型，可以得到理想状态的双雷达底座中心点间相对位置，如图\ref{fig:lidar_calib_estimate}所示，经过坐标变换后的初值矩阵如式\eqref{eq:lidar_init_guess}所示。
 
 \begin{figure}[htbp]
   \centering
@@ -317,7 +324,7 @@ dataset
 \end{bmatrix}.
 \end{equation}
 
-随后，以基准雷达帧序列构建地图 $\mathcal{M}$ 作为后续配准参考；为提升建图质量，可对点云进行体素下采样、离群点剔除等预处理，并在必要时对帧间运动畸变进行校正。在外参迭代阶段，将目标雷达每帧点云在当前外参下变换后与地图（或局部子地图/近邻点集合）进行 GICP 配准，得到增量修正 $\Delta \mathbf{T}_k$ 并更新外参，同时记录每帧配准质量指标（如 fitness score）以支撑一致性筛选。标定过程界面及前后点云叠加效果如图\ref{fig:lidar_calib_overlay}所示。
+随后，以基准雷达帧序列构建地图 $\mathcal{M}$ 作为后续配准参考；在外参迭代阶段，将目标雷达每帧点云在当前外参下变换后与地图或局部子地图进行 GICP 配准，得到增量修正 $\Delta \mathbf{T}_k$ 并更新外参，同时记录每帧配准质量指标以支撑一致性筛选。标定过程界面及前后点云叠加效果如图\ref{fig:lidar_calib_overlay}所示。
 
 \begin{figure}[htbp]
   \centering
@@ -325,7 +332,7 @@ dataset
   \caption{双雷达自动标定的点云配准效果示意}
   \label{fig:lidar_calib_overlay}
 \end{figure}
-完成逐帧配准后，对外参估计序列进行稳健筛选与拟合，输出最终外参 $\hat{\mathbf{T}}_{l_2}^{l_1}$（将雷达2坐标系下的点变换到基准雷达1坐标系，可用旋转/平移、欧拉角或四元数表示）。同时可输出标定质量统计（例如有效帧比例、fitness score 分布）用于可解释性验证，自动标定的结果输出如图\ref{fig:lidar_calib_result}所示。
+完成逐帧配准后，对外参估计序列进行稳健筛选与拟合，输出最终外参 $\hat{\mathbf{T}}_{l_2}^{l_1}$。同时可输出标定质量统计，例如有效帧比例和 fitness score 分布，用于可解释性验证，自动标定的结果输出如图\ref{fig:lidar_calib_result}所示。
 
 \begin{figure}[htbp]
   \centering
@@ -345,7 +352,9 @@ dataset
 0 & 0 & 0 & 1
 \end{bmatrix}.
 \end{equation}
-式\eqref{eq:lidar_lidar_result}给出了从 $\{l_2\}$ 到 $\{l_1\}$ 的刚体变换，因此运行时可直接用于将雷达2点云映射到基准雷达1坐标系，并作为后续 TF 静态发布与双雷达点云融合的统一参数。为确保自动标定结果可靠，工程部署仍需保证双雷达数据尽可能同步且帧对应关系稳定，采集运动尽量缓慢并减少急转弯以降低运动畸变带来的配准偏差，环境结构保持足够丰富以避免几何退化，同时粗外参需实现“大致对齐”以提高 GICP 收敛到正确极值的概率。最终得到的 $\hat{\mathbf{T}}_{l_2}^{l_1}$ 将用于第3章的点云实时融合与坐标统一。
+式\eqref{eq:lidar_lidar_result}给出了从 $\{l_2\}$ 到 $\{l_1\}$ 的最终刚体变换。为确保该结果可直接用于后续在线融合，本文除检查标定前后点云叠加效果外，还在静止场景下统计重叠区域最近邻距离分布，并以最近邻距离均值不超过 $0.10\,\mathrm{m}$、95\% 分位不超过 $0.20\,\mathrm{m}$ 作为可用性判据。当该条件成立时，可认为双雷达在后续特征提取、配准和近场目标生成中具备可接受的几何一致性。
+
+最终得到的 $\hat{\mathbf{T}}_{l_2}^{l_1}$ 将在运行时直接写入 \texttt{livox\_merge} 的静态外参配置，用作第3章双雷达实时融合的输入参数。也就是说，第2章回答“外参如何得到并验证”，第3章只讨论“已求得外参如何被融合代码调用”，二者在章节分工上不再重复。
 
 \subsection{雷达--相机外参标定}\label{ux96f7ux8fbeux76f8ux673aux5916ux53c2ux6807ux5b9a}
 
@@ -507,7 +516,9 @@ data
 
 压缩逻辑的引入直接针对 Jetson 边缘侧的 I/O 瓶颈。未加入压缩发布前，原始 RGB 图像单帧数据量约为 $4\,\mathrm{Mb}$，按默认 $10\,\mathrm{Hz}$ 发布时平均带宽约为 $40\,\mathrm{Mb/s}$。考虑系统还需同时写入双 LiDAR、双 IMU 及其他 ROS 消息，该负载会快速挤占边缘侧磁盘写入带宽，导致录包与在线处理共享 I/O 通路时出现明显阻塞。实际排查中，使用 \texttt{iostat -xz 1} 观察到磁盘 \texttt{\%util} 接近 $100\%$、\texttt{await} 持续升高，表明系统已进入典型的存储 I/O 饱和状态。加入压缩图像逻辑后，原始 \texttt{rgb} 话题默认不再发布，仅保留压缩后的 \texttt{/hikrobot\_camera/rgb/compressed} 输出；在图像质量无明显下降的前提下，即使将视觉发布频率提升至 $20\,\mathrm{Hz}$，链路带宽仍可稳定在约 $4.4\,\mathrm{Mb/s}$，显著降低磁盘 I/O 压力，并为多传感器同步录制预留了更充足的吞吐裕量。
 
-在双 LiDAR 以太网直连边缘计算单元的场景中，常见工程约束是\textbf{两台雷达默认处于同一网段}（如 \texttt{192.168.2.x}），且雷达侧 Host IP 固定指向 \texttt{192.168.2.1}。在不修改雷达侧网络配置的前提下，若主机通过两块物理网卡分别直连两台雷达，应避免在两块网卡上同时配置同一个 Host IP，否则会造成地址绑定与二层转发的不确定性并引发丢包。本文采用\textbf{软件桥接（bridge）}将两块物理口接入同一二层广播域：创建桥接接口 \texttt{br0} 并将\textbf{唯一的} \texttt{192.168.2.1/24} 配置在 \texttt{br0} 上，使主机对外呈现为单一逻辑接口。工程落地时需保证 IP 仅配置在 \texttt{br0}、链路不引入额外路由/网关路径、网络管理服务不自动重写地址/路由，并在日志中记录链路状态与丢包统计以支撑上层延迟补偿与告警。
+在双 LiDAR 与边缘计算单元的以太网互联中，本文最终采用\textbf{小型交换机汇聚 + 工控机 \texttt{eth0} 单网口接入}的拓扑，而不再引入软路由或双网口桥接方案。这样调整的直接原因在于，时间同步机制需要将两台雷达与主机尽可能置于同一稳定二层链路中，以减少额外转发路径带来的时延抖动和配置复杂度。考虑到两台雷达默认处于同一网段（如 \texttt{192.168.2.x}），且雷达侧 Host IP 固定指向 \texttt{192.168.2.1}，采用交换机汇聚后只需在主机的 \texttt{eth0} 上配置唯一的 \texttt{192.168.2.1/24}，即可同时完成两台雷达的数据接入与统一管理。
+
+与原有多网口桥接思路相比，该方案避免了桥接接口维护、地址重复绑定以及额外网络转发规则带来的不确定性，使链路部署更接近即插即用的工程形态。工程落地时需保证交换机工作在稳定的二层转发模式，\texttt{eth0} 作为主机唯一的雷达接入口不再叠加额外路由功能，并在日志中持续记录链路状态、丢包统计与时间同步偏差，以支撑上层延迟补偿与异常告警。
 
 ROS1 话题通信采用发布/订阅机制，若生产端速率高于消费端处理能力，队列积压会直接转化为延迟增长并破坏融合一致性。因此本文对关键话题采用“\textbf{小队列 + 可丢帧}”策略，使系统尽可能运行在低延迟稳态。设订阅端的平均处理时延为 $T_p$、队列长度为 $Q$，则在持续拥塞时队列引入的额外排队时延近似为
 \begin{equation}
@@ -681,53 +692,50 @@ PTP时间同步原理图如图\ref{fig:ptp_timing}所示，在此给出PTP传输
 
 跨模块的空间一致性依赖于统一的坐标系定义与 TF 发布规范。若时间同步解决的是“不同传感器是否对应同一时刻”的问题，则 TF 接口解决的是“同一组观测是否处于同一空间参考”这一问题。对于吊钩端多传感器系统而言，若点云、IMU 与视觉观测分别在不同参考系下被解释，则同一距离阈值、ROI 边界与投影关系会随参考帧切换而改变，进而使定位输出与风险判定结果失去可复用性。因此，本节在保留抽象外参建模方式的基础上，进一步给出本文系统实际采用的 TF 主链、记号约定与静态发布职责。
 
-本文统一采用“$\mathbf{T}_{b}^{a}$ 表示将坐标系 $\{b\}$ 下的点变换到坐标系 $\{a\}$”的记号。抽象层面仍以吊钩端参考坐标系 $\{h\}$ 作为统一空间参考；工程实现层面则将其主体参考帧映射为 ROS 中的 \texttt{base\_link}。两台 LiDAR 坐标系 $\{l_1\}$、$\{l_2\}$、相机机体系 $\{c\}$、相机光学坐标系以及两路 IMU 安装坐标系，均通过刚体变换与该主体参考帧建立关系。这样处理的意义在于：论文中仍可使用统一的吊钩端参考系符号表达多传感器几何关系，而在工程部署中则以 \texttt{base\_link} 作为唯一主体帧，避免 \texttt{hook\_link}、\texttt{base\_link} 等命名并存导致的接口歧义。
+本文统一采用“$\mathbf{T}_{b}^{a}$ 表示将坐标系 $\{b\}$ 下的点变换到坐标系 $\{a\}$”的记号。抽象层面仍以吊钩端参考坐标系 $\{h\}$ 作为统一空间参考；工程实现层面则将其对应为 ROS 中的 \texttt{base\_link}。结合当前启动文件与节点实现，实际运行链路中的关键坐标系并非“两个 LiDAR 帧直接挂在主体帧下”的结构，而是围绕融合点云坐标系逐步展开：Livox\_merge 将双雷达点云与 IMU 数据先统一到 \texttt{body}，merged\_pointcloud\_leveler 再将其重力对齐为 \texttt{body\_leveled}，相机变换节点最终在 \texttt{body\_leveled} 下发布 \texttt{hikrobot\_camera\_leveled}。与此同时，LIO-SAM 的定位主链使用 \texttt{map}、\texttt{odom} 与 \texttt{base\_link} 三层参考系，\texttt{robot\_state\_publisher} 在本项目中仅保留 \texttt{chassis\_link} 与 \texttt{imu\_link} 这组兼容 URDF 的固定支路。因此，从代码真实行为出发，本文需要区分“进入 TF 树并被查询的坐标系”与“仅作为消息 \texttt{header.frame\_id} 出现的名称”：例如原始图像消息使用 \texttt{hikrobot\_camera}，但当前代码并未额外广播 \texttt{hikrobot\_camera\_optical\_frame}，真正参与投影链与 TF 查询的是 \texttt{hikrobot\_camera\_leveled}。
 
 \begin{figure}[htbp]
   \centering
   \begin{minipage}{0.9\textwidth}
     \footnotesize
 \begin{verbatim}
-map                                      # 世界坐标系，地图原点
-└── odom                                 # 里程计坐标系，机器人位姿估计
-    └── base_link                        # 吊钩坐标系（hook_link）
-    ├── lidar_1_link                  # 基准激光雷达坐标系
-    ├── lidar_0_link                  # 雷达2坐标系
-        ├── imu_0_link                    # 主IMU传感器坐标系
-        ├── imu_1_link                    # 备IMU传感器坐标系
-        └── hikrobot_camera               # 海康机器人相机坐标系
-            └── hikrobot_camera_optical_frame  # 相机光学坐标系
+map                                    # 全局地图系
+└── odom                               # 局部连续里程计系
+    └── base_link                      # LIO-SAM 主体参考系
+        ├── body                       # Livox_merge 融合点云/IMU 输出帧
+        │   └── body_leveled           # 重力对齐后的点云与 IMU 帧
+        │       └── hikrobot_camera_leveled
+        └── chassis_link               # robot_state_publisher 兼容支路
+            └── imu_link
 \end{verbatim}
   \end{minipage}
-  \caption{系统 TF 树与坐标系关系示意}
+  \caption{系统实际 TF 树与坐标系关系}
   \label{fig:tf_tree_hook}
 \end{figure}
 
-从当前系统实际运行方式看，动态 TF 的核心主链为 \texttt{map -> odom -> base\_link}。其中，\texttt{base\_link} 表示吊钩端主体参考系，用于承载外参、融合结果与风险区域定义；\texttt{odom} 表示局部连续的里程计参考系，其作用是在短时间内提供平滑、不突变的位姿演化；\texttt{map} 则表示经过建图或全局约束后的地图参考系，用于表达系统在全局场景中的稳定位置。采用双层坐标系的原因在于，局部运动估计通常可以保证连续性，但会随时间积累漂移；若将全部校正直接施加到主体帧，则会把全局修正带来的跳变传递给后续融合与门控模块。因而，系统将“连续运动”与“全局纠偏”分解到两层 TF 中，并满足
+从当前系统实际运行方式看，动态 TF 的核心主链为 \texttt{map -> odom -> base\_link}。其中，\texttt{map -> odom} 由 \texttt{/lio\_sam\_imuPreintegration} 持续发布，在当前配置中对应单位变换，用于为全局地图系预留统一入口；\texttt{odom -> base\_link} 则由 \texttt{/lio\_sam\_mapOptmization} 发布，是系统实际使用的连续定位结果。之所以这样划分，是因为当前参数文件中设置了 \texttt{lidarFrame = baselinkFrame = base\_link} 且 \texttt{publishImuBaselinkTf = false}，从而避免 \texttt{imuPreintegration} 与 \texttt{mapOptmization} 同时广播 \texttt{odom -> base\_link} 造成重复 TF。对后续感知模块而言，\texttt{base\_link} 是定位主链上的主体参考系，\texttt{body} 则通过系统启动文件中的静态变换与其重合，承担融合点云与融合 IMU 的数据帧角色；\texttt{body\_leveled} 由在线重力标定得到，其存在的意义不是替代主体帧，而是为后续点云投影、地面约束和视觉关联提供与重力方向一致的稳定参考。因而，系统将“连续运动”与“重力对齐”分别放在动态 TF 与静态 TF 两个层面处理，并满足
 \begin{equation}
 \mathbf{T}_{\text{map}}^{\text{base\_link}}(t)=\mathbf{T}_{\text{map}}^{\text{odom}}(t)\,\mathbf{T}_{\text{odom}}^{\text{base\_link}}(t)
 \end{equation}
 即主体在地图系下的位姿由全局校正项与局部连续运动项共同决定。对于本文场景，这一分层关系直接保证了点云标准化、危险区域表达以及多传感器融合时空间尺度的一致性。
 
-在运行时，传感器安装外参应视为静态变换。以基准雷达1为静态外参组织中心，可将两雷达、相机和 IMU 的安装关系写为
+在运行时，传感器安装外参与中间参考帧映射均应视为静态变换。工程实现层面，Livox\_merge 配置文件存储双雷达与双 IMU 相对融合坐标系 $\{\text{body}\}$ 的外参矩阵，具体形式为
 \begin{equation}
-\mathbf{T}_{l_2}^{l_1}=\hat{\mathbf{T}}_{l_2}^{l_1},\qquad
-\mathbf{T}_{c}^{l_1}=\hat{\mathbf{T}}_{c}^{l_1},\qquad
-\mathbf{T}_{imu_0}^{l_1}=\mathbf{T}_{imu_1}^{l_2}=\begin{bmatrix}
-\mathbf{I}_{3\times 3} & \mathbf{t}_{imu}\\
-\mathbf{0}^{\mathsf{T}} & 1
-\end{bmatrix},
+\mathbf{T}_{\text{body}}^{\text{lidar\_0}}=\mathbf{I}_{4\times 4},\qquad
+\mathbf{T}_{\text{body}}^{\text{lidar\_1}}=\hat{\mathbf{T}}_{\text{body}}^{\text{lidar\_1}},\qquad
+\mathbf{T}_{\text{body}}^{\text{imu\_0}}=\mathbf{I}_{4\times 4},\qquad
+\mathbf{T}_{\text{body}}^{\text{imu\_1}}=\hat{\mathbf{T}}_{\text{body}}^{\text{lidar\_1}}
 \end{equation}
-其中 $\hat{\mathbf{T}}_{l_2}^{l_1}$ 与 $\hat{\mathbf{T}}_{c}^{l_1}$ 分别由式\eqref{eq:lidar_lidar_result} 与式\eqref{eq:cam_lidar_result} 给出；$\mathbf{t}_{imu}=[0.01100\;0.02329\;-0.04412]^{\mathsf{T}}\,\mathrm{m}$ 表示 IMU 芯片原点在各自点云坐标系下的位置，且 IMU 坐标轴方向与点云坐标轴方向一致，因此两路内置 IMU 相对于各自 LiDAR 坐标系的旋转部分均取单位阵。上述关系在语义上描述的是各传感器相对于主体参考链路的安装关系，因此应作为静态 TF 进行维护。工程实现时，可先围绕 \texttt{lidar\_1\_link} 维护上述标定外参，再通过常量变换将其并入 \texttt{base\_link} 主链；若 \texttt{base\_link} 与 \texttt{lidar\_1\_link} 在实现上取重合，则静态链可进一步简化。与之相对，动态位姿（例如 $\mathbf{T}_{\text{map}}^{h}(t)$）由定位模块输出，并以一定频率发布。结合本文当前实现，\texttt{map -> odom} 与 \texttt{odom -> base\_link} 由定位前端节点 \texttt{/lio\_sam\_imuPreintegration} 持续发布，用于提供全局校正与局部连续位姿；若优化线程额外输出 LiDAR 相关位姿分支，则可由 \texttt{/lio\_sam\_mapOptmization} 发布类似 \texttt{odom -> lidar\_link} 的补充分支，但该分支不作为系统主控制链；而主体与各传感器之间的静态安装关系则宜由 \texttt{/robot\_state\_publisher} 或 \texttt{StaticTransformBroadcaster} 统一发布。这样的职责划分可以避免多个节点同时维护同一变换造成的 TF 抖动，也便于后续替换定位算法而不破坏感知与融合模块的接口边界。
+其中 $\mathbf{I}_{4\times 4}$ 表示第一台 LiDAR 及其对应 IMU 在当前配置下与 \texttt{body} 重合，$\hat{\mathbf{T}}_{\text{body}}^{\text{lidar\_1}}$ 为第二台 LiDAR 相对融合坐标系的刚体变换，第二路 IMU 也复用该同名设备位姿。也就是说，在当前代码中，IMU 并不是通过单独一组固定偏移量挂到 TF 树上，而是先在 Livox\_merge 内部依据配置矩阵完成坐标统一，再统一以 \texttt{body} 为 \texttt{frame\_id} 发布融合后的 \texttt{/merged\_imu}。相机外参则保存在 \texttt{hikrobot\_camera/config/camera\_frame\_transform.yaml} 中，该文件给出从相机到 \texttt{body} 的标定矩阵；相机变换节点会先查询 \texttt{body -> body\_leveled}，再将两者组合为 \texttt{body\_leveled -> hikrobot\_camera\_leveled} 的静态 TF。与此同时，系统启动文件还显式发布 \texttt{base\_link -> body} 的单位静态变换，\texttt{robot\_state\_publisher} 发布 \texttt{base\_link -> chassis\_link -> (imu\_link)} 的兼容支路。由此可见，当前系统中的静态 TF 并非由单一节点集中维护，而是由 \texttt{static\_transform\_publisher}、\texttt{merged\_pointcloud\_leveler}、\texttt{camera\_frame\_transform\_node} 和 \texttt{robot\_state\_publisher} 分别承担不同分支的发布职责；这种分工使定位主链、点云标准化与视觉投影链在接口上相互解耦，同时避免多个节点对同一父子帧重复广播。
 
-为避免坐标系混用导致的投影翻转与距离计算错误，所有发布的 \texttt{PointCloud2}、\texttt{Imu} 与 \texttt{Image} 消息均应正确填写 \texttt{header.frame\_id}，并与 TF 树中的坐标系名称完全一致；所有坐标系采用右手系、长度单位统一为 m，旋转优先使用四元数或旋转矩阵表示，以避免链路中多次欧拉角转换带来的歧义。对视觉观测而言，\texttt{hikrobot\_camera} 表示相机机体系，\texttt{hikrobot\_camera\_optical\_frame} 表示满足针孔投影模型约定的光学坐标系；若驱动默认输出的图像坐标系与光学坐标系不一致，则应通过静态 TF 显式完成转换，而不应在感知算法内部隐式修正。对于融合模块而言，优先通过唯一且明确的 TF 链完成坐标变换，例如
+为避免坐标系混用导致的投影翻转与距离计算错误，所有发布的 \texttt{PointCloud2}、\texttt{Imu} 与 \texttt{Image} 消息均应正确填写 \texttt{header.frame\_id}，并与 TF 树中的坐标系名称保持严格一致。根据当前实现链路，Livox 驱动底层原始数据可使用默认 \texttt{livox\_frame} 或设备级话题名，但进入融合主流程后，Livox\_merge 将点云和 IMU 统一发布为 \texttt{body}；merged\_pointcloud\_leveler 在标定完成后，把点云、Livox 自定义消息与 IMU 的输出帧统一改写为 \texttt{body\_leveled}；海康相机驱动原始图像消息使用 \texttt{hikrobot\_camera}，而 camera\_frame\_transform\_node 输出的重力对齐图像则使用 \texttt{hikrobot\_camera\_leveled}。需要特别指出的是，当前代码并未显式广播 \texttt{hikrobot\_camera\_optical\_frame}，因此正文不应将其写入现行 TF 主树；若后续为严格遵循针孔相机约定而增加光学帧，也应作为新的静态分支单独实现，而不是在论文中预设其已经存在。所有坐标系采用右手系、长度单位统一为 m，旋转优先使用四元数或旋转矩阵表示，以避免链路中多次欧拉角转换带来的歧义。对于融合与投影模块而言，优先通过唯一且明确的 TF 链完成坐标变换，例如
 \begin{equation}
-\mathbf{p}^{l_1} = \mathbf{T}_{l_2}^{l_1}\,\mathbf{p}^{l_2},\qquad
-\mathbf{p}^{c} = \mathbf{T}_{l_1}^{c}\,\mathbf{p}^{l_1}=\left(\mathbf{T}_{c}^{l_1}\right)^{-1}\mathbf{p}^{l_1}
+\mathbf{p}^{\text{body\_leveled}} = \mathbf{T}_{\text{body}}^{\text{body\_leveled}}\,\mathbf{p}^{\text{body}},\qquad
+\mathbf{p}^{\text{hikrobot\_camera\_leveled}} = \mathbf{T}_{\text{body\_leveled}}^{\text{hikrobot\_camera\_leveled}}\,\mathbf{p}^{\text{body\_leveled}}
 \end{equation}
 以减少多次组合带来的数值误差与实现复杂度。若模块内部需要以吊钩端参考系 $\{h\}$ 或 \texttt{base\_link} 为中间坐标系，则应通过标准 TF 链进行组合，而不应另行维护一套脱离 TF 的私有外参。其本质要求是：任何模块都不应在本地私有维护一套“等价外参”，而应统一通过 TF 查询获得当前有效变换，从而保证定位、目标提取、雷视融合与预警模块共享同一空间参考。
 
-综上，本文将吊钩端参考系的抽象建模与当前工程实际采用的 \texttt{map -> odom -> base\_link} 主链统一起来：前者用于表达多传感器几何关系与外参约束，后者用于在运行时提供连续、可查询且可维护的空间基准；静态层面则以基准雷达1为外参组织中心，将双雷达、相机与双 IMU 的安装关系统一纳入 TF。统一的坐标系与 TF 接口规范使得定位、目标提取、雷视融合与预警模块能够在同一空间参考下协同工作，也为第3章围绕定位输出、点云标准化与危险区域判定的进一步展开提供了明确的坐标接口边界。
+综上，本文将吊钩端参考系的抽象建模与当前工程实际采用的真实 TF 树统一起来：动态主链为 \texttt{map -> odom -> base\_link}，其中定位输出最终落在 \texttt{base\_link}；静态感知链则为 \texttt{base\_link -> body -> body\_leveled -> hikrobot\_camera\_leveled}，并辅以 \texttt{base\_link -> chassis\_link} 的兼容 URDF 支路。这样的组织方式使定位、点云融合、重力对齐和雷视投影分别在各自明确的坐标接口上完成，既避免了多个模块重复维护外参，也保证了第3章所用点云标准化、目标关联和危险区域判定都建立在代码真实可查询的 TF 关系之上。
 
 \section{本章小结}\label{sec:ch2_summary}
 

@@ -10,7 +10,7 @@
 \contentsline {figure}{\numberline {2.8}{\ignorespaces 一体化盒体内部关键部件布局与线束走线组织示意}}{25}{figure.caption.29}%
 \contentsline {figure}{\numberline {2.9}{\ignorespaces 相机内参标定的数据采集示意}}{27}{figure.caption.30}%
 \contentsline {figure}{\numberline {2.10}{\ignorespaces 相机内参标定的重投影误差评价示意}}{28}{figure.caption.31}%
-\contentsline {figure}{\numberline {2.11}{\ignorespaces 双雷达外参自动标定数据准备}}{29}{figure.caption.32}%
+\contentsline {figure}{\numberline {2.11}{\ignorespaces 双雷达外参自动标定数据准备}}{30}{figure.caption.32}%
 \contentsline {figure}{\numberline {2.12}{\ignorespaces 初始矩阵的位置估计}}{30}{figure.caption.33}%
 \contentsline {figure}{\numberline {2.13}{\ignorespaces 双雷达自动标定的点云配准效果示意}}{31}{figure.caption.34}%
 \contentsline {figure}{\numberline {2.14}{\ignorespaces 自动标定过程的结果}}{31}{figure.caption.35}%
@@ -21,6 +21,21 @@
 \contentsline {figure}{\numberline {2.19}{\ignorespaces 吊钩端多传感器硬件与通信链路}}{36}{figure.caption.40}%
 \contentsline {figure}{\numberline {2.20}{\ignorespaces PTP 时间同步示意图}}{39}{figure.caption.42}%
 \contentsline {figure}{\numberline {2.21}{\ignorespaces 多传感器时间同步与延迟补偿时序示意}}{41}{figure.caption.43}%
-\contentsline {figure}{\numberline {2.22}{\ignorespaces 系统 TF 树与坐标系关系示意}}{42}{figure.caption.44}%
+\contentsline {figure}{\numberline {2.22}{\ignorespaces 系统实际 TF 树与坐标系关系}}{42}{figure.caption.44}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces 第3章从双雷达融合到动态目标生成的总体流程占位图}}{46}{figure.caption.45}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces 双雷达时间窗口同步与扫描线重映射占位图}}{48}{figure.caption.46}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces 融合 IMU 排序与一次性自动调平占位图}}{50}{figure.caption.47}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces LIO-SAM 输入输出接口占位图}}{51}{figure.caption.48}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces LIO-SAM 节点流程占位图}}{54}{figure.caption.49}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces M-detector 输入组织与历史深度图占位图}}{55}{figure.caption.50}%
+\contentsline {figure}{\numberline {3.7}{\ignorespaces M-detector 三类动态判别占位图}}{56}{figure.caption.51}%
+\contentsline {figure}{\numberline {3.8}{\ignorespaces 动态点桥接与欧式聚类占位图}}{57}{figure.caption.52}%
+\contentsline {figure}{\numberline {3.9}{\ignorespaces 动态目标短时跟踪与预测占位图}}{59}{figure.caption.53}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces YOLO26 模型训练、导出与边缘端部署流程占位图}}{63}{figure.caption.54}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces 基于分割掩码的点云投影回查与实例点集提取占位图}}{66}{figure.caption.55}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces 多层级预警链路与三级预警状态机占位图}}{71}{figure.caption.56}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces 从感知到控制的闭环避障架构占位图}}{73}{figure.caption.57}%
+\contentsline {figure}{\numberline {5.1}{\ignorespaces 实验平台与典型工况组织占位图}}{76}{figure.caption.58}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces 端到端时延预算与实时性分析占位图}}{82}{figure.caption.59}%
 \contentsfinish 
 \contentsfinish 
