@@ -38,6 +38,7 @@ t_{\mathrm{infer}} + t_{\mathrm{pre}} + t_{\mathrm{post}} \leq T,
 	\caption{YOLO26 模型训练、导出与边缘端部署流程占位图}
 	\label{fig:ch4_yolo26_deploy_placeholder}
 \end{figure}
+\par
 
 \subsection{工地实采数据上的模型训练、验证与预测流程}\label{subsec_ch4_train_validate_predict}
 
@@ -120,45 +121,151 @@ u=\frac{u'}{w'},\; v=\frac{v'}{w'}.
 
 进一步面向预警链路，本文建议将输出接口组织为至少三层。第一层是\textbf{可视化层}，包括投影叠加图像与语义着色点云，其作用是帮助观察系统运行状态与定位效果。第二层是\textbf{目标描述层}，包括目标时间戳、类别标签、置信度、三维质心和实例点数等字段，用于把感知结果转化为程序可消费的对象状态。第三层是\textbf{风险计算准备层}，在目标描述基础上继续补充最小距离、空间包络、速度估计来源和数据有效性标志位，为后续预警模块提供统一输入。
 
-由于当前仓库中尚未定义完整的统一消息类型，因此本小节应明确写成“接口设计与输出组织方案”。建议输出结构至少包含
+结合当前实现，感知链路已经形成面向下游的结构化消息雏形，例如对象状态消息中已包含类别、置信度、三维位姿、包络半径与点数等字段。因此，本小节既可以讨论接口设计原则，也可以把输出结构进一步抽象为统一的对象状态表达。建议输出结构至少包含
 \begin{equation}
 \mathbf{z}_i=\{t_i,c_i,s_i,\bar{\mathbf{p}}_i,d_i,\eta_i\},
 \end{equation}
-其中 $t_i$ 为时间戳，$c_i$ 为类别标签，$s_i$ 为置信度，$\bar{\mathbf{p}}_i$ 为三维位置估计，$d_i$ 为最小距离或边界距离，$\eta_i$ 为数据有效性标志。若后续需要承接动态风险评估，还可以在接口中补充速度、预测轨迹句柄或包络信息。通过这一设计，感知模块输出将不再只是“好看的结果图”，而是能够真正进入风险计算与控制决策的规范化对象状态。
+其中 $t_i$ 为时间戳，$c_i$ 为类别标签，$s_i$ 为置信度，$\bar{\mathbf{p}}_i$ 为三维位置估计，$d_i$ 为最小距离或边界距离，$\eta_i$ 为数据有效性标志。若后续需要承接动态风险评估，还可以在接口中补充速度、预测轨迹句柄或包络信息。通过这一设计，感知模块输出将不再只是“好看的结果图”，而是能够真正进入风险计算与控制决策的规范化对象状态，并与后续的 \texttt{WarningState} 和 \texttt{ControlCommand} 接口自然衔接。
 
 \section{面向吊装作业的多层级预警链路设计}\label{sec_ch4_warning_design}
 
-\subsection{基于空间距离的静态风险阈值卡控}\label{subsec_ch4_static_distance_warning}
+为从系统层面说明多源感知、风险融合与控制建议之间的数据流关系，图\ref{fig:ch4_warning_pipeline_overview} 给出了多层级预警机制的总体流程。图中三路输入分别对应吊装目标对象状态、动态轨迹状态和局部地图静态环境，\texttt{warningEvaluator} 在统一坐标系下完成静态净空、动态净空和趋势升级判定，随后输出的 \texttt{WarningState} 一方面服务于 RViz 预警可视化，另一方面作为第4.4节控制接口原型的直接输入。该图既概括了第4.3节的核心评估逻辑，也给出了预警向控制建议扩展的系统边界。
 
-在完整的吊装安全预警链路中，最基础的一层判断应当来自空间距离阈值卡控。其核心思想是：不论是否存在复杂动态目标，只要吊装构件与周边静态障碍物之间的最小空间距离低于安全边界，就应触发相应等级的风险提示。与传统仅基于图像框位置或主观经验判断不同，本研究强调以第4.2节得到的三维空间定位结果为基础建立安全边界，从而使预警判定建立在几何量之上。
+\begin{figure}[htbp]
+	\centering
+	\resizebox{0.86\textwidth}{!}{%
+	\begin{tikzpicture}[
+		x=1cm,y=1cm,>=Latex,font=\scriptsize,
+		io/.style={draw, rounded corners=2pt, thick, fill=gray!18, align=center, minimum width=2.8cm, minimum height=0.95cm},
+		proc/.style={draw, rounded corners=2pt, thick, fill=gray!8, align=center, minimum width=2.8cm, minimum height=0.95cm},
+		resultbox/.style={draw, rounded corners=2pt, thick, fill=gray!14, align=center, minimum width=3.0cm, minimum height=0.95cm}
+	]
+		\node[io] (img) at (0,0) {YOLO26 分割\\图像输入};
+		\node[proc] (seg) at (0,-1.3) {实例分割结果};
+		\node[io] (cloud) at (3.4,0) {Leveled\\点云输入};
+		\node[proc] (proj) at (1.7,-1.3) {3D 点投影到\\2D 图像};
+		\node[proc] (lookup) at (1.7,-2.6) {按 mask 回查\\实例点云集合};
+		\node[resultbox] (obj) at (1.7,-3.9) {吊装目标对象状态\\质心 尺寸 包络半径\\最近距离 点数};
 
-设吊装构件状态为 $\mathcal{O}$，静态障碍物集合为 $\mathcal{E}=\{E_1,E_2,\dots,E_m\}$，则吊装构件与环境之间的最小距离可表示为
+		\node[io] (dyn) at (6.0,0) {动态点检测\\与聚类};
+		\node[proc] (tracker) at (6.0,-1.3) {Dynamic Tracker};
+		\node[resultbox] (tracks) at (6.0,-2.6) {动态轨迹状态\\ID 位置 速度\\预测轨迹};
+
+		\node[io] (map) at (-0.8,-5.2) {LIO-SAM 局部地图\\\texttt{map\_local}};
+		\node[proc] (staticeval) at (0.5,-6.5) {静态净空评估};
+		\node[proc] (staticlevel) at (0.5,-7.8) {静态风险等级};
+
+		\node[proc] (vel) at (2.9,-5.2) {目标速度估计};
+		\node[proc] (dyneval) at (4.4,-6.5) {动态风险评估};
+		\node[proc] (dynlevel) at (4.4,-7.8) {动态风险等级};
+		\node[proc] (upgrade) at (4.4,-9.1) {是否相向运动升级};
+		\node[proc] (dynadj) at (4.4,-10.4) {动态等级修正};
+
+		\node[proc] (fusion) at (2.45,-11.7) {融合判级\\取静态与动态最大等级};
+		\node[proc] (hyst) at (2.45,-13.0) {迟滞状态机\\升级立即生效\\降级延时 1 s};
+		\node[resultbox] (state) at (2.45,-14.3) {WarningState 输出\\\texttt{/warning/state}};
+		\node[proc] (markers) at (0.2,-15.6) {RViz 预警可视化\\\texttt{/warning/markers}};
+		\node[proc] (controller) at (4.7,-15.6) {Warning Controller};
+		\node[resultbox] (command) at (4.7,-16.9) {ControlCommand 输出\\\texttt{/warning/control\_command}};
+
+		\draw[->, thick] (img) -- (seg);
+		\draw[->, thick] (seg) -- (proj);
+		\draw[->, thick] (cloud) -- (proj);
+		\draw[->, thick] (proj) -- (lookup);
+		\draw[->, thick] (lookup) -- (obj);
+
+		\draw[->, thick] (dyn) -- (tracker);
+		\draw[->, thick] (tracker) -- (tracks);
+
+		\draw[->, thick] (map) -- (staticeval);
+		\draw[->, thick] (obj) -- (staticeval);
+		\draw[->, thick] (staticeval) -- (staticlevel);
+
+		\draw[->, thick] (obj) -- (vel);
+		\draw[->, thick] (vel) -- (dyneval);
+		\draw[->, thick] (tracks) |- (dyneval);
+		\draw[->, thick] (dyneval) -- (dynlevel);
+		\draw[->, thick] (dynlevel) -- (upgrade);
+		\draw[->, thick] (upgrade) -- (dynadj);
+
+		\draw[->, thick] (staticlevel) |- (fusion);
+		\draw[->, thick] (dynadj) |- (fusion);
+		\draw[->, thick] (fusion) -- (hyst);
+		\draw[->, thick] (hyst) -- (state);
+		\draw[->, thick] (state) -- (markers);
+		\draw[->, thick] (state) -- (controller);
+		\draw[->, thick] (controller) -- (command);
+	\end{tikzpicture}}
+	\caption{多层级预警机制总体流程图}
+	\label{fig:ch4_warning_pipeline_overview}
+\end{figure}
+
+\subsection{基于空间净空的静态风险阈值评估}\label{subsec_ch4_static_distance_warning}
+
+在吊装安全预警链路中，最先需要回答的问题并不是“目标未来会不会碰撞”，而是“当前时刻吊装构件与周边环境还剩多少可用净空”。如果这一基础量无法稳定估计，那么后续关于相向接近、趋势升级和动作约束的讨论都会失去几何基准。因此，本文将静态风险评估建立在第4.2节已经获得的三维对象状态之上，并直接与局部地图点云进行距离计算，而不是继续沿用旧版二维网格报警的处理方式。当前系统中，这一过程已经在 \texttt{warningEvaluator} 节点中形成原型实现，可作为整条预警链路的第一层判据。
+
+从输入组织看，预警模块首先从 \texttt{/segment/object\_states} 中筛选被监控对象。当前默认监控类别为吊装作业直接相关的 \texttt{crane}、\texttt{exca-arm} 和 \texttt{exca-body}，并同时要求目标满足最小置信度和最小关联点数阈值，以避免远距离噪声或稀疏误检直接进入风险评估。设被监控目标的三维质心为 $\bar{\mathbf{p}}_o$，空间包络半径为 $r_o$，局部静态地图点集为 $\mathcal{M}_{\mathrm{local}}$，则系统首先通过最近邻搜索计算质心到局部地图的最近距离
 \begin{equation}
-d_{\mathrm{static}}=\min_{E_j\in\mathcal{E}}\mathrm{dist}(\mathcal{O},E_j).
+d_{\mathrm{nn}}=\min_{\mathbf{q}\in\mathcal{M}_{\mathrm{local}}}\|\bar{\mathbf{p}}_o-\mathbf{q}\|,
 \end{equation}
-在此基础上，可将静态预警划分为提示区、警戒区和危险区三个层级，分别对应阈值 $D_1>D_2>D_3$。当 $d_{\mathrm{static}}<D_1$ 时，系统进入一级提示；当 $d_{\mathrm{static}}<D_2$ 时，进入二级报警；当 $d_{\mathrm{static}}<D_3$ 时，进入三级危险状态。该设计的意义在于，它为后续更复杂的动态升级规则提供了一个几何上的基础层，使系统能够先快速筛除明显安全的场景。
+进而得到静态净空
+\begin{equation}
+d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o).
+\end{equation}
+这一定义与当前代码中的 KD-tree 最近邻实现保持一致，其本质是利用局部地图近邻点近似表征构件与周边静态障碍物之间的最小可用边界。
 
-需要指出的是，当前仓库中旧版基于网格风险区的逻辑已经被移除，新的分层距离卡控尚未形成完整实现。因此，本小节必须明确写成\textbf{论文方法设计}，而不是既有代码功能描述。这样处理并不削弱章节逻辑，反而更符合论文的真实贡献边界：已有代码提供了吊装构件三维位置与彩色点云基础，而本文在此基础上系统化提出了可直接工程实现的静态风险分层判定方法。对应的阈值数值、标定方式和实验结果将在第5章通过 \textbf{【待补充：距离阈值标定与误报统计】} 进一步完善。
+在当前原型配置中，静态净空被划分为三级阈值区间：当 $d_{\mathrm{static}}\leq 0.8\,\mathrm{m}$ 时触发紧急等级，当 $0.8\,\mathrm{m}<d_{\mathrm{static}}\leq 1.5\,\mathrm{m}$ 时触发警告等级，当 $1.5\,\mathrm{m}<d_{\mathrm{static}}\leq 2.5\,\mathrm{m}$ 时触发提示等级，超过 $2.5\,\mathrm{m}$ 则视为静态净空充分。需要强调的是，这组数值反映的是当前 \texttt{warning\_evaluator.yaml} 中的第一阶段原型参数，而不是已经完成充分场景标定的最终阈值。其工程意义在于先把“构件是否逼近静态边界”这一问题落到可机读、可配置的几何量上，为后续动态升级和控制映射提供稳定入口。
+
+从方法边界看，当前静态风险评估仍采用“质心加球形包络半径”的近似表达，并以 \texttt{map\_local} 的最近邻点代替严格的障碍物几何包络，因此它更适合作为在线预警的快速近似层，而不是最终的高精度碰撞检测器。也正因为如此，第5章仍需结合 rosbag 复盘对阈值取值、误报触发距离和场景适用范围做进一步统计。换言之，静态净空分级已经从论文设想走向了可运行原型，但其参数标定与精细空间建模仍保留后续优化空间。
+
+为避免静态净空、动态净空和预测净空在后续章节中被混用，图\ref{fig:ch4_clearance_definition} 对三者的几何含义作了统一示意。其中，静态净空关注目标与局部地图静态边界之间的剩余边界距离，动态净空关注目标与动态障碍物在当前时刻的边界距离，而预测净空则进一步衡量在预测时间窗内两者最接近时仍能保留的最小边界。
+
+\begin{figure}[htbp]
+	\centering
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\textbf{静态净空}\\[0.3em]
+		\includegraphics[page=1,width=\linewidth]{静态净空、动态净空与预测净空定义示意.pdf}
+	\end{minipage}\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\textbf{动态净空}\\[0.3em]
+		\includegraphics[page=2,width=\linewidth]{静态净空、动态净空与预测净空定义示意.pdf}
+	\end{minipage}\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		\textbf{预测净空}\\[0.3em]
+		\includegraphics[page=3,width=\linewidth]{静态净空、动态净空与预测净空定义示意.pdf}
+	\end{minipage}
+	\caption{静态净空、动态净空与预测净空定义示意}
+	\label{fig:ch4_clearance_definition}
+\end{figure}
+
+其中，$d_{\mathrm{static}}$ 表示目标与静态障碍物（地图静态边界）之间的最小几何距离（静态净空）；$d_{\mathrm{dynamic}}$ 表示目标与动态障碍物之间的最小几何距离（动态净空）；$P_{\mathrm{static}}$ 为静态障碍物边界上与目标最近的点；$D$ 与 $O$ 分别表示动态障碍物和目标对象的边界（外廓）；$D^{*}$ 与 $O^{*}$ 分别表示预测时刻动态障碍物与目标对象的边界（预测位姿下的外廓）；$d_{\mathrm{pred}}$ 表示在预测时间窗内两者最接近时的最小边界距离（预测净空）。
 
 \subsection{动态点检测、聚类与障碍物状态表达}\label{subsec_ch4_dynamic_candidate}
 
-静态距离阈值只能描述环境边界对吊装构件的约束，而无法充分反映人员、车辆或其他运动体带来的时间维度风险。因此，预警链路还需要承接动态点检测模块输出的障碍物候选状态。当前系统已经形成较完整的上游动态链路，包括 LiDAR 数据输入、定位建图、动态点识别、欧式聚类和目标中心提取。这意味着，论文在本小节中可以把“动态障碍物候选生成器”写成已具备实现基础的模块，而不是纯粹的构想。
+仅有静态净空并不足以覆盖吊装作业中的主要风险来源。人员穿行、车辆靠近以及其他机械臂运动往往首先表现为局部点云中的动态扰动，如果系统只关注静态地图边界，就难以及时反映“环境正在接近构件”这一时间维度风险。因此，预警链路必须承接上游动态检测与聚类模块的输出，把离散动态点组织成目标级状态量，再交由风险评估模块统一处理。当前工程中，这部分能力已经由动态点检测、欧式聚类和 \texttt{dynamicTracker} 节点共同提供。
 
-从功能上看，动态点检测模块的目标不是直接输出最终风险等级，而是把杂散的动态点组织成目标级状态量。设经过动态筛选后的点集为 $\mathcal{Q}_t$，经聚类后得到候选目标集合
+设经过动态筛分后的点集为 $\mathcal{Q}_t$，聚类后得到候选目标集合
 \begin{equation}
-\mathcal{C}_t=\{C_1,C_2,\dots,C_{n_t}\},
+\mathcal{C}_t=\{C_1,C_2,\dots,C_{n_t}\}.
 \end{equation}
-其中每个聚类对象 $C_k$ 至少应包含几何中心、点数规模、空间范围以及时间戳等属性。只有当动态点从“离散点集合”上升为“对象状态”后，后续的速度估计、轨迹预测和风险评估才具备统一输入接口。
+每个聚类对象不再只是“某处出现了若干动态点”的松散描述，而是被提升为带有几何中心、点数规模、时间戳和后续轨迹 ID 的对象级候选。这样做的意义在于把动态风险评估的输入统一到与目标相关的状态量上，使后续速度估计、轨迹平滑和 TTC 计算都可以围绕单个候选目标展开，而不是在点级层面直接做高层决策。
 
-在论文表达中，本小节还应明确区分“候选生成”和“风险确认”这两个阶段。动态点检测模块只说明某处出现了具有运动特征的目标，并不意味着该目标一定构成与吊装构件有关的风险。真正的风险判断还需要结合吊装构件位置、相对运动方向、未来交汇趋势以及安全距离阈值综合计算。因此，动态点检测在全系统中的合理定位应是“为预警模块提供动态障碍物候选状态”，而不是直接承担预警决策职责。这样的表述既符合当前代码组织，也有利于后续在第4.3.4节引入更高层的风险升级规则。
+在当前实现中，动态候选最终被组织为 \texttt{DynamicTrackArray} 消息，并通过 \texttt{/dynamic\_tracker/track\_states} 发布给预警模块。每个轨迹对象至少包含 \texttt{track\_id}、\texttt{state}、位置、速度、标量速度、轨迹年龄、距最近一次更新的时间以及丢失帧计数等字段。默认配置下，预警模块优先使用 \texttt{Confirmed} 轨迹而不是所有暂态候选，以降低短时误聚类对风险输出的直接扰动。由此可见，动态点检测在系统中的职责不是直接宣布“发生危险”，而是为后续趋势判断提供可信的动态对象状态。
+
+这种处理方式还带来一个重要好处，即动态候选生成与风险确认在架构上被显式解耦。前者回答的是“哪些对象在运动”，后者回答的是“这些运动对象是否对吊装构件构成威胁”。二者拆分之后，动态检测模块可以独立优化聚类和跟踪稳定性，而预警模块则能够专注于几何净空、相对速度和趋势升级逻辑。这样的职责划分既符合当前代码结构，也使第4.3节的技术路线从“感知”自然过渡到“风险评估”。
 
 \subsection{基于卡尔曼滤波的未来运动趋势预测}\label{subsec_ch4_kalman_prediction}
 
-在获得动态障碍物候选目标之后，系统需要进一步估计其未来短时运动趋势，以判断其是否会与吊装构件形成持续接近关系。当前代码已经实现二维常速度模型的卡尔曼滤波器，因此本小节可以直接建立在现有算法基础之上展开。设动态目标在平面内的状态向量为
+动态候选目标被稳定提取之后，系统还需要进一步估计其短时未来运动趋势。原因在于，瞬时位置只能说明“目标此刻在哪里”，却无法回答“它在未来若干时刻是否会继续向吊装构件收敛”。为此，当前系统在 \texttt{dynamicTracker} 中采用二维常速度模型的卡尔曼滤波器，对动态目标的位置和速度进行联合估计，并在此基础上提供短时预测结果。这里的重点不在于追求复杂运动模型，而在于用一个足够稳定、可在线运行的状态估计器支撑后续风险计算。
+
+设动态目标在平面内的状态向量为
 \begin{equation}
 \mathbf{x}_k=[p_x,p_y,v_x,v_y]^\mathsf{T},
 \end{equation}
-则在采样时间间隔 $\Delta t$ 下，常速度模型的状态转移可写为
+则在采样时间间隔 $\Delta t$ 下，常速度模型可写为
 \begin{equation}
 \mathbf{x}_{k+1}=\mathbf{F}(\Delta t)\mathbf{x}_k+\mathbf{w}_k,
 \qquad
@@ -170,114 +277,248 @@ d_{\mathrm{static}}=\min_{E_j\in\mathcal{E}}\mathrm{dist}(\mathcal{O},E_j).
 0&0&0&1
 \end{bmatrix},
 \end{equation}
-其中 $\mathbf{w}_k$ 为过程噪声。观测量通常由动态聚类中心给出，对应位置更新项 $[p_x,p_y]^\mathsf{T}$。
+其中 $\mathbf{w}_k$ 为过程噪声，观测量由动态聚类中心位置提供。相较于直接使用原始聚类中心，卡尔曼滤波能够在存在检测噪声、短时丢帧和速度波动时维持更平滑的状态估计，从而避免风险输出对单帧异常过度敏感。
 
-该模型的优点在于形式简单、参数可控，能够在动态目标短时运动较平滑的前提下稳定输出位置和速度联合估计。当前系统默认预测时域为 2.0 s，预测步长为 0.2 s，并能够发布未来轨迹可视化结果。对论文而言，这些实现细节具有直接价值，因为它们表明系统并非只在当前时刻做几何检测，而是已经具备面向短时未来的趋势估计能力。第5章中的动态场景实验也可以围绕这一预测时域和步长展开分析。
+结合当前参数配置，系统默认预测时域为 $2.0\,\mathrm{s}$，并以 $0.2\,\mathrm{s}$ 的时间步长进行短时外推。这一设置服务于吊装作业中的“近未来”判断：时域过短，则不足以体现接近趋势；时域过长，则预测误差会快速累积，反而削弱在线预警的可信度。基于该预测器，\texttt{DynamicTrackArray} 不仅能够输出轨迹当前位置，还能够稳定给出速度向量、标量速度、目标年龄和更新状态，为第4.3.4节中的相对运动分析提供一致的输入语义。
 
-需要注意的是，本小节的目标不是把卡尔曼滤波本身写成主要创新，而是说明它在整条预警链路中的功能位置。卡尔曼预测输出的未来轨迹并不直接等于碰撞风险结论，而是作为第4.3.4节相向运动升级判据和最近接距离估计的前置输入。换言之，预测模块回答的是“目标未来可能怎样运动”，而风险评估模块回答的是“这种运动是否会演化为危险接近”。把二者区分开来，有助于保持论文章节逻辑清晰，也能准确反映当前代码已经完成的部分与论文进一步补充的部分之间的关系。
+需要强调的是，卡尔曼预测并不直接等价于碰撞风险结论。它回答的是“目标未来可能如何运动”，而不是“该目标是否已经足以触发某一级预警”。风险升级仍需要将预测结果与吊装构件当前状态、相对接近速度、预测最近接净空和 TTC 指标联合使用。换言之，本小节的作用是为动态风险评估提供时间维度上的先验，而不是把轨迹预测本身误写成预警输出。这样既保留了系统层次的清晰性，也使当前代码的职责划分在论文中得到准确映射。
 
-\subsection{面向相向运动场景的风险升级判据与三级预警状态机}\label{subsec_ch4_risk_upgrade}
+\subsection{基于相对运动与TTC的动态风险升级机制}\label{subsec_ch4_risk_upgrade}
 
-在静态距离阈值卡控与动态趋势预测的基础上，本文进一步提出面向相向运动场景的风险升级方法。其基本出发点是：仅依据当前时刻的瞬时距离，无法充分反映“虽然距离尚可，但正在快速接近”的危险状态；对于吊钩或吊物与动态障碍物相向运动的场景，若仍等到距离阈值被击穿后再触发高等级报警，则预警提前量可能不足。因此，需要把相对速度方向、未来最近接距离以及预测交汇趋势引入分级逻辑。
+在静态净空和未来运动趋势的基础上，系统还需要回答一个更关键的问题：对于“当前尚未贴近，但正在快速逼近”的场景，是否应该提前提高预警等级。仅凭瞬时距离，很容易漏掉相向接近带来的提前量风险；而对于吊钩端和吊物附近空间较为受限的作业环境，这种提前量恰恰决定了预警输出是否具有实际价值。基于这一考虑，当前 \texttt{warningEvaluator} 已经把动态风险计算组织为“当前净空、相对接近速度、预测净空和 TTC 联合判定”的结构，而不是单纯依赖某一个距离阈值。
 
-设吊装构件与某一动态目标的相对位置和相对速度分别为 $\mathbf{r}(t)$ 与 $\mathbf{v}_{\mathrm{rel}}(t)$，则可定义接近判据
+设被监控吊装构件的位置与速度分别为 $\mathbf{p}_o$ 和 $\mathbf{v}_o$，某一动态目标的位置与速度分别为 $\mathbf{p}_d$ 和 $\mathbf{v}_d$，则相对位置和相对速度可写为
 \begin{equation}
-\gamma(t)=\mathbf{r}(t)^\mathsf{T}\mathbf{v}_{\mathrm{rel}}(t).
+\mathbf{r}=\mathbf{p}_d-\mathbf{p}_o,
+\qquad
+\mathbf{v}_{\mathrm{rel}}=\mathbf{v}_d-\mathbf{v}_o.
 \end{equation}
-当 $\gamma(t)<0$ 时，表示二者处于相向接近或整体收敛趋势；当 $\gamma(t)\geq 0$ 时，表示相对距离不再缩小。在此基础上，还可引入未来预测窗口内的最近接距离
+若吊装构件和动态目标分别采用半径为 $r_o$ 与 $r_d$ 的球形包络近似，则当前净空定义为
 \begin{equation}
-d_{\min}^{\mathrm{pred}}=\min_{\tau\in[0,T_p]}\|\mathbf{r}(t+\tau)\|,
+d_{\mathrm{cur}}=\max\bigl(0,\,\|\mathbf{r}\|-r_o-r_d\bigr).
 \end{equation}
-以及时间到最近接近或 TTC 指标。若同时满足“当前距离已进入警戒区”“相对运动方向为收敛”“预测最近接距离持续减小”三项条件，则系统应当把预警等级从静态层级进一步上调。
-
-基于上述判据，本文建议构建三级预警状态机：一级提示主要用于提示操作员关注接近趋势；二级报警用于表明需要降低速度或限制部分运动方向；三级紧急用于表示已出现高碰撞风险，应触发停止或紧急制动。状态转移可由静态距离等级 $L_s$ 与动态趋势等级 $L_d$ 综合决定，即
+进一步地，定义相对接近速度为
 \begin{equation}
-L=\max(L_s,L_d).
+v_{\mathrm{close}}=-\mathbf{v}_{\mathrm{rel}}^\mathsf{T}\frac{\mathbf{r}}{\|\mathbf{r}\|},
 \end{equation}
-其中 $L_s$ 由静态距离阈值给出，$L_d$ 由相对速度方向、TTC、预测最近接距离等共同给出。为抑制状态频繁跳变，状态机还应设置进入与退出滞回、最小保持时间以及异常观测屏蔽规则。
+则当 $v_{\mathrm{close}}>v_{\min}$ 时，可得到时间到接触指标
+\begin{equation}
+\mathrm{TTC}=\frac{d_{\mathrm{cur}}}{v_{\mathrm{close}}},
+\end{equation}
+若当前已经重叠则记为 $0$，若不存在有效接近则记为无穷大。由此，系统不仅知道“距离有多近”，还能够知道“接近有多快”。
 
-需要特别说明的是，当前仓库中尚未完成 TTC 计算、相向运动升级规则和完整三级状态机实现，因此本小节属于\textbf{论文提出的系统化设计方案}。之所以仍需在第4章中详细展开，是因为现有动态检测与卡尔曼预测已经提供了足够坚实的前置基础，使这些设计并非脱离实现条件的空想，而是能够自然承接当前系统并向完整预警闭环扩展的下一步工作。
+为了抑制仅凭单时刻速度做出的误判，系统还进一步计算预测窗口内的最近接净空。设预测时域为 $T_p$，则最近接近时刻可表示为
+\begin{equation}
+\tau^*=\operatorname{clip}\left(-\frac{\mathbf{r}^\mathsf{T}\mathbf{v}_{\mathrm{rel}}}{\|\mathbf{v}_{\mathrm{rel}}\|^2},\,0,\,T_p\right),
+\end{equation}
+相应的预测净空为
+\begin{equation}
+d_{\mathrm{pred}}=\max\bigl(0,\,\|\mathbf{r}+\tau^*\mathbf{v}_{\mathrm{rel}}\|-r_o-r_d\bigr).
+\end{equation}
+当前原型配置中，动态分级阈值采用三级结构：当当前净空、预测净空或 TTC 任一指标进入 $2.0\,\mathrm{m}/3.0\,\mathrm{s}$ 区间时触发提示；进入 $1.2\,\mathrm{m}/2.0\,\mathrm{s}$ 区间时触发警告；进入 $0.6\,\mathrm{m}/1.0\,\mathrm{s}$ 区间时触发紧急。这种“取多指标中更危险者”的策略能够更好覆盖动态接近中的不同演化模式。
+
+在此基础上，系统还实现了面向相向运动的等级升级规则。设吊装构件与动态目标速度夹角满足
+\begin{equation}
+\cos\theta=\frac{\mathbf{v}_o^\mathsf{T}\mathbf{v}_d}{\|\mathbf{v}_o\|\,\|\mathbf{v}_d\|},
+\end{equation}
+当二者均存在有效速度，且 $v_{\mathrm{close}}$ 足够大、$\cos\theta<-0.2$ 时，系统将当前动态等级上调一级，最高不超过紧急等级；在低速场景下，则退化为基于接近速度和预测净空的保守升级逻辑。由此可以看出，当前原型已经不再停留在“只看瞬时距离”的阶段，而是能够对相向接近场景给出更激进但仍可解释的提前预警。需要进一步补充的部分主要不是算法框架本身，而是这些阈值在不同吊装场景中的标定依据与统计验证。
 
 \begin{figure}[htbp]
 	\centering
-	\fbox{\parbox[c][5.4cm][c]{0.88\textwidth}{\centering
-	占位图：多层级预警链路与三级状态机示意图\\[0.5em]
-	建议内容：静态距离阈值卡控、动态候选生成、卡尔曼预测、相向运动升级判据、一级提示、二级报警、三级紧急及状态转移条件。}}
-	\caption{多层级预警链路与三级预警状态机占位图}
+	\resizebox{!}{0.90\textheight}{%
+	\begin{tikzpicture}[
+		x=1cm,y=1cm,>=Latex,font=\scriptsize,
+		proc/.style={draw, rounded corners=2pt, thick, fill=gray!8, align=center, minimum width=3.0cm, minimum height=0.95cm},
+		judge/.style={draw, rounded corners=2pt, thick, dashed, fill=gray!14, align=center, minimum width=3.0cm, minimum height=0.95cm},
+		term/.style={draw, rounded corners=2pt, thick, fill=gray!18, align=center, minimum width=2.8cm, minimum height=0.95cm}
+	]
+		% 输入验证流程 (顶部，更紧凑)
+		\node[proc] (recv) at (3,0) {接收对象状态\\\texttt{object\_states}};
+		\node[judge] (valid) at (3,-1.3) {对象状态是否有效};
+		\node[term] (clear1) at (0,-1.3) {输出 \texttt{clear}\\\texttt{reason=waiting\_for\_inputs}};
+		\node[proc] (select) at (3,-2.6) {筛选监控目标\\\texttt{crane / exca-arm / exca-body}};
+		\node[judge] (found) at (3,-3.9) {是否找到满足条件目标};
+		\node[term] (clear2) at (0,-3.9) {输出 \texttt{clear}\\\texttt{reason=no\_monitored\_object}};
+		\node[proc] (tf) at (3,-5.2) {坐标变换到 \texttt{map}};
+		\node[judge] (tfok) at (3,-6.5) {TF 是否成功};
+		\node[term] (clear3) at (0,-6.5) {输出 \texttt{clear}\\\texttt{reason=object\_tf\_failed}};
+		\node[proc] (vel) at (3,-7.8) {估计目标速度};
+
+		% 静态分支 (左侧)
+		\node[proc] (staticcalc) at (0.5,-9.5) {静态净空计算\\目标到 \texttt{map\_local} 最近邻\\距离减包络半径};
+		\node[proc] (staticlevel) at (0.5,-11.2) {静态阈值分级\\0.8 / 1.5 / 2.5 m};
+
+		% 动态分支 (右侧)
+		\node[proc] (dyncalc) at (5.5,-9.5) {动态风险计算\\当前净空 相对速度\\TTC 预测净空};
+		\node[proc] (dynlevel) at (5.5,-11.2) {动态阈值或 TTC 分级\\0.6 / 1.2 / 2.0 m\\1 / 2 / 3 s};
+		\node[judge] (headon) at (5.5,-12.9) {是否相向运动};
+		\node[proc] (up) at (4,-14.2) {动态等级上调一级\\最高不超过 Emergency};
+		\node[proc] (keep) at (7,-14.2) {保持当前动态等级};
+
+		% 融合与输出流程 (底部)
+		\node[proc] (fusion) at (3,-16) {融合静态与动态等级};
+		\node[proc] (desired) at (3,-17.3) {\texttt{desired\_level}};
+		\node[proc] (hys) at (3,-18.6) {迟滞状态机};
+		\node[proc] (active) at (3,-19.9) {\texttt{active\_level}};
+		\node[term] (pub) at (3,-21.2) {发布 \texttt{WarningState}};
+
+		% 连接线
+		\draw[->, thick] (recv) -- (valid);
+		\draw[->, thick] (valid) -- node[midway, fill=white, inner sep=1pt]{是} (select);
+		\draw[->, thick] (valid) -- node[midway, fill=white, inner sep=1pt]{否} (clear1);
+		\draw[->, thick] (select) -- (found);
+		\draw[->, thick] (found) -- node[midway, fill=white, inner sep=1pt]{是} (tf);
+		\draw[->, thick] (found) -- node[midway, fill=white, inner sep=1pt]{否} (clear2);
+		\draw[->, thick] (tf) -- (tfok);
+		\draw[->, thick] (tfok) -- node[midway, fill=white, inner sep=1pt]{是} (vel);
+		\draw[->, thick] (tfok) -- node[midway, fill=white, inner sep=1pt]{否} (clear3);
+
+		% 从速度估计分支到静态和动态计算
+		\draw[->, thick] (vel) -- ++(0,-0.5) -- ++(-2.5,0) -- (staticcalc);
+		\draw[->, thick] (vel) -- ++(0,-0.5) -- ++(2.5,0) -- (dyncalc);
+
+		% 静态分支连接
+		\draw[->, thick] (staticcalc) -- (staticlevel);
+		\draw[->, thick] (staticlevel) -- ++(0,-0.5) -- ++(2.5,0) -- (fusion);
+
+		% 动态分支连接
+		\draw[->, thick] (dyncalc) -- (dynlevel);
+		\draw[->, thick] (dynlevel) -- (headon);
+		\draw[->, thick] (headon) -- node[midway, fill=white, inner sep=1pt]{是} (up);
+		\draw[->, thick] (headon) -- node[midway, fill=white, inner sep=1pt]{否} (keep);
+		\draw[->, thick] (up) -- (fusion);
+		\draw[->, thick] (keep) -- ++(0,-0.5) -- ++(-3,0) -- (fusion);
+
+		% 融合输出连接
+		\draw[->, thick] (fusion) -- (desired);
+		\draw[->, thick] (desired) -- (hys);
+		\draw[->, thick] (hys) -- (active);
+		\draw[->, thick] (active) -- (pub);
+	\end{tikzpicture}}
+	\caption{预警判级细化流程图}
 	\label{fig:ch4_warning_state_machine_placeholder}
 \end{figure}
 
-\subsection{预警信息发布机制与系统接口组织}\label{subsec_ch4_warning_interface}
+\subsection{预警状态机与消息接口组织}\label{subsec_ch4_warning_interface}
 
-当预警等级被确定之后，系统需要把结果以统一、解耦的方式发布给上层人机界面或控制模块。因此，预警信息发布机制本身也是第4章必须明确的一部分。若没有统一接口，即使感知和判级方法已经成立，系统仍难以实现跨模块协同和后续控制对接。
-
-本文建议将预警输出组织为两类消息。第一类是\textbf{风险状态消息}，主要服务于显示、日志记录和系统监控，字段可包括风险等级、触发对象 ID、对象类别、当前最小距离、预测最近接距离、相对速度、有效时间窗和数据有效性标志。第二类是\textbf{控制建议消息}，主要服务于第4.4节的避障执行模块，字段可包括建议动作类型、限速比例、限向标志位、急停标志位以及建议保持时间等。前者强调“系统判断到了什么风险”，后者强调“系统建议采取什么动作”，二者在接口上应当解耦，以便不同权限层级的系统按需订阅。
-
-形式化地，可将风险状态消息记为
+静态分级和动态分级得到之后，系统并不会直接把某一个分支的结果原样输出，而是先执行等级融合，再通过迟滞状态机生成面向下游的稳定风险状态。设静态分级结果为 $L_s$，动态分级结果为 $L_d$，则即时目标等级可表示为
 \begin{equation}
-\mathbf{w}=\{L,\mathrm{id},c,d_{\mathrm{cur}},d_{\min}^{\mathrm{pred}},v_{\mathrm{rel}},T_p,\eta\},
+L_{\mathrm{des}}=\max(L_s,L_d).
 \end{equation}
-其中 $L$ 为风险等级，$\eta$ 为有效性标志。若后续系统接入控制接口，则再基于 $\mathbf{w}$ 生成控制建议消息 $\mathbf{u}_{\mathrm{adv}}$。这样设计的好处在于，即使控制模块尚未真正接入，预警链路本身也能独立运行和验证；而一旦需要向控制闭环扩展，也无需重构前端感知与判级输出格式。
+这一处理体现了预警系统的保守性原则：只要静态风险或动态风险任一分支已经达到更高等级，系统就不再尝试以另一分支的较低结果进行抵消。当前实现中，\texttt{desired\_level} 用于记录这一级即时判定，而真正对外发布的 \texttt{active\_level} 则由迟滞机制进一步修正。
 
-当前仓库尚未定义统一预警消息类型，因此本小节同样应按设计方案写入论文。但与完全空白的设计不同，这里的接口定义是建立在已有图像、点云和动态轨迹等中间结果发布机制之上的，只是缺少最后一步标准化组织。因此，本小节的作用，是把现有“多个中间结果话题”进一步提升为“统一预警接口”的工程设计，为第4.4节控制接口的引入搭建数据基础。
+迟滞机制的设计目标是避免等级在阈值附近频繁抖动。当前原型采用“升级立即生效、降级延时 $1.0\,\mathrm{s}$”的规则：当新的 $L_{\mathrm{des}}$ 高于当前输出等级时，系统立即提升 \texttt{active\_level}；当新的 $L_{\mathrm{des}}$ 低于当前等级时，则先进入待降级状态，仅当这一较低等级持续满足指定保持时间后才真正下调。这样处理的意义在于，预警输出既能对突发危险保持足够敏感，又不会因为单帧测量波动而在提示、警告和紧急之间频繁来回跳变，进而减轻下游可视化和控制接口的不稳定性。
+
+在接口组织上，当前系统已经形成了从感知到风险评估的三层结构化消息链路。第一层为 \texttt{SegmentedObjectStateArray}，通过 \texttt{/segment/object\_states} 发布构件类别、置信度、三维位姿、包络半径和关联点数等对象状态；第二层为 \texttt{DynamicTrackArray}，通过 \texttt{/dynamic\_tracker/track\_states} 发布轨迹 ID、状态、位置、速度和轨迹生命周期信息；第三层为 \texttt{WarningState}，通过 \texttt{/warning/state} 输出 \texttt{active\_level}、\texttt{desired\_level}、\texttt{source}、\texttt{reason}、\texttt{static\_clearance}、\texttt{dynamic\_clearance}、\texttt{relative\_speed}、\texttt{ttc}、\texttt{predicted\_clearance}、\texttt{head\_on} 和 \texttt{system\_ready} 等字段。形式化地，可将风险状态写为
+\begin{equation}
+\mathbf{w}=\{L_{\mathrm{act}},L_{\mathrm{des}},s,r,d_{\mathrm{static}},d_{\mathrm{cur}},v_{\mathrm{close}},\mathrm{TTC},d_{\mathrm{pred}},h,\eta\},
+\end{equation}
+其中 $s$ 表示风险来源，$r$ 表示触发原因，$h$ 表示是否发生相向升级，$\eta$ 表示系统是否具备有效输入条件。
+
+值得注意的是，\texttt{WarningState} 不仅承载最终等级，还承担了“为什么触发”的解释性接口功能。当系统尚未具备足够输入时，可通过 \texttt{system\_ready} 与 \texttt{reason} 显式给出 \texttt{waiting\_for\_inputs}、\texttt{no\_monitored\_object} 或 \texttt{object\_tf\_failed} 等状态，而不是简单沉默或误触发高等级输出。这种设计使预警链路既能独立验证，也便于后续控制模块根据状态质量判断是否采信当前结果。由此，第4.3节已经从单个算法段落扩展为一条完整的结构化预警链路。
 
 \section{预警后的避障策略与控制接口设计}\label{sec_ch4_avoidance_design}
 
-\subsection{从感知到控制的闭环避障架构}\label{subsec_ch4_closed_loop_arch}
+\subsection{预警到控制的解耦接口架构}\label{subsec_ch4_closed_loop_arch}
 
-为了使整套系统不止停留在“看见风险并发出提示”，还能够向安全辅助控制扩展，论文需要进一步说明从感知到控制的闭环架构。本文建议将系统组织为四层：第一层为视觉识别与吊物空间定位层，负责输出吊装构件状态；第二层为环境感知与动态候选层，负责输出静态障碍和动态目标状态；第三层为风险评估与预警分级层，负责融合距离、速度和趋势信息形成风险等级；第四层为控制接口与动作执行层，负责把风险等级转化为具体动作建议或控制指令。
+预警链路的价值并不止于在 RViz 中显示“当前危险”，更重要的是向上层操作界面或控制器提供统一、可机读的动作建议。然而，风险评估模块不应直接越权驱动执行机构，否则一旦控制策略调整，就会迫使感知和预警逻辑同步重构。基于这一考虑，当前系统在 \texttt{warningEvaluator} 之后增加了独立的 \texttt{warningController} 节点，使风险评估与控制映射在结构上保持解耦。其数据链路为 \texttt{/warning/state} $\rightarrow$ \texttt{warningController} $\rightarrow$ \texttt{/warning/control\_command}，从而把“识别风险”和“生成动作建议”拆分成两个可独立验证的阶段。
 
-这一架构的关键意义在于把“预警”和“避障”区分为两个不同层级的任务。预警层回答的是“当前风险有多高”，控制层回答的是“针对该风险应执行什么动作”。前者更强调感知可信性与判级逻辑，后者更强调接口规范、动作权限和执行安全性。将二者解耦能够保证系统在尚未接入实机控制的阶段，先完成预警链路验证；同时也为后续接入真实塔吊控制系统预留了清晰边界。
-
-需要明确的是，当前仓库已经较为完整地覆盖了感知基础和动态趋势预测，但尚未形成统一控制接口与动作执行闭环。因此，本小节应采用“架构设计”写法，而不是陈述已完成控制模块。这样既不会夸大系统现状，也能体现论文在系统完整性层面的设计贡献，即把感知、预警和控制放在同一架构中讨论，而不是把控制问题完全留到论文之外。
-
-\subsection{分级避障动作策略与控制接口约定}\label{subsec_ch4_control_strategy}
-
-在控制接口层，动作策略应与预警等级一一对应，而不是由控制模块重新解释上游风险语义。为此，本文建议采用分级动作约定。一级提示对应观察与人工注意，不主动干预执行机构；二级报警对应限制部分运动方向或降低速度，例如降低起升速度、限制向障碍物方向的回转或行走；三级紧急对应硬停或软停指令，用于在高碰撞风险场景下优先保护人员与设备安全。这种分级动作机制能够保证风险等级与控制强度之间存在清晰映射关系。
-
-若把控制建议表示为 $\mathbf{u}_{\mathrm{adv}}$，则其字段可组织为
+在接口语义上，\texttt{warningController} 接收的是 \texttt{WarningState} 中已经完成融合和迟滞处理的 \texttt{active\_level} 及其上下文信息，然后将其映射为 \texttt{ControlCommand}。若将控制建议向量记为
 \begin{equation}
-\mathbf{u}_{\mathrm{adv}}=\{L,a,\rho,\delta,e,\tau_h\},
+\mathbf{u}=\{a,\rho,h,e,\alpha,\mathbf{d}_{\mathrm{rec}},\eta\},
 \end{equation}
-其中 $L$ 为风险等级，$a$ 为动作类型，$\rho$ 为限速比例，$\delta$ 为受限方向或自由度标志，$e$ 为急停标志位，$\tau_h$ 为建议保持时间。通过这一设计，上层控制器可以根据自身权限和安全策略决定是否直接执行该建议，或仅将其作为辅助决策输入。也就是说，预警系统提供的是“可执行建议”，而不是强行越权接管控制。
+其中 $a$ 表示动作类型，$\rho$ 表示限速比例，$h$ 表示保持当前位置标志，$e$ 表示急停标志，$\alpha$ 表示是否需要人工确认，$\mathbf{d}_{\mathrm{rec}}$ 表示建议退让方向，$\eta$ 表示系统是否准备就绪。与第4.3节输出的风险状态相比，这一接口已经不再强调“危险从何而来”，而是强调“针对该危险下游应如何响应”。
 
-对于相向接近和预测最近接距离持续减小的场景，应提高动作约束级别。例如，当系统判定动态目标与吊装构件存在持续收敛趋势，即使当前距离尚未进入最危险阈值，也可提前触发二级限速；当三级危险状态已成立时，则不再只给出提示，而应明确发布停止相关自由度的命令建议。该处理体现了本文设计中“动态趋势优先于单时刻距离”的安全思想。
+需要明确的是，当前控制层已经具备消息级原型实现，但其输出仍停留在 ROS 话题层，并未直接接入 PLC、底盘控制器或塔吊执行机构。这一边界在论文中必须写清楚。也就是说，第4.4节讨论的是“预警到控制建议的原型接口”而不是“实机自动避障闭环已经完成”。这样写并不会削弱工作价值，相反能够更准确地体现系统当前已经完成的模块边界：风险评估已经可运行，控制建议已经标准化，而真正的执行闭环仍需结合设备侧权限、安全认证与反馈协议进一步推进。
 
-当前仓库中尚未发现完整的控制接口实现，因此本小节必须明确写成\textbf{接口设计与动作约定}。但这一设计并非凭空提出，而是直接承接第4.3节所定义的预警输出字段，因此其工程实现路径是清晰的：只要上层控制系统能够接收标准化的风险状态和动作建议消息，就能进一步把论文中的设计转化为原型级闭环系统。
+\subsection{分级控制动作映射与建议退让方向}\label{subsec_ch4_control_strategy}
+
+在控制接口层，最关键的问题不是再去重新判断一次风险，而是把上游预警等级稳定地映射为动作建议。当前 \texttt{warningController} 已经将 \texttt{WarningState} 的等级输出组织为分级动作规则：当 \texttt{active\_level} 为 \texttt{LEVEL\_NONE} 时，输出 \texttt{ACTION\_CLEAR}，保持正常运行；当等级为 \texttt{LEVEL\_NOTICE} 时，输出 \texttt{ACTION\_OBSERVE}，仅提示操作员关注；当等级为 \texttt{LEVEL\_WARNING} 时，默认输出 \texttt{ACTION\_LIMIT\_MOTION}，并施加速度限制比例；当等级为 \texttt{LEVEL\_EMERGENCY} 时，则输出 \texttt{ACTION\_EMERGENCY\_STOP}，同时置位保持和急停标志。这种映射保证了风险语义不会在控制层被重新解释，从而维持系统行为的一致性。
+
+若将等级到动作的映射记为策略函数 $a=\pi(L_{\mathrm{act}},s)$，则当前原型中最典型的配置为：警告等级默认采用 $\rho=0.35$ 的限速比例，紧急等级采用 $\rho=0$ 并同时令 \texttt{hold\_position=true}、\texttt{emergency\_stop=true}。此外，系统还保留了面向静态风险或静态与动态组合风险的可选策略，即在某些场景下可将警告等级直接映射为 \texttt{ACTION\_HOLD\_POSITION}，以获得更保守的响应方式。这些规则说明当前控制接口并非抽象描述，而是已经可以通过参数文件进行约束强度切换的可运行原型。
+
+除动作类型之外，系统还给出了建议退让方向，用于向操作员或下游控制器提示“应沿哪个方向优先减速或退让”。设被监控对象速度为 $\mathbf{v}_o$，则当前原型采用
+\begin{equation}
+\mathbf{d}_{\mathrm{rec}}=
+\begin{cases}
+-\dfrac{\mathbf{v}_o}{\|\mathbf{v}_o\|}, & L_{\mathrm{act}}\geq \texttt{WARNING},\ \|\mathbf{v}_o\|>0.08\\
+\mathbf{0}, & \text{otherwise}
+\end{cases}
+\end{equation}
+作为建议方向。其含义并不是直接给出全局最优避障轨迹，而是基于当前构件运动趋势给出一个保守、可解释的“先沿反方向减速退让”的建议。这种处理适合作为原型系统中的人机提示或控制先验，但距离严格意义上的轨迹规划仍有明显差别。
+
+因此，当前控制策略的价值主要体现在两个方面：一是它把风险等级转化为下游可以直接订阅的标准化动作建议，二是它保持了足够保守的安全边界，避免论文在尚未接入真实执行器的阶段夸大自动控制能力。换言之，第4.4节描述的不是最终避障控制器，而是为控制闭环预留清晰输入语义和执行接口的一层原型桥接。
 
 \begin{figure}[htbp]
 	\centering
-	\fbox{\parbox[c][5.6cm][c]{0.9\textwidth}{\centering
-	占位图：从感知到控制的闭环避障架构图\\[0.5em]
-	建议内容：视觉分割与空间定位层、静态/动态环境感知层、风险评估与预警分级层、控制建议输出层，以及与操作员或控制器之间的接口关系。}}
-	\caption{从感知到控制的闭环避障架构占位图}
+	\resizebox{0.9\textwidth}{!}{%
+	\begin{tikzpicture}[
+		x=1cm,y=1cm,>=Latex,font=\scriptsize,
+		proc/.style={draw, rounded corners=2pt, thick, fill=gray!8, align=center, minimum width=3.0cm, minimum height=0.95cm},
+		judge/.style={draw, rounded corners=2pt, thick, dashed, fill=gray!14, align=center, minimum width=2.9cm, minimum height=0.95cm},
+		term/.style={draw, rounded corners=2pt, thick, fill=gray!18, align=center, minimum width=2.9cm, minimum height=0.95cm}
+	]
+		\node[proc] (recv) at (2.5,0) {接收 \texttt{WarningState}};
+		\node[judge] (ready) at (2.5,-1.5) {\texttt{system\_ready}};
+		\node[term] (clear0) at (-0.1,-1.5) {输出 \texttt{ACTION\_CLEAR}};
+		\node[judge] (level) at (2.5,-3.1) {\texttt{active\_level}};
+
+		\node[term] (clear1) at (-1.6,-4.9) {\texttt{ACTION\_CLEAR}\\不限速};
+		\node[term] (observe) at (0.9,-4.9) {\texttt{ACTION\_OBSERVE}\\仅提示};
+		\node[term] (limit) at (3.4,-4.9) {\texttt{ACTION\_LIMIT\_MOTION}\\默认限速 0.35};
+		\node[term] (estop) at (5.9,-4.9) {\texttt{ACTION\_EMERGENCY\_STOP}\\限速 0\\保持位/急停位为 true};
+
+		\node[judge] (dir) at (4.65,-6.7) {是否需要建议退让方向};
+		\node[proc] (dir0) at (3.2,-8.5) {\texttt{recommended\_direction}=0};
+		\node[proc] (dir1) at (6.1,-8.5) {\texttt{recommended\_direction}\\为当前速度反方向};
+		\node[term] (pub) at (2.5,-10.3) {发布 \texttt{ControlCommand}};
+
+		\draw[->, thick] (recv) -- (ready);
+		\draw[->, thick] (ready) -- node[midway, fill=white, inner sep=1pt]{否} (clear0);
+		\draw[->, thick] (ready) -- node[midway, fill=white, inner sep=1pt]{是} (level);
+
+		\draw[->, thick] (level) -- node[midway, fill=white, inner sep=1pt]{None} (clear1);
+		\draw[->, thick] (level) -- node[midway, fill=white, inner sep=1pt]{Notice} (observe);
+		\draw[->, thick] (level) -- node[midway, fill=white, inner sep=1pt]{Warning} (limit);
+		\draw[->, thick] (level) -- node[midway, fill=white, inner sep=1pt]{Emergency} (estop);
+
+		\draw[->, thick] (clear0) |- (pub);
+		\draw[->, thick] (clear1) |- (pub);
+		\draw[->, thick] (observe) |- (pub);
+		\draw[->, thick] (limit) -- (dir);
+		\draw[->, thick] (estop) -- (dir);
+		\draw[->, thick] (dir) -- node[midway, fill=white, inner sep=1pt]{否} (dir0);
+		\draw[->, thick] (dir) -- node[midway, fill=white, inner sep=1pt]{是} (dir1);
+		\draw[->, thick] (dir0) |- (pub);
+		\draw[->, thick] (dir1) |- (pub);
+	\end{tikzpicture}}
+	\caption{预警到控制接口映射流程图}
 	\label{fig:ch4_closed_loop_arch_placeholder}
 \end{figure}
 
-\subsection{避障策略伪代码设计}\label{subsec_ch4_avoidance_pseudocode}
+\subsection{控制接口原型的伪代码与扩展边界}\label{subsec_ch4_avoidance_pseudocode}
 
-为突出整套预警与避障链路的可实现性，本文将核心执行逻辑进一步概括为伪代码式流程。其重点不在于展示复杂程序结构，而在于清楚说明“距离阈值卡控优先、动态趋势升级、控制动作分级执行”的主逻辑。按照第4章前述设计，系统每个处理周期都应先获取吊装构件状态、静态障碍物集合和动态轨迹预测结果，再统一完成风险判定与动作生成。
+为了更清楚地说明当前系统已经形成的“预警到控制建议”链路，本文将控制接口层的核心逻辑概括为伪代码式流程。与第4.3节中的风险判级不同，这里的重点不再是重新计算几何关系，而是说明控制层如何在保留安全边界的前提下消费上游预警状态，并生成统一动作建议。
 
 \begin{quote}
 \ttfamily
 Input:\\
-suspended\_object\_state: 吊装构件三维位置、边界与速度信息\\
-static\_obstacles: 静态障碍物集合\\
-dynamic\_tracks: 动态目标当前状态与预测轨迹\\
-threshold\_config: 距离阈值、TTC阈值与动作参数\\[0.3em]
+warning\_state: active\_level, source, reason, system\_ready, monitored\_velocity\\[0.3em]
 Process:\\
-1. 计算吊装构件与静态障碍物的最小距离 d\_static\_min；\\
-2. 计算吊装构件与动态目标的相对运动关系，得到最近接距离、相对速度与 TTC；\\
-3. 根据静态距离阈值得到等级 L\_s；\\
-4. 根据动态趋势升级规则得到等级 L\_d；\\
-5. 取 warning\_level = max(L\_s, L\_d)；\\
-6. 若 warning\_level 为一级，则发布提示消息；\\
-7. 若 warning\_level 为二级，则发布报警消息并生成限速或限向建议；\\
-8. 若 warning\_level 为三级，则发布紧急消息并生成停止建议。\\[0.3em]
+1. 若 system\_ready 为 false，则输出 ACTION\_CLEAR；\\
+2. 读取 active\_level 与 source；\\
+3. 若 active\_level 为 LEVEL\_NONE，则输出 ACTION\_CLEAR；\\
+4. 若 active\_level 为 LEVEL\_NOTICE，则输出 ACTION\_OBSERVE；\\
+5. 若 active\_level 为 LEVEL\_WARNING，则按参数选择 ACTION\_LIMIT\_MOTION 或 ACTION\_HOLD\_POSITION；\\
+6. 若 active\_level 为 LEVEL\_EMERGENCY，则输出 ACTION\_EMERGENCY\_STOP；\\
+7. 若等级不低于 WARNING 且目标速度足够大，则计算 recommended\_direction；\\
+8. 发布 control\_command。\\[0.3em]
 Output:\\
-warning\_message, control\_advice
+control\_command
 \end{quote}
 
-上述流程说明，整套系统并不是由某一个复杂模型一次性完成所有判断，而是由“感知定位、风险计算、动作生成”三个相对独立但接口清晰的阶段构成。其优点在于结构可解释、便于调试，也更适合在工程上逐步迭代。例如，在当前阶段，系统已经能够稳定支撑前两个阶段中的大部分感知与定位能力；随着后续预警状态机和控制接口逐步补全，该流程即可自然扩展为更完整的安全辅助闭环。
+上述流程表明，当前系统已经具备从感知定位、风险评估到控制建议输出的完整原型链路。它的优点在于结构透明、接口清晰，既便于单模块联调，也便于在 rosbag 回放中独立检查风险判定与动作映射是否一致。更重要的是，这种分层方式避免了“为了接执行器而把控制逻辑回塞到预警节点”这一结构性问题，使后续系统扩展能够围绕标准化消息接口进行，而不必反复改动前端感知部分。
 
-本节的结论是，第4章从 YOLO26 视觉分割出发，经由点云投影回查建立吊装构件的三维空间定位基础，再进一步延伸到多层级预警和控制接口设计，构成了一条由已实现基础和论文方案设计共同支撑的完整技术路线。这种写法既忠实于当前代码实际，又能够体现论文对系统闭环性的提升和方法框架的完整性。
+与此同时，本文也必须明确当前原型的扩展边界。首先，\texttt{/warning/control\_command} 仍然只是 ROS 级控制建议，不包含执行确认、命令超时、人工复位和硬件故障反馈等完整闭环机制；其次，\texttt{recommended\_direction} 只是基于当前运动方向给出的保守退让建议，并不等价于最优轨迹规划；最后，参数文件中的限速比例、确认机制和保持策略仍需结合第5章实验进行整定。因此，第4章在此处的贡献应理解为：已经把预警链路自然延伸到了标准化控制接口原型，并为真实设备侧闭环接入建立了清晰的系统边界和数据约定。
+
+本节的结论是，第4章从 YOLO26 视觉分割和点云投影出发，先建立吊装构件的三维对象状态，再通过局部地图净空、动态轨迹预测、TTC 与相向升级形成多层级预警输出，最后进一步映射为标准化控制建议接口。由此，本章不再只是“感知算法的拼接”，而是形成了一条由已实现原型支撑、并为后续实机闭环留出明确边界的完整技术路线。
