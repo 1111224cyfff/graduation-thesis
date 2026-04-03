@@ -1,13 +1,13 @@
 ﻿% !TeX root = ../thesis.tex
 \chapter{基于融合点云的定位与空间危险区域检测方法}\label{ux57faux4e8eux878dux5408ux70b9ux4e91ux7684ux5b9aux4f4dux4e0eux7a7aux95f4ux5371ux9669ux533aux57dfux68c0ux6d4bux65b9ux6cd5}
 
-本章以“融合点云驱动的定位建图与动态目标候选生成”为核心，给出双雷达点云实时融合、基于 LIO-SAM 的位姿估计与静态地图构建，以及基于 M-detector 的动态点检测、候选聚类与短时跟踪方法。整条处理链遵循“先融合与定位，再在已配准点云上执行动态检测”的顺序：前半部分强调时序一致性、扫描结构适配和位姿连续性，后半部分强调在统一世界系下完成动态点提取、候选目标组织和短时状态输出。这样，定位模块主要回答“平台自身如何稳定估计”，而动态模块回答“外界目标如何从点级事件上升为可跟踪对象”。
+本章以“融合点云驱动的定位建图与动态目标候选生成”为核心，系统阐述双雷达点云实时融合、基于 LIO-SAM 的位姿估计与静态地图构建，以及基于 M-detector 的动态点检测、候选聚类与短时跟踪方法。整体处理流程遵循“先融合定位，后动态检测”的串行架构：前半部分聚焦于多源传感器数据的时序一致性、扫描结构适配与位姿连续性；后半部分则在统一世界坐标系下完成动态点提取、候选目标组织与短时状态输出。其中，定位模块旨在解决“平台自身位姿的鲁棒估计”问题，而动态检测模块则致力于将“点级动态事件”提升为“可跟踪目标对象”。
 
 \begin{figure}[htbp]
 	\centering
 	\fbox{\parbox[c][5.6cm][c]{0.9\textwidth}{\centering
 	占位图：第3章方法总流程图\\[0.5em]
-	建议内容：双 Livox Mid-360 原始点云与 IMU 输入 $\rightarrow$ 静态外参加载、时间窗口同步与自动调平 $\rightarrow$ LIO-SAM 的 \texttt{imageProjection/featureExtraction/mapOptimization} 链路 $\rightarrow$ 输出连续位姿、静态地图与已配准点云 $\rightarrow$ M-detector 构建短时历史深度图并执行 Case1/2/3 动态判别 $\rightarrow$ 点云桥接、欧式聚类与短时跟踪状态输出。}}
+	建议内容：双 Livox Mid-360 原始点云与a IMU 输入 $\rightarrow$ 静态外参加载、时间窗口同步与自动调平 $\rightarrow$ LIO-SAM 的 \texttt{imageProjection/featureExtraction/mapOptimization} 链路 $\rightarrow$ 输出连续位姿、静态地图与已配准点云 $\rightarrow$ M-detector 构建短时历史深度图并执行 Case1/2/3 动态判别 $\rightarrow$ 点云桥接、欧式聚类与短时跟踪状态输出。}}
 	\caption{第3章从双雷达融合到动态目标生成的总体流程占位图}
 	\label{fig:ch3_overall_pipeline_placeholder}
 \end{figure}
