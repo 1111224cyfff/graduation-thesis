@@ -27,7 +27,8 @@
 
 % 定义图片文件存放位置( 默认在 figures 子目录下 )
 % 最好使用 pdf 格式的图片
-\graphicspath{{figures/}}
+% 优先使用自动裁边后的 PDF 目录，找不到时回退到原始目录
+\graphicspath{{figures-cropped/}{figures/}}
 
 %%% 封面部分
 \frontmatter

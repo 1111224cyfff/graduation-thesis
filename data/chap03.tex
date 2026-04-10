@@ -1,14 +1,12 @@
 ﻿% !TeX root = ../thesis.tex
 \chapter{基于融合点云的定位与空间危险区域检测方法}\label{ux57faux4e8eux878dux5408ux70b9ux4e91ux7684ux5b9aux4f4dux4e0eux7a7aux95f4ux5371ux9669ux533aux57dfux68c0ux6d4bux65b9ux6cd5}
 
-本章以“融合点云驱动的定位建图与动态目标候选生成”为核心，系统阐述双雷达点云实时融合、基于 LIO-SAM 的位姿估计与静态地图构建，以及基于 M-detector 的动态点检测、候选聚类与短时跟踪方法。整体处理流程遵循“先融合定位，后动态检测”的串行架构：前半部分聚焦于多源传感器数据的时序一致性、扫描结构适配与位姿连续性；后半部分则在统一世界坐标系下完成动态点提取、候选目标组织与短时状态输出。其中，定位模块旨在解决“平台自身位姿的鲁棒估计”问题，而动态检测模块则致力于将“点级动态事件”提升为“可跟踪目标对象”。
+本章以“融合点云驱动的定位建图与动态目标候选生成”为核心，系统性地阐述双雷达点云实时融合、基于LIO-SAM的位姿估计与静态地图构建，以及基于M-detector的动态点检测、候选聚类与短时跟踪方法。整体处理流程遵循“先融合定位，后动态检测”的串行架构：前半部分聚焦于多源传感器数据的时序对齐、扫描结构适配与位姿连续性保持；后半部分则在统一世界坐标系下完成动态点提取、候选目标组织与短时状态输出。其中，定位模块旨在实现平台自身位姿的鲁棒估计，而动态检测模块则旨在将点级动态事件提升为可跟踪的目标对象。
 
 \begin{figure}[htbp]
 	\centering
-	\fbox{\parbox[c][5.6cm][c]{0.9\textwidth}{\centering
-	占位图：第3章方法总流程图\\[0.5em]
-	建议内容：双 Livox Mid-360 原始点云与a IMU 输入 $\rightarrow$ 静态外参加载、时间窗口同步与自动调平 $\rightarrow$ LIO-SAM 的 \texttt{imageProjection/featureExtraction/mapOptimization} 链路 $\rightarrow$ 输出连续位姿、静态地图与已配准点云 $\rightarrow$ M-detector 构建短时历史深度图并执行 Case1/2/3 动态判别 $\rightarrow$ 点云桥接、欧式聚类与短时跟踪状态输出。}}
-	\caption{第3章从双雷达融合到动态目标生成的总体流程占位图}
+	\includegraphics[width=0.98\textwidth]{点云融合与动态目标生成总体框架.pdf}
+	\caption{第3章从双雷达融合到动态目标生成的总体流程}
 	\label{fig:ch3_overall_pipeline_placeholder}
 \end{figure}
 
@@ -16,31 +14,31 @@
 
 \subsection{双雷达原始数据接入与静态外参加载}\label{ux539fux59cbux70b9ux4e91ux6570ux636eux7279ux5f81}
 
-第3章讨论的重点不再是外参如何求解，而是已求得的静态外参如何进入运行时融合链路。系统启动后，\texttt{livox\_merge} 包中的 \texttt{merge\_lidar\_node} 同时订阅两路 Mid-360 点云话题和两路 IMU 话题，当前实现对应输入分别为 \texttt{/livox/lidar\_192\_168\_1\_125}、\texttt{/livox/lidar\_192\_168\_1\_148} 以及 \texttt{/livox/imu\_192\_168\_1\_125}、\texttt{/livox/imu\_192\_168\_1\_148}。点云侧使用 \texttt{livox\_ros\_driver2/CustomMsg}，每个点同时包含坐标、反射率、线号和帧内偏移时间 \texttt{offset\_time}；IMU 侧使用标准 \texttt{sensor\_msgs/Imu} 消息。这一输入组织方式决定了双雷达融合不是“先转成统一文件再离线拼接”，而是直接面向在线消息流构建的。
+双雷达实时融合基于第2章标定的外参信息实现。系统启动时，\texttt{livox\_merge}包中的\texttt{merge\_lidar\_node}节点同时订阅同一局域网内两路Mid-360激光雷达及其对应IMU的在线消息流，通过设备IP区分传感器并组织话题。点云数据采用\texttt{livox\_ros\_driver2/CustomMsg}格式，每个点包含坐标、反射率、线号和帧内偏移时间；IMU数据采用标准\texttt{sensor\_msgs/Imu}消息格式。该设计确保了融合过程直接处理在线消息流，而非离线文件拼接。
 
-运行时所用的静态外参由 \texttt{livox\_merge\_config.yaml} 加载。配置文件中 \texttt{lidar\_0} 与 \texttt{imu\_0} 取单位阵，表示基准雷达和其对应 IMU 所在坐标系直接作为融合参考系 \texttt{body}；\texttt{lidar\_1} 与 \texttt{imu\_1} 则写入第2章获得的最终外参矩阵，用于将第2路 LiDAR 与第2路 IMU 统一到同一参考系。换言之，第2章输出的是“静态外参结果”，第3章读取的是“静态外参配置”，在线阶段不再执行外参优化，也不再重复讨论粗配准与精配准的求解过程。
+融合系统以第一路LiDAR与IMU的坐标系作为统一参考系\texttt{body}，第二路传感器通过标定得到的外参矩阵$\mathbf{R}_B^{L_1}$、$\mathbf{t}_B^{L_1}$、$\mathbf{R}_B^{I_1}$、$\mathbf{t}_B^{I_1}$等映射到该基准系。在线处理阶段无需执行外参优化或重复配准计算，从而实现了离线标定与在线融合流程的解耦。
 
-在实现层面，节点初始化时会将外参矩阵拆分为旋转部分 $\mathbf{R}_{B}^{L_i}$ 和平移部分 $\mathbf{t}_{B}^{L_i}$，分别存入雷达缓冲结构；IMU 同理，得到 $\mathbf{R}_{B}^{I_i}$ 和 $\mathbf{t}_{B}^{I_i}$。因此，对第 $i$ 路雷达中任一点 $\mathbf{p}^{l_i}$，运行时的坐标统一形式可写为
+在节点初始化阶段，外参矩阵被分解为旋转部分$\mathbf{R}_{B}^{L_i}$和平移部分$\mathbf{t}_{B}^{L_i}$，并存储到雷达缓冲区中；IMU外参采用相同的处理方式。对于第$i$路雷达中的任意点$\mathbf{p}^{l_i}$，运行时的坐标统一变换可表示为
 \begin{equation}
 \mathbf{p}^{b}=\mathbf{R}_{B}^{L_i}\,\mathbf{p}^{l_i}+\mathbf{t}_{B}^{L_i},
 \end{equation}
-其中 $\mathbf{p}^{b}$ 表示统一到 \texttt{body} 坐标系下的点坐标。该式在代码中对应逐点坐标变换，是双雷达在线融合的入口，而不是新的标定步骤。
+其中$\mathbf{p}^{b}$表示统一到\texttt{body}坐标系下的点坐标。该公式对应于代码中的逐点坐标变换，构成了双雷达在线融合的入口操作。
 
-这一设计的工程意义在于将“离线标定结果”与“在线融合主流程”明确解耦。只要静态外参已经在第2章得到验证，运行时只需保证配置文件、话题命名和参考坐标系一致，便可在不扩大状态量的前提下，将双雷达系统等价地转化为“单参考系下的多源观测输入”。这也是后续 LIO-SAM 仍可沿用“单 LiDAR + 单 IMU”接口假设的前提。
+鉴于静态外参已在第2章完成验证，在运行时仅需确保配置文件、话题命名与参考坐标系保持一致，即可在不引入额外状态量的前提下，将双雷达系统等价转化为单参考系下的多源观测输入。这也是后续LIO-SAM能够沿用“单LiDAR + 单IMU”接口假设的前提。
 
 \subsection{基于时间窗口的点云同步与坐标统一融合}\label{ux5916ux53c2ux77e9ux9635ux5e94ux7528ux4e0eux5750ux6807ux7edfux4e00}
 
-点云融合的核心工作由 \texttt{PcHandlerLivox}、\texttt{LidarBufReady}、\texttt{ExtractLidarPoints} 和 \texttt{SyncLidar} 四个过程共同完成。对每一帧 \texttt{CustomMsg}，系统首先将 Livox 原始点转换为内部统一点结构，保留坐标、反射率、线号和帧内偏移时间；随后对每个点执行上一小节给出的刚体变换，将其从各自雷达坐标系映射到 \texttt{body}。也就是说，外参在本节中的角色只是“逐点变换算子”，真正影响实时性的关键约束来自时间窗口管理和缓冲调度。
+点云融合围绕“逐点坐标统一与时间窗口同步”展开。针对每一帧\texttt{CustomMsg}，系统首先将原始点转换为统一的内部结构，保留坐标、反射率、线号和帧内偏移时间等属性，随后依据上一小节所述的刚体变换将各雷达观测映射到\texttt{body}坐标系。外参在此仅作为在线几何变换算子，实时性能主要受窗口管理与缓冲调度策略的约束。
 
-双雷达前置融合还必须解决扫描结构兼容问题。单台 Mid-360 的线号范围为 0 到 3，如果直接拼接两路点云而不处理 \texttt{ring}，后续依赖扫描线组织邻域的模块无法区分来自不同雷达的通道。代码在首次收到点云后自动检测各路雷达通道数，并为后续雷达计算 \texttt{ring offset}：基准雷达保持原始线号，第2路雷达在线号上统一加偏移量 4，使合并后的 \texttt{ring} 范围变为 0 到 7。这样，双雷达融合后的点云在数据结构层面被显式重写为“等效 8 线 LiDAR”，为第3.2节的 LIO-SAM 适配提供了直接依据。
+双雷达融合还需解决扫描结构的兼容性问题。单台Mid-360的线号范围为0到3，若仅进行两路点云拼接而不重写\texttt{ring}字段，后续依赖扫描线邻域的模块将难以区分不同雷达通道。在实际处理中，基准雷达保留原始线号，对第二路雷达施加固定线号偏移，使得合并后的\texttt{ring}范围扩展为0至7。相应地，算法期望的扫描线总数\texttt{N\_SCAN}设置为8，从而确保\texttt{ring}编号范围与扫描线总数保持一致。因此，融合点云在数据结构层面被统一为等效的8线LiDAR，为第3.2节LIO-SAM输入适配提供了必要前提。
 
-时间同步采用面向在线处理的“窗口抽取”机制，而不是离线全局对齐。系统将每路点云写入各自缓冲队列，基准雷达首包的 \texttt{startTime} 和 \texttt{endTime} 用于定义当前融合窗口 $[t_k,t_{k+1}]$；只有当其他雷达缓冲区的时间覆盖已经越过该窗口上界时，\texttt{LidarBufReady} 才允许触发当前轮融合。对任一传感器 $i$ 的点 $\mathbf{p}_{i,j}$，若其绝对时间戳满足 $t_{i,j}\in[t_k,t_{k+1}]$，则被抽取到当前输出帧；若超过上界，则暂存到 \texttt{leftover} 缓冲区，等待下一轮处理。因此，第 $k$ 个融合输出可写为
+时间同步采用面向在线处理的窗口抽取机制。系统将各路点云写入独立的缓冲区，融合窗口$[t_k,t_{k+1}]$由基准雷达当前帧的时间边界定义；仅当其余雷达在时间覆盖上满足该窗口要求时，才触发当前轮次的融合。对于任意传感器$i$的点$\mathbf{p}_{i,j}$，若其绝对时间戳满足$t_{i,j}\in[t_k,t_{k+1}]$，则纳入当前输出；若超出上界，则留待下一窗口处理。因此，第$k$个融合输出可表示为
 \begin{equation}
 \mathcal{P}_{f}(k)=\bigcup_{i=1}^{2}\left\{\mathbf{p}^{b}_{i,j}\mid t_{i,j}\in[t_k,t_{k+1}]\right\}.
 \end{equation}
-该机制直接对应代码中的 \texttt{cutoff\_time} 与 \texttt{cutoff\_time\_new}，其优点是无需长时间缓存即可维持稳定输出频率，同时避免同一点被重复发布或跨窗口错配。
+该机制通过有限缓存维持稳定的输出频率，避免同一点跨窗口重复发布或错配。
 
-融合主线程 \texttt{SyncLidar} 以 $20\,\mathrm{Hz}$ 的目标频率运行，并按窗口输出三类结果：标准 \texttt{PointCloud2} 格式的 \texttt{/merged\_pointcloud}、保留 Livox 时间字段的 \texttt{/merged\_livox}，以及仅做高度切片后的 \texttt{/merged\_pointcloud\_sliced}。当前实现对点云的在线轻量处理仅包含高度约束 $z\in[-1.5,2.5]\,\mathrm{m}$，并未在融合节点内执行强体素下采样或统计离群点剔除；这一取舍是为了优先保持定位前端的结构特征，把更激进的任务侧滤波留到第3.3节再处理。与之相配套的缓存参数为每路 LiDAR 上限 50 帧、每路 IMU 上限 2000 样本、历史保留时间 $0.1\,\mathrm{s}$，这些参数共同限定了在线融合的实时延迟边界。
+融合线程以$10\,\mathrm{Hz}$的目标频率运行，按窗口发布两类结果：标准\texttt{PointCloud2}点云以及保留Livox时间字段的点云。当前的在线轻量处理优先保留定位前端所需的结构信息，未在融合节点执行强体素下采样或统计离群点剔除操作，更激进的任务侧滤波留待第3.3节处理。系统通过限制缓存深度与历史保留时长，将在线融合延迟稳定在可控范围内。
 
 \begin{figure}[htbp]
 	\centering
@@ -53,19 +51,17 @@
 
 \subsection{IMU 合并、时序发布与一次性自动调平}\label{ux70b9ux4e91ux5b9eux65f6ux878dux5408ux4e0eux53d1ux5e03}
 
-双雷达融合并不只发生在点云侧，IMU 数据同样要在统一参考系下进入后续定位链路。\texttt{ImuHandler} 在接收每路 \texttt{sensor\_msgs/Imu} 后，先利用对应的 $\mathbf{R}_{B}^{I_i}$ 将线加速度、角速度和四元数姿态全部变换到 \texttt{body}，再写入各自的 IMU 缓冲区。由于定位侧去畸变和预积分依赖时间单调的惯性序列，代码在这一阶段已将“多路 IMU 原始输出”改写为“同一参考系下的多路惯性观测”。
+双雷达系统同步完成惯性信息的坐标统一与时序统一。各路IMU观测依据静态外参映射到统一\texttt{body}坐标系，使线加速度、角速度与姿态量在同一几何语义下表达，抑制跨传感器坐标差异在预积分与去畸变中的累积偏差。
 
-IMU 的跨传感器合并由 \texttt{PublishTimeSortedImu} 完成。当前配置 \texttt{imu\_publish\_mode} 采用默认的 \texttt{time\_sorted} 模式，即在每一个激光融合窗口内，收集所有时间戳落入 $[t_k,t_{k+1}]$ 的 IMU 样本，按时间排序后逐条发布到 \texttt{/merged\_imu}，并通过全局时间戳单调检查避免重复发布与逆序输出。虽然代码同时保留 \texttt{select} 和 \texttt{fused} 两种可选模式，但本文实际系统采用的仍是时序排序模式，因为它最符合 LIO-SAM 对连续惯性数据流的输入要求。
+时序组织上采用\texttt{time\_sorted}模式，融合节点以激光同步窗口为参照，对窗口内多路IMU样本统一调度并按时间戳递增发布，形成单调连续的\texttt{/merged\_imu}序列，保留原始惯性时序结构以匹配LIO-SAM对连续输入流的处理机制。
 
-在得到 \texttt{/merged\_pointcloud}、\texttt{/merged\_livox} 和 \texttt{/merged\_imu} 之后，系统并不立即送入定位模块，而是先经过 \texttt{merged\_pointcloud\_leveler\_node} 完成一次性自动调平。该节点在启动初期要求平台保持静止，默认累计 $2.0\,\mathrm{s}$ 内不少于 800 个 IMU 样本，对加速度进行平均并估计重力方向 $\hat{\mathbf{g}}$，再构造旋转矩阵 $\mathbf{R}_{\mathrm{level}}$ 使其满足
+双雷达安装存在固定夹角且朝向与作业方向相反，若不调平则点云呈现上下颠倒与整体倾斜。系统在获得融合点云与IMU后先执行一次性自动调平。启动阶段在平台静止工况下累计约$2.0\,\mathrm{s}$且不少于800个IMU样本估计重力方向$\hat{\mathbf{g}}$，构造旋转矩阵$\mathbf{R}_{\mathrm{level}}$满足
 \begin{equation}
 \mathbf{R}_{\mathrm{level}}\,\hat{\mathbf{g}}=[0\;0\;1]^{\mathsf{T}}.
 \end{equation}
-这一过程本质上利用重力方向建立 \texttt{body} 到 \texttt{body\_leveled} 的姿态校正，因此能够稳定消除横滚和俯仰造成的整体倾斜，而不会额外引入新的航向观测。
+该校正建立\texttt{body}到\texttt{body\_leveled}的重力一致姿态关系，消除横滚和俯仰引起的整体倾斜，不额外引入航向观测。调平完成后，同一旋转应用于融合点云、Livox消息和融合IMU，并同步发布\texttt{body -> body\_leveled}的TF静态变换。调平完成前，相关输出被抑制以保证后续模块数据姿态一致性。
 
-调平完成后，节点对 \texttt{/merged\_pointcloud}、\texttt{/merged\_livox} 和 \texttt{/merged\_imu} 进行同一旋转变换，并分别发布 \texttt{/merged\_pointcloud\_leveled}、\texttt{/merged\_livox\_leveled} 和 \texttt{/merged\_imu\_leveled}，同时发布静态 TF \texttt{body -> body\_leveled}。若调平尚未完成，则由于 \texttt{publish\_before\_calibrated=false}，相关输出会暂时抑制，直到获得可靠的重力方向估计为止。这说明调平在本文实现中是“运行前一次性标定”，而不是随时间持续更新的在线姿态补偿。
-
-这一设计对后续任务具有两层意义：其一，LIO-SAM 得到的是已经对齐到重力方向的点云和 IMU，减轻了强动态工况下的初始姿态扰动；其二，第3.3节使用的高度阈值、ROI 边界和近场距离约束都建立在 \texttt{body\_leveled} 坐标系之上，从而避免同一目标因平台摆动而在 $z$ 方向出现明显的非物理漂移。
+该步骤为LIO-SAM提供重力对齐的惯性与几何输入，并使后续地面处理在近似水平参考系下执行：地面法向与$z$轴一致后，地面点抑制、近地噪声过滤与目标相对高度估计可采用更稳定阈值。同时，第3.3节的高度阈值、ROI边界与近场距离约束获得一致坐标基准，降低平台姿态扰动对动态目标判别稳定性的影响。
 
 \begin{figure}[htbp]
 	\centering
@@ -76,135 +72,206 @@ IMU 的跨传感器合并由 \texttt{PublishTimeSortedImu} 完成。当前配置
 	\label{fig:ch3_merge_publish_placeholder}
 \end{figure}
 
-\subsection{融合结果发布与 LIO-SAM 接口适配}\label{sec:ch3_livox_merge_lio_interface}
+综上所述，第3.1节的工程产出可归纳为一组可直接接入定位链路的标准化接口：融合点云与融合IMU在重力对齐坐标系下保持统一语义，并保留点级时间信息以支撑后续去畸变。与此同时，双雷达重映射后的\texttt{ring}范围与\texttt{N\_SCAN}满足一致性约束，保证前端不会因扫描结构不匹配而丢失有效观测。由此，第3.1节完成了从多源异构输入到统一前端接口的重构，为第3.2节的位姿估计与建图流程提供直接输入。
 
-从系统装配关系看，双雷达融合链路由 \texttt{system\_bringup/launch/run.launch} 统一编排：首先启动 \texttt{livox\_merge.launch} 完成多雷达和多 IMU 的同步输出，再启动 \texttt{merged\_pointcloud\_leveler.launch} 进行一次性调平，随后通过静态变换发布 \texttt{base\_link} 与 \texttt{body} 的重合关系，最后再启动 LIO-SAM、动态检测和图像分割等后续模块。这样，第3.1节输出的不是一个抽象“融合点云”概念，而是一组带有明确话题名和 \texttt{frame\_id} 的系统接口。
+\section{基于融合点云的定位系统集成与输出}\label{ux57faux4e8eux878dux5408ux70b9ux4e91ux7684ux5b9aux4f4dux7cfbux7edfux96c6ux6210ux4e0eux8f93ux51fa}
 
-在接口层面，融合前输出统一以 \texttt{body} 为参考系，包括 \texttt{/merged\_pointcloud}、\texttt{/merged\_pointcloud\_sliced}、\texttt{/merged\_livox} 和 \texttt{/merged\_imu}；调平后则改为 \texttt{body\_leveled}，对应输出为 \texttt{/merged\_pointcloud\_leveled}、\texttt{/merged\_livox\_leveled} 和 \texttt{/merged\_imu\_leveled}。其中，LIO-SAM 实际订阅的并非标准点云话题，而是 \texttt{/merged\_livox\_leveled} 与 \texttt{/merged\_imu\_leveled}，因为前者保留了 Livox 原始点的时间偏移字段，更便于后续点级去畸变。
+\subsection{LIO-SAM 紧耦合定位原理}\label{sec:ch3_lio_sam_principle}
 
-更关键的适配发生在扫描结构参数上。\texttt{paramsLivoxIMU.yaml} 将 \texttt{N\_SCAN} 从单雷达模式下的 4 调整为 8，其原因不是经验性调参，而是与上一小节的 \texttt{ring} 重映射严格对应：双雷达合并后，点云线号范围已经扩展为 0 到 7，若此时仍按 4 线 LiDAR 处理，则 \texttt{imageProjection} 会直接丢弃 \texttt{ring>=4} 的点，等价于只使用一半观测信息。由此可见，第3.1节的输出不仅是“点更多的融合结果”，而是经过坐标统一、时序统一和扫描结构重写之后，能够被 LIO-SAM 正确解释的输入数据。
-
-因此，本节与下一节之间的接口可以概括为：第3.1节负责将“双雷达 + 双 IMU”重构为“单参考系、单时序、等效 8 线 LiDAR 的融合输入”，第3.2节则在此基础上执行点级去畸变、特征提取和位姿优化。通过这样的章节分工，双雷达融合不再是独立于定位之外的前处理，而是整个定位与空间危险区域检测链路的前端数据组织层。
-
-\section{基于融合点云的SLAM定位与静态地图构建（LIO-SAM）}\label{ux57faux4e8eux878dux5408ux70b9ux4e91ux7684slamux5b9aux4f4dux4e0eux9759ux6001ux5730ux56feux6784ux5efalio-sam}
-
-\subsection{LIO-SAM 输入适配与系统接口}\label{sec:ch3_lio_input_interface}
-
-第3.2节不再从“为什么选 LIO-SAM”展开，而是直接说明双雷达融合结果如何被当前代码适配为 LIO-SAM 的标准输入。系统启动时，由 \texttt{run6axis.launch} 依次拉起 \texttt{imuPreintegration}、\texttt{imageProjection}、\texttt{featureExtraction} 和 \texttt{mapOptmization} 四个核心节点，形成“惯性先验 - 前端配准 - 后端优化”的实时链路。当前配置文件 \texttt{paramsLivoxIMU.yaml} 明确指定 \texttt{pointCloudTopic=/merged\_livox\_leveled}、\texttt{imuTopic=/merged\_imu\_leveled}、\texttt{lidarFrame=base\_link}、\texttt{odometryFrame=odom} 和 \texttt{mapFrame=map}，因此第3.1节输出的调平后融合消息并不是中间可视化结果，而是定位模块的直接输入接口。
-
-为了保留 Livox 点云的帧内时间结构，LIO-SAM 前端订阅的不是普通 \texttt{sensor\_msgs/PointCloud2}，而是包含 \texttt{offset\_time} 与 \texttt{line} 字段的 \texttt{livox\_ros\_driver2/CustomMsg}。这意味着点级去畸变依赖的不是离线估计的平均扫描时刻，而是每个点自身的时间偏移。与此同时，双雷达融合后的 \texttt{line} 范围已经被重映射为 0 到 7，因此 \texttt{N\_SCAN} 必须同步改为 8；若仍保持单雷达配置 4，\texttt{imageProjection} 会直接丢弃 \texttt{ring>=4} 的点，使融合收益在前端入口处被抵消。
-
-从输出关系看，LIO-SAM 内部首先发布 \texttt{lio\_sam/deskew/cloud\_info} 作为前端共享消息，随后在建图阶段发布 \texttt{lio\_sam/mapping/odometry}、\texttt{lio\_sam/mapping/path}、\texttt{lio\_sam/mapping/map\_global} 与 \texttt{lio\_sam/mapping/cloud\_registered} 等结果。其中，连续位姿与已配准点云将直接作为第3.3节动态检测的输入，因此本节真正建立的是“融合链路到定位链路”的接口闭环，而不是单独再论述一遍 SLAM 选型原则。
-
-\begin{figure}[htbp]
-	\centering
-	\fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
-	占位图：LIO-SAM 在本系统中的输入输出接口图\\[0.5em]
-	建议内容：输入端包含 \texttt{/merged\_livox\_leveled}、\texttt{/merged\_imu\_leveled} 与 \texttt{map/odom/base\_link} 坐标链，内部标出 \texttt{imuPreintegration}、\texttt{imageProjection}、\texttt{featureExtraction} 和 \texttt{mapOptmization}，输出端标出 \texttt{lio\_sam/mapping/odometry}、\texttt{cloud\_registered} 和静态地图。}}
-	\caption{LIO-SAM 输入输出接口占位图}
-	\label{fig:ch3_lio_sam_io_placeholder}
-\end{figure}
-
-\subsection{点级去畸变与 range image 组织}\label{sec:ch3_lio_deskew_projection}
-
-LIO-SAM 前端的第一步由 \texttt{imageProjection} 完成，其核心任务不是“重新配准点云”，而是把融合后的 Livox 扫描整理为后续特征提取可直接使用的有序结构。该节点同时订阅融合点云、融合 IMU 以及 \texttt{odometry/imu\_incremental}，首先在 \texttt{cachePointCloud()} 中缓存当前 \texttt{CustomMsg}，得到扫描起始时刻 $t_{\mathrm{scan}}$ 与终止时刻 $t_{\mathrm{end}}$；随后在 \texttt{deskewInfo()} 中检查 IMU 队列和增量里程计队列是否覆盖整段扫描时间窗。代码中显式要求 IMU 查询区间满足 $[t_{\mathrm{scan}}-0.01,\, t_{\mathrm{end}}+0.01]$，这样做的目的不是增大缓冲，而是保证扫描头尾点均可获得稳定插值。
-
-对当前扫描内任一点 $\mathbf{p}_i$，若其相对采样时刻为 $\Delta t_i$，则去畸变实际上是在恢复它相对于扫描起始时刻的等效位置：
+作为本系统位姿估计的核心引擎，LIO-SAM（Lidar Inertial Odometry via Smoothing and Mapping）\cite{Shan2020LIOSAM} 采用紧耦合的平滑与建图框架。其本质是在统一状态空间中联合建模激光几何约束与惯性动力学约束，而非将两类传感器结果进行后验级联。对关键帧 $k$，系统状态可表示为
 \begin{equation}
-\tilde{\mathbf{p}}_i=\mathbf{T}(t_{\mathrm{scan}}\leftarrow t_{\mathrm{scan}}+\Delta t_i)\,\mathbf{p}_i.
+\mathbf{x}_k=[\mathbf{R}_k,\,\mathbf{p}_k,\,\mathbf{v}_k,\,\mathbf{b}^g_k,\,\mathbf{b}^a_k],
 \end{equation}
-其中旋转量由 IMU 角速度积分获得，平移增量则由增量里程计提供初值。实现上，\texttt{findRotation()} 通过 IMU 时间序列插值求得当前点的转角增量，\texttt{deskewPoint()} 再将点变换到扫描起始坐标系，从而避免平台摆动对单帧刚体假设的破坏。
+其中 $\mathbf{R}_k$、$\mathbf{p}_k$、$\mathbf{v}_k$ 分别对应姿态、位置和速度，$\mathbf{b}^g_k$、$\mathbf{b}^a_k$ 分别对应陀螺与加速度计偏置。
 
-完成点级去畸变后，\texttt{projectPointCloud()} 将点投影到尺寸为 \texttt{N\_SCAN x Horizon\_SCAN} 的 \texttt{rangeMat}。对 Livox 输入而言，行索引直接取自点的 \texttt{ring}，列索引则由每条线的累计计数给出，因此双雷达融合后的 8 条扫描线会被组织为 8 行稠密 range image。随后，\texttt{cloudExtraction()} 依据有效像素提取有序点云，并同步生成 \texttt{startRingIndex}、\texttt{endRingIndex}、\texttt{pointColInd} 与 \texttt{pointRange} 等辅助数组。这些量共同组成 \texttt{cloud\_info} 消息，成为下一步特征提取和遮挡点剔除的直接依据。
-
-\subsection{特征提取与 scan-to-map 前端配准}\label{sec:ch3_lio_frontend}
-
-在 \texttt{featureExtraction} 节点中，前端首先对 \texttt{cloud\_info} 进行曲率计算和遮挡标记。具体而言，\texttt{calculateSmoothness()} 基于相邻点的距离差构造局部曲率，\texttt{markOccludedPoints()} 则结合列索引差与深度跳变，剔除被遮挡点和平行光束引发的不稳定邻域。这样得到的不是“所有可能的特征”，而是对 scan-to-map 优化最稳定的角点与面点候选。
-
-当前实现将每条扫描线划分为 6 个区段，在每个区段内按曲率大小筛选角点和面点：高曲率点在满足 \texttt{edgeThreshold=1} 时优先进入角点集合，每段最多保留 40 个；低曲率点在满足 \texttt{surfThreshold=0.1} 时进入面点集合，并再经体素滤波降采样。由此得到的 \texttt{cloud\_corner} 与 \texttt{cloud\_surface} 被送入 \texttt{mapOptmization}，用于构建当前帧到局部地图的几何残差。
-
-\texttt{mapOptmization} 的前端部分则围绕“当前扫描如何与局部地图对齐”展开。代码先通过 \texttt{updateInitialGuess()} 引入 IMU 预积分与增量里程计提供的初值，再用 \texttt{extractSurroundingKeyFrames()} 从历史关键帧中提取局部子地图，对当前角点与面点执行 \texttt{scan2MapOptimization()}。其目标可概括为
+在惯性约束层，系统对相邻关键帧间的 IMU 连续观测执行预积分，将高频原始测量压缩为
 \begin{equation}
-\min_{\mathbf{T}_{w}^{b}} \sum_{i\in\mathcal{E}} \rho\!\left(r^{\mathrm{edge}}_i\right)^2+\sum_{j\in\mathcal{S}} \rho\!\left(r^{\mathrm{surf}}_j\right)^2,
+\Delta\mathbf{z}_{k,k+1}=\left[\Delta\mathbf{R}_{k,k+1},\,\Delta\mathbf{v}_{k,k+1},\,\Delta\mathbf{p}_{k,k+1}\right],
 \end{equation}
-其中 $\mathcal{E}$ 与 $\mathcal{S}$ 分别表示角点和面点集合，$r^{\mathrm{edge}}_i$ 与 $r^{\mathrm{surf}}_j$ 分别表示点到线、点到面的匹配残差。优化完成后，当前扫描被变换到里程计参考系，并通过 \texttt{cloud\_registered} 发布。这一步不仅提供了定位结果，也为第3.3节的动态检测提供了已经完成位姿补偿的输入点云。
+并以因子形式嵌入后端图优化，联合估计位姿、速度与偏置。该机制使系统能够在关键帧尺度获得全局一致估计，同时在帧间尺度维持高频状态传播\cite{Shan2020LIOSAM}。
 
-\subsection{IMU 预积分、因子图优化与位姿地图输出}\label{sec:ch3_lio_backend_output}
-
-LIO-SAM 的后端由 \texttt{imuPreintegration} 与 \texttt{TransformFusion} 共同完成。前者将位姿、速度和 IMU 偏置纳入统一因子图，在相邻关键帧之间加入 IMU 预积分因子与 LiDAR 位姿校正因子；后者则将建图线程输出的低频里程计与 IMU 线程输出的高频增量位姿进行融合，得到连续可查询的位姿序列。用状态量 $\mathbf{x}_k=\{\mathbf{R}_k,\mathbf{p}_k,\mathbf{v}_k,\mathbf{b}_k\}$ 表示第 $k$ 个关键时刻的姿态、位置、速度和偏置，则后端优化可写为
+在激光前端，点云以点级时间戳为依据完成运动去畸变。通过对惯性角速度进行时间积分并在点时刻插值，可构造扫描周期内每个采样点相对于参考时刻的位姿变换。对时刻 $t_j$ 的点 $\mathbf{p}_j$，其去畸变表达为
 \begin{equation}
-\min_{\{\mathbf{x}_k\}}\sum_k \left\|\mathbf{r}_{\mathrm{imu}}(\mathbf{x}_{k-1},\mathbf{x}_k)\right\|_{\mathbf{W}_{\mathrm{imu}}}^2+\sum_k \left\|\mathbf{r}_{\mathrm{lidar}}(\mathbf{x}_k)\right\|_{\mathbf{W}_{\mathrm{lidar}}}^2.
+\mathbf{p}^{(0)}_j=\mathbf{T}^{-1}(t_0)\,\mathbf{T}(t_j)\,\mathbf{p}_j,
 \end{equation}
-当前实现中，IMU 噪声参数由 \texttt{imuAccNoise}、\texttt{imuGyrNoise}、\texttt{imuAccBiasN} 和 \texttt{imuGyrBiasN} 给出；为保持在线性，图优化在累计约 100 个关键状态后会以边缘协方差为先验重置一次增量图结构。
+其中 $t_0$ 为扫描参考时刻。去畸变后的点云被组织为距离图表示，从而显式保留扫描拓扑邻域关系，为后续几何特征计算提供结构化输入。
 
-后端优化完成后，\texttt{mapOptmization} 会持续发布 \texttt{lio\_sam/mapping/odometry}、\texttt{lio\_sam/mapping/path}、\texttt{lio\_sam/mapping/map\_global} 以及关键帧地图；\texttt{TransformFusion} 则进一步输出高频 \texttt{odometry/imu} 和 \texttt{lio\_sam/imu/path}，供需要更高时间分辨率的模块使用。需要强调的是，回环检测虽然在代码中以 \texttt{loopClosureEnableFlag} 作为可选增强存在，但第3.3节的动态检测主链并不依赖回环结果，而是直接建立在连续里程计和已配准点云之上。
+在特征建模层，系统以局部距离变化表征几何显著性。对第 $i$ 个采样点，其粗糙度可写为
+\begin{equation}
+c_i=\left(r_{i-2}+r_{i-1}-4r_i+r_{i+1}+r_{i+2}\right)^2.
+\end{equation}
+在实际约束构造时，系统在遮挡一致性判别基础上提取角点与面点，并通过分段采样与降采样机制维持特征分布均衡，以降低局部退化几何对估计稳定性的影响。
 
-因此，第3.2节的工程作用可以概括为：把第3.1节提供的“已融合、已调平、等效 8 线 LiDAR 输入”转化为“连续位姿 + 静态地图 + 已配准点云”三类结果。前两者提供统一时空参考，后一者直接进入动态检测模块，构成从定位到目标生成的中间接口。
+在后端优化层，采用局部地图约束下的 Scan-to-Map 非线性优化。角点与面点分别形成点到线、点到面的几何残差，可写为
+\begin{equation}
+r_{\text{line}}=\frac{\left\| (\mathbf{p}-\mathbf{a})\times(\mathbf{p}-\mathbf{b})\right\|}{\left\|\mathbf{a}-\mathbf{b}\right\|},
+\qquad
+r_{\text{plane}}=\mathbf{n}^{\mathsf{T}}\mathbf{p}+d.
+\end{equation}
+在此基础上，系统通过增量式平滑框架联合最小化惯性残差、激光几何残差及全局约束残差（如闭环与可用时的卫星定位约束），其目标可概括为
+\begin{equation}
+\min_{\{\mathbf{x}_k\}}\sum\|r_{\mathrm{imu}}\|_{\mathbf{\Lambda}_{\mathrm{imu}}}^{2}
++\sum\|r_{\mathrm{line}}\|_{\mathbf{\Lambda}_{\mathrm{line}}}^{2}
++\sum\|r_{\mathrm{plane}}\|_{\mathbf{\Lambda}_{\mathrm{plane}}}^{2}
++\sum\|r_{\mathrm{loop}}\|_{\mathbf{\Lambda}_{\mathrm{loop}}}^{2}
++\sum\|r_{\mathrm{gps}}\|_{\mathbf{\Lambda}_{\mathrm{gps}}}^{2}.
+\end{equation}
+
+因此，LIO-SAM 在本文中的作用可概括为：通过紧耦合状态估计将双雷达融合观测转化为时间连续、空间一致且可全局校正的位姿与地图基准，为后续动态目标检测提供稳定的时空参考。
+
+\subsection{双雷达融合定位的观测一致性与参数化适配}\label{sec:ch3_lio_input_interface}
+
+基于第3.1节形成的融合观测流，双雷达定位适配的核心目标是将“异构、多源、异步”的原始观测转化为可被统一状态估计模型直接吸收的约束集合。该过程不仅是接口连通，更是观测拓扑、时间基准和参考坐标三类一致性条件的联合满足。
+
+在观测拓扑层，双雷达融合后可视为两组 4 线扫描的并行叠加。为避免扫描行索引混叠，采用固定线号偏移策略构造等效 8 线观测：
+\begin{equation}
+r_f=
+\begin{cases}
+r^{(1)}, & \text{来自雷达1},\\
+r^{(2)}+4, & \text{来自雷达2},
+\end{cases}
+\quad r^{(1)},r^{(2)}\in\{0,1,2,3\}.
+\end{equation}
+与之对应，系统参数设置 $N_{\mathrm{SCAN}}=8$、$H_{\mathrm{SCAN}}=6000$，并以 $[1.0,40.0]$ m 的有效距离门限抑制近距无效回波和远距低可信回波。该参数化约束的作用在于保持距离图行列拓扑与真实采样结构同构，防止特征提取阶段出现结构性信息丢失。
+
+在时间一致性层，系统同时保留帧级时间窗口与点级偏移时间。对第 $i$ 帧第 $j$ 个点，其绝对时间可记为
+\begin{equation}
+t_{i,j}=t_i+\delta t_{i,j},\qquad \delta t_{i,j}\in[0,T_i],
+\end{equation}
+并通过连续惯性序列提供的运动先验完成点级去畸变。由此，窗口组织与连续传播不再冲突，而是共同服务于“离散采样-连续运动”的统一建模，从而降低相位错配引起的补偿误差。
+
+在参考系一致性层，前置重力对齐将系统初始姿态误差主要压缩到航向维度；后端再通过小权重滚转/俯仰正则项抑制短时姿态漂移。其等价融合形式可写为
+\begin{equation}
+\hat{\boldsymbol\theta}^{rp}_k=(1-\alpha)\,\boldsymbol\theta^{rp}_{k,\mathrm{geo}}+\alpha\,\boldsymbol\theta^{rp}_{k,\mathrm{imu}},
+\end{equation}
+其中本文配置取 $\alpha=0.01$。该设计在保持几何主导性的同时引入弱惯性约束，兼顾高频扰动下的稳定性与长期一致性。
+
+此外，特征阈值与体素分辨率共同构成定位负载与精度的折中边界：角点/面点阈值分别取 1.0 与 0.1，里程计与建图层面的体素尺度分别采用 0.2 m、0.1 m 和 0.2 m；关键帧触发阈值取 0.5 m 与 0.1 rad，局部地图搜索半径取 20 m。上述参数并非独立超参数集合，而是围绕“近场结构保持 + 实时可解性”这一目标形成的协同配置。
+
+\subsection{定位输出的误差抑制与下游可用性分析}\label{sec:ch3_lio_pose_output}
+
+在完成联合优化后，定位子系统输出可分为三类：连续位姿轨迹、运动补偿后的配准点云以及全局静态地图。三类输出分别承担时空映射、运动分离与结构先验的功能，并共同决定下游动态检测的可用性上界。
+
+其一，连续位姿轨迹提供跨时刻可比的统一坐标映射。对任意时刻 $t$ 的传感器点 $\mathbf{p}^{b}_{t}$，世界坐标表示为
+\begin{equation}
+\mathbf{p}^{w}_{t}=\mathbf{T}^{w}_{b}(t)\,\mathbf{p}^{b}_{t}.
+\end{equation}
+该映射将“同一目标在不同时刻”的观测对齐到统一参考系，避免坐标系漂移造成的伪位移，从而保证速度、位移与趋势估计具有可解释的物理语义。
+
+其二，配准点云实现平台自运动项的显式剥离。以参考时刻 $t_r$ 为基准，第 $t$ 时刻点云的补偿表达可写为
+\begin{equation}
+\mathbf{p}^{\mathrm{reg}}_{t}=\left(\mathbf{T}^{w}_{b}(t_r)\right)^{-1}\mathbf{T}^{w}_{b}(t)\,\mathbf{p}^{b}_{t}.
+\end{equation}
+据此，相邻时刻差分可近似分解为
+\begin{equation}
+\Delta\mathbf{p}^{\mathrm{reg}}\approx \Delta\mathbf{p}^{\mathrm{obj}}+\boldsymbol\epsilon_{\mathrm{pose}}+\boldsymbol\epsilon_{\mathrm{assoc}},
+\end{equation}
+其中 $\Delta\mathbf{p}^{\mathrm{obj}}$ 为目标真实相对运动项，$\boldsymbol\epsilon_{\mathrm{pose}}$ 与 $\boldsymbol\epsilon_{\mathrm{assoc}}$ 分别为位姿误差和数据关联误差。该分解表明：定位质量直接决定动态检测中的误差地板。
+
+其三，后端全局一致性机制抑制长期累积漂移并提升下游稳定性。系统通过关键帧图优化持续更新位姿协方差，并在满足门限条件时引入绝对约束与回环约束；其中回环更新频率为 1 Hz，历史候选由空间邻近与时间间隔共同筛选（15 m、30 s）。这意味着下游模块接收的并非单次配准结果，而是经过全局一致性校正的时空状态序列，有利于保持候选目标轨迹的连续性并降低误警抖动。
+
+综上，第3.2节输出的价值不仅体现在“可用定位结果”，更体现在其对后续检测链路的误差约束能力：通过统一映射、运动分离和全局一致性三重机制，将动态判别问题从“平台运动主导”转化为“场景目标运动主导”，从而为第3.3节候选目标生成和第4章预警判定提供可复用的定量基础。
 
 \begin{figure}[htbp]
 	\centering
 	\fbox{\parbox[c][5.6cm][c]{0.9\textwidth}{\centering
-	占位图：LIO-SAM 节点流程与前后端约束示意图\\[0.5em]
-	建议内容：\texttt{imageProjection} 负责点级去畸变与 range image，\texttt{featureExtraction} 负责角点/面点提取，\texttt{mapOptmization} 负责局部地图配准与关键帧管理，\texttt{imuPreintegration} 与 \texttt{TransformFusion} 负责惯性约束和连续位姿输出。}}
-	\caption{LIO-SAM 节点流程占位图}
-	\label{fig:ch3_lio_sam_flow_placeholder}
+	占位图：定位输出对动态检测的时空支撑关系图\\[0.5em]
+	建议内容：左侧给出连续位姿、配准点云与静态地图三类定位输出，中部给出“统一参考系映射”与“自运动补偿”两项作用机理，右侧给出动态检测模块的输入组织，强调跨时刻可比性与判别稳定性提升。}}
+	\caption{定位系统输出与动态检测接口占位图}
+	\label{fig:ch3_lio_to_detection_placeholder}
 \end{figure}
 
 \section{基于 M-detector 的动态点检测与候选目标状态生成}\label{sec:ch3_mdetector_generation}
 
-本节聚焦于“\textbf{候选目标生成}”：以第3.2节输出的已配准点云和连续位姿为输入，依次完成动态点检测、候选聚类和短时跟踪，输出可供第4章进一步做风险分级的目标级状态量。本节不直接给出 TTC 或预警等级，而是回答“哪些点在运动、哪些运动点属于同一目标、该目标在短时间内如何延续”这三个更基础的问题。
+本节聚焦于“\textbf{候选目标生成}”：在第3.2节提供的统一参考系点云与连续位姿基础上，构建基于遮挡机理的 M-detector 动态事件检测链路\cite{Wu2024MDetector}，并进一步完成候选聚类与短时跟踪。本节目标是形成可供第4章风险分级使用的目标级状态量，而非直接输出 TTC 或预警等级。
 
 \subsection{动态检测输入组织与短时历史深度图构建}\label{sec:ch3_mdetector_input}
 
-M-detector 在系统中的启动入口为 \texttt{detector\_mid360\_lio\_sam.launch}。该 launch 文件将 \texttt{dyn\_obj/points\_topic} 指向 \texttt{/lio\_sam/mapping/cloud\_registered}，将 \texttt{dyn\_obj/odom\_topic} 指向 \texttt{/lio\_sam/mapping/odometry}，并设置 \texttt{input\_in\_world\_frame=true}。这表明动态检测模块接收的并不是原始雷达坐标系点云，而是已经由 LIO-SAM 变换到里程计参考系的配准结果。由此，平台自运动的大部分影响已经在第3.2节中被吸收，本节主要关注配准后仍然存在的场景动态性。
+在工程实现中，动态检测链路以前一阶段输出的已配准点云与同步里程计为上游输入，并可在动态判别前启用近场 ROI 预裁剪。启用该预处理时，点云先经近场范围约束后再进入动态判别流程，以降低计算复杂度。由于输入已完成主要时空对齐，M-detector 在本系统中的任务被限定为识别场景中的相对运动事件，从而在模块边界上实现“定位误差抑制”与“动态证据提取”的职责分离。
 
-在实现上，\texttt{dynfilter\_with\_odom.cpp} 同时缓存点云和里程计，定时器回调以近似先进先出的方式取出一帧点云及其对应时刻位姿，并调用 \texttt{DynObjFilter::filter()} 执行动态判别。为保证历史观测的时间连续性，系统并不直接使用“当前帧对上一帧”的两帧比较，而是在内部维护一个短时深度图队列 \texttt{depth\_map\_list}。根据当前配置，\texttt{buffer\_delay=0.1 s}、\texttt{depth\_map\_dur=0.4 s}、\texttt{max\_depth\_map\_num=5}、\texttt{frame\_dur=0.02 s}，因此每个历史深度图代表一个短时间片段的球面投影结果，最多保留约 5 个时间片的短时观测。
-
-对任意一个深度图，代码都会按球面像素记录当前射线上的深度范围，可写为
+为满足逐点事件判别的时序要求，系统在动态目标滤除模块中维护短时历史深度图队列，而非仅依赖相邻两帧差分。对任一历史时间片，球面像素 $(u,v)$ 记录深度包络，可写为
 \begin{equation}
 \mathcal{D}_k(u,v)=\big[d_k^{\min}(u,v),\, d_k^{\max}(u,v)\big],
 \end{equation}
-其中 $d_k^{\min}$ 和 $d_k^{\max}$ 分别表示第 $k$ 个短时深度图在像素 $(u,v)$ 上记录的最小和最大深度。与此同时，系统会先执行无效点与自体点检查：\texttt{blind\_dis=0.3 m} 用于剔除近距离无效回波；\texttt{self\_x\_f/self\_x\_b/self\_y\_l/self\_y\_r} 则用于描述自体掩膜。当前公开配置将自体掩膜参数设为 0，表示默认不启用硬掩膜，但接口仍然保留，以便工程部署时按吊具外包络补充。
+其中 $d_k^{\min}$ 与 $d_k^{\max}$ 分别表示第 $k$ 个时间片在像素 $(u,v)$ 的最小与最大深度。该表示可在不依赖语义先验的条件下，将遮挡关系转化为可比较的几何约束。实验配置采用短时缓冲滑窗策略，设置了 $0.1\,\mathrm{s}$ 延迟及$0.4\,\mathrm{s}$ 深度图时长，窗口维持最多 5 个历史片段，并保留近距盲区与自体掩膜接口以适配不同设备外形。
+
+在数据调度上，动态检测节点采用“点云队列 + 里程计队列 + 定时器触发”的近似同序处理机制：每次回调取出队首点云与队首位姿并执行动态点判别流程，随后发布动态点结果。该机制将算法延迟限制在“短时缓冲窗口 + 调度周期”范围内，并避免对长时间历史进行回溯计算。
+
+从可计算性看，逐点判别的时间复杂度受历史深度图数量线性约束。记经近场 ROI 约束后的单帧有效点数为 $N_p$、历史深度图数量为 $K_h$，则检测主过程可近似写为
+\begin{equation}
+\mathcal{O}(N_p\cdot K_h),\qquad K_h\leq \texttt{max\_depth\_map\_num}=5.
+\end{equation}
+因此，在固定传感器频率与固定窗口配置下，单帧计算量上界由 $N_p\cdot K_h$ 决定，主要消耗于“当前点与历史深度图”的逐点比较；当历史片段数受限于 $K_h\leq 5$ 时，模块总开销随输入点数近似线性增长，因而具备可预测且有界的实时计算开销。
+
+为降低远距离背景点与无关区域点对遮挡判别的扰动，系统在历史深度图构建前执行近场 ROI 约束。设第 $k$ 帧已配准点集为 $\mathcal{P}_{\mathrm{reg}}(k)$，则送入动态检测的点集可表示为
+\begin{equation}
+\mathcal{P}_{\mathrm{roi}}(k)=\left\{\mathbf{p}\in\mathcal{P}_{\mathrm{reg}}(k)\mid x^2+y^2\leq r_{xy}^2\right\},\qquad r_{xy}=10\,\mathrm{m},
+\end{equation}
+其中 $(x,y)$ 在重力对齐坐标系下计算。实现上，ROI 判定与后续位姿对齐及坐标变换过程保持时空语义一致，从而避免几何筛选阶段引入附加参考系偏差。该预处理仅作用于动态检测支路，不改变定位主链路的观测输入。
+
+在当前运行验证中，近场 ROI 将送入动态检测的点数由约 $1.19\times10^4$ 降至约 $4.93\times10^3$，平均保留比例约为 $41.4\%$。因此，复杂度表达中的 $N_p$ 不再等同于原始已配准点云规模，而是由 ROI 半径与场景分布共同决定的有效点数规模，这为在线实时性提供了额外的可调约束。
+
+近场 ROI 约束在动态检测输入组织中的位置与作用机理如图\ref{fig:ch3_roi_crop_placeholder}所示。
 
 \begin{figure}[htbp]
 	\centering
-	\fbox{\parbox[c][5.6cm][c]{0.9\textwidth}{\centering
-	占位图：M-detector 输入组织与短时历史深度图示意图\\[0.5em]
-	建议内容：\texttt{/lio\_sam/mapping/cloud\_registered} 与 \texttt{/lio\_sam/mapping/odometry} 进入 \texttt{dynfilter}，经缓冲后形成多个按时间片组织的球面深度图，图中标出 \texttt{buffer\_delay}、\texttt{depth\_map\_dur} 和像素级深度范围记录。}}
-	\caption{M-detector 输入组织与历史深度图占位图}
-	\label{fig:ch3_mdetector_input_placeholder}
+	\fbox{\parbox[c][5.8cm][c]{0.9\textwidth}{\centering
+	占位图：近场 ROI 裁剪在动态检测输入组织中的示意图\\[0.5em]
+	建议内容：左侧为已配准点云的全量观测，中部为重力对齐坐标系下的平面圆形约束区域（$r_{xy}=10\,\mathrm{m}$）及保留点/剔除点示意，右侧为裁剪后点云进入历史深度图构建与动态判别流程；图中可补充点数由 $N_{\mathrm{raw}}$ 缩减至 $N_p$ 的关系与对 $\mathcal{O}(N_p\cdot K_h)$ 计算负载的影响。}}
+	\caption{近场 ROI 裁剪在动态检测输入组织中的作用示意占位图}
+	\label{fig:ch3_roi_crop_placeholder}
 \end{figure}
 
 \subsection{基于遮挡关系的三类动态点判别}\label{sec:ch3_mdetector_cases}
 
-在完成深度图构建后，\texttt{DynObjFilter::filter()} 会对每个点按固定顺序执行 \texttt{InvalidPointCheck}、\texttt{SelfPointCheck}、\texttt{Case1}、\texttt{Case2} 和 \texttt{Case3} 三类判别。只有当一个点既不是无效点，也不属于自体区域，且在前一类规则中没有被判为动态时，才会继续进入下一类判别。最终每个点被赋予 \texttt{STATIC}、\texttt{CASE1}、\texttt{CASE2}、\texttt{CASE3} 或 \texttt{INVALID} 标签，这些标签构成后续候选目标生成的原始依据。
+基于上述历史表征，算法按“有效性检验 $\rightarrow$ 自体剔除 $\rightarrow$ Case1/2/3 判别”的顺序逐点推理。实现层面，每个点最终被标注为 \texttt{STATIC}、\texttt{CASE1}、\texttt{CASE2}、\texttt{CASE3} 或 \texttt{INVALID}，并作为候选目标生成的输入标签。
 
-第一类判别对应深度边界不一致。若当前点在球面像素 $(u,v)$ 上的深度 $d(u,v)$ 长期落在历史深度区间之外，则说明该方向上出现了新物体或原有物体消失。代码中这一过程不仅检查当前深度是否超出 $[d_k^{\min}, d_k^{\max}]$，还会调用 \texttt{Case1MapConsistencyCheck()} 在邻域内执行静态一致性验证，并依据 \texttt{occluded\_map\_thr1} 决定需要多少个历史深度图同时给出不一致证据。当前配置下，\texttt{occluded\_map\_thr1=3}，因此单次偶发深度跳变不会直接被当作动态事件。
-
-第二类判别对应“遮挡体运动”。若当前点深度较大，而某个更靠近传感器的历史点曾经遮挡它，则需要进一步判断是测量噪声造成的深度起伏，还是遮挡物自身发生了运动。代码通过 \texttt{Case2Enter()}、\texttt{Case2DepthConsistencyCheck()} 和 \texttt{Case2VelCheck()} 组合完成这一判断：只有当遮挡关系在多个历史深度图中持续成立、且遮挡体速度变化满足连续性约束时，才累计 \texttt{occluded\_times\_thr2} 次证据并将其标为 \texttt{CASE2}。当前配置取 \texttt{occluded\_times\_thr2=3}。
-
-第三类判别对应“被遮挡物体显露”。其逻辑与第二类相对：若当前点比历史最浅深度更近，并且这种变化能够通过连续的遮挡消失过程解释，则说明原先被挡住的物体进入了可见区。该过程由 \texttt{Case3Enter()}、\texttt{Case3DepthConsistencyCheck()} 和 \texttt{Case3VelCheck()} 完成，并以 \texttt{occluding\_times\_thr3} 控制连续证据数量，当前配置同样取 3。这样，Case1/2/3 分别对应“新出现或消失的边界”“遮挡体本身运动”“被遮挡体显露”三类不同的动态来源，而不是把所有不一致都混为同一种动态噪声。
+M-detector\cite{Wu2024MDetector}中主要考虑了三类典型判别机制（图\ref{fig:ch3_mdetector_cases_placeholder}），分别对应不同动态来源：Case1 描述深度边界不一致，即当前观测持续偏离历史深度包络；Case2 描述遮挡体运动，即遮挡关系在时间上持续且可由连续运动解释；Case3 描述被遮挡体显露，即观测由“被遮挡”向“可见”稳定转变。
 
 \begin{figure}[htbp]
 	\centering
-	\fbox{\parbox[c][6.0cm][c]{0.9\textwidth}{\centering
-	占位图：M-detector 三类动态判别机理图\\[0.5em]
-	建议内容：分三幅小图展示 Case1 深度边界不一致、Case2 遮挡体运动、Case3 被遮挡物体显露，图中包含球面深度图像素 $(u,v)$、历史深度区间和当前点深度的比较关系。}}
-	\caption{M-detector 三类动态判别占位图}
+	\includegraphics[width=0.9\textwidth]{m_detector-遮挡原理.pdf}
+	\caption{M-detector 三类动态判别原理示意图\cite{Wu2024MDetector}}
 	\label{fig:ch3_mdetector_cases_placeholder}
 \end{figure}
 
+为降低偶发回波和单帧噪声引发的误检，系统在三类判别中均加入多帧一致性与邻域几何一致性验证；当前配置中三类事件均要求至少 3 次连续证据后才确认动态。该策略可显著提升后续聚类与跨帧关联的稳定性。
+
+若以 $\mathcal{R}^{(k)}_c(p)\in\{0,1\}$ 表示点 $p$ 在第 $k$ 个历史片上的第 $c$ 类判别结果（$c\in\{1,2,3\}$），则证据累积可写为
+\begin{equation}
+\Gamma_c(p)=\sum_{k=1}^{K_h}\mathcal{R}^{(k)}_c(p).
+\end{equation}
+对应的类别确认规则可表示为
+\begin{equation}
+\ell(p)=
+\begin{cases}
+\texttt{CASE1}, & \Gamma_1(p)\ge \tau_1,\\
+\texttt{CASE2}, & \Gamma_2(p)\ge \tau_2,\\
+\texttt{CASE3}, & \Gamma_3(p)\ge \tau_3,\\
+\texttt{STATIC}, & \text{otherwise},
+\end{cases}
+\end{equation}
+其中本系统配置下 $\tau_1=\tau_2=\tau_3=3$。在执行顺序上，Case1 优先于 Case2/Case3，这一“先边界后遮挡链”的设计可优先剔除显著不一致点，再对遮挡关系进行细化判别。
+
+此外，Case2 与 Case3 均引入速度连续性检验，以加速度门限约束跨时刻遮挡解释的一致性。该约束等价于对遮挡链速度施加一阶平滑先验，从而降低由局部噪声导致的错误链式触发。
+
 \subsection{动态点世界系桥接与欧式聚类候选生成}\label{sec:ch3_mdetector_cluster}
 
-M-detector 原始输出的动态点云话题为 \texttt{/m\_detector/point\_out}，其 \texttt{frame\_id} 默认跟随检测模块内部使用的里程计系。为了让后续聚类和跟踪统一在固定世界系中工作，系统在 launch 中额外启用了 \texttt{pointcloud\_tf\_bridge}，将 \texttt{/m\_detector/point\_out} 显式变换为 \texttt{/m\_detector/point\_out\_map}。这种“先检测、后桥接”的组织方式把动态判别与世界系表达解耦开来，既保留了检测模块对输入坐标的独立性，又避免了下游模块反复自行查 TF。
+动态点输出后，系统先通过点云桥接节点统一到固定世界系，再进行候选聚类与对象化表达。该“检测与坐标表达分离”的组织方式降低了下游模块对 TF 查询细节的耦合，并保证不同时间的候选中心可在同一参考系中直接比较。
 
-在候选目标生成阶段，\texttt{dyn\_cluster\_node} 对 \texttt{/m\_detector/point\_out\_map} 执行欧式聚类，当前配置参数为聚类半径 \texttt{0.6 m}、最小簇点数 \texttt{20}、最大簇点数 \texttt{50000}。需要强调的是，这里采用的是标准欧式聚类，而不是 DBSCAN 或 KMeans 变体。对每个聚类，节点先计算其轴对齐包围盒，再取包围盒中心作为候选目标中心：
+桥接节点在时间戳一致性上采用“两阶段策略”：优先使用精确时间戳 TF 进行变换；若当前时刻 TF 暂缺，则在开启回退选项时使用最近可用 TF 并保留输入消息时间戳。该机制在保证实时性的同时减少因瞬时 TF 缺失引起的消息丢失。
+
+候选生成阶段采用欧式聚类，并对每个聚类计算轴对齐包围盒中心
 \begin{equation}
 \mathbf{c}_u=\left[\frac{x_{\min}+x_{\max}}{2},\,\frac{y_{\min}+y_{\max}}{2},\,\frac{z_{\min}+z_{\max}}{2}\right]^{\mathsf{T}}.
 \end{equation}
-因此，下游接收到的并不是逐点动态标签，而是已经上升为“候选目标级”的几何中心。
+其中 $\mathbf{c}_u$ 为第 $u$ 个候选目标的几何中心。实验配置下，聚类半径与规模阈值取 $0.6\,\mathrm{m}$、$[20,50000]$。最终输出为候选中心序列（\texttt{PoseArray}），并可选发布聚类点云与可视化标记，以支持调参与可解释性分析。
 
-除 \texttt{/m\_detector/dynamic\_clusters} 这一 \texttt{PoseArray} 输出外，聚类节点还可选发布 \texttt{/m\_detector/dynamic\_cluster\_markers} 和 \texttt{/m\_detector/clustered\_cloud}。前者用于可视化候选目标中心，后者保留参与聚类的动态点集合，便于后续分析聚类边界是否稳定。就章节边界而言，第3.3.3 到这里已经完成了“动态点到候选目标”的抽象提升，而尚未进入跨帧关联和趋势估计。
+从算法负载看，聚类阶段以 KD-tree 邻域搜索为核心，其主导复杂度可近似为
+\begin{equation}
+\mathcal{O}(N_c\log N_c),
+\end{equation}
+其中 $N_c$ 为进入聚类的动态点数。由于上游已通过多帧一致性抑制孤立噪声点，$N_c$ 在大多数工况下显著小于原始点云规模，从而使候选生成维持可接受的在线开销。
 
 \begin{figure}[htbp]
 	\centering
@@ -217,7 +284,7 @@ M-detector 原始输出的动态点云话题为 \texttt{/m\_detector/point\_out}
 
 \subsection{短时目标跟踪与状态输出}\label{sec:ch3_dynamic_tracker}
 
-候选目标中心在单帧层面仍然可能因为遮挡、漏检和聚类边界抖动而发生跳变，因此系统在 \texttt{dynamicTracker} 节点中进一步执行短时关联与状态平滑。当前 launch 会加载 \texttt{dynamic\_tracker.yaml}，将输入话题显式设置为 \texttt{/m\_detector/dynamic\_clusters}，并以 \texttt{map} 作为输出参考系。与上一版论文描述不同，当前实现采用的是二维常速度模型，而不是三维匀速状态模型。
+候选目标中心在单帧层面仍可能因遮挡、漏检和聚类边界抖动产生跳变，因此系统在短时目标跟踪模块中执行跨帧关联与状态平滑。结合第3.1节的一次性自动调平结果，场景在运行阶段可在重力对齐坐标系下近似解耦为“水平面运动 + 高度缓变”，当前实现采用二维常速度卡尔曼模型，输入为候选中心序列，输出为确认轨迹、状态量与短时预测结果。
 
 设第 $k$ 个时刻的跟踪状态为
 \begin{equation}
@@ -234,13 +301,57 @@ M-detector 原始输出的动态点云话题为 \texttt{/m\_detector/point\_out}
 0&0&0&1
 \end{bmatrix}.
 \end{equation}
-其中观测只包含二维中心位置，$z$ 向高度并未纳入状态方程，而是通过 \texttt{z\_lowpass\_alpha} 执行指数低通平滑。这样的设计与当前候选输出的几何特征一致，也更符合近场短时避障中对平面运动趋势的主要关注。
+其中观测只包含二维中心位置，$z$ 向高度并未纳入状态方程，而是采用指数低通更新
+\begin{equation}
+z_k=\alpha z_{k-1}+(1-\alpha)\tilde{z}_k
+\end{equation}
+其中 $z_{k-1}$ 为上一时刻轨迹高度估计，$\tilde{z}_k$ 为当前检测高度。该更新可抑制高度估计中的高频抖动：$\alpha$ 越大，历史信息权重越高、输出更平滑但响应滞后更明显；$\alpha$ 越小，输出对新观测更敏感、响应更快但更易受瞬时噪声影响。这样的设计与当前候选输出的几何特征一致，也更符合近场短时避障中对平面运动趋势的主要关注。
 
 数据关联采用时间扩张门控策略。设某条轨迹在当前时刻的预测位置为 $\hat{\mathbf{p}}_k$，检测到的候选中心为 $\mathbf{c}_u$，则只有当
 \begin{equation}
 \|\mathbf{c}_u-\hat{\mathbf{p}}_k\|_2\le \delta_0+k_g\Delta t
 \end{equation}
-时，二者才允许匹配。当前配置取 \texttt{gate\_distance\_base=1.5 m}、\texttt{gate\_distance\_per\_second=3.0 m/s}。同时，轨迹需满足 \texttt{confirm\_hits=2} 才会从暂态轨迹转为确认轨迹；若连续丢失超过 \texttt{max\_missed\_frames=30} 或 \texttt{max\_missed\_time=3.0 s}，则轨迹被删除。节点最终发布 \texttt{dynamic\_tracker/tracked\_centers}、\texttt{dynamic\_tracker/tracks} 和 \texttt{dynamic\_tracker/predictions}，其中预测轨迹的默认时间域为 \texttt{2.0 s}、步长为 \texttt{0.2 s}。
+时，二者才允许匹配。该门控机制可随时间间隔自适应放宽匹配半径，以兼顾短时准确性与间歇漏检容忍性。轨迹管理采用“暂态-确认-删除”的生命周期策略：连续命中后转为确认轨迹，连续失配或超时后删除；同时按固定预测时域发布未来轨迹，用于第4章的风险趋势评估。
+
+上述生命周期由“累计命中确认”和“失配/超时删除”两类判据共同决定，其中 $h_k$ 为累计命中次数，$m_k$ 为连续失配帧数。当前配置取 $H_{\mathrm{conf}}=2$、$M_{\mathrm{miss}}=30$、$T_{\mathrm{miss}}=3.0\,\mathrm{s}$，相应的在线更新流程见算法~\ref{alg:ch3_tracker_lifecycle}。
+
+\begin{algorithm}[htbp]
+\caption{短时目标跟踪生命周期更新（单帧）}
+\label{alg:ch3_tracker_lifecycle}
+\KwIn{上一时刻轨迹集合 $\mathcal{T}_{k-1}$；当前检测集合 $\mathcal{D}_k$；时间戳 $t_k$；参数 $H_{\mathrm{conf}},M_{\mathrm{miss}},T_{\mathrm{miss}},\delta_0,k_g,\alpha$}
+\KwOut{更新后的轨迹集合 $\mathcal{T}_k$}
+\ForEach{$\tau_i\in\mathcal{T}_{k-1}$}{
+	常速度预测并得到 $\hat{\mathbf{p}}_{i,k}$\;
+	$g_i\leftarrow \delta_0+k_g\big(t_k-t_{i,\mathrm{update}}\big)$\;
+}
+构建满足 $\|\mathbf{c}_{j,k}-\hat{\mathbf{p}}_{i,k}\|_2\le g_i$ 的候选匹配对，并按距离升序排序\;
+执行一对一贪心关联\;
+\ForEach{匹配对 $(\tau_i,\mathbf{c}_{j,k})$}{
+	更新二维卡尔曼状态\;
+	$z_{i,k}\leftarrow \alpha z_{i,k-1}+(1-\alpha)\tilde{z}_{j,k}$\;
+	$h_i\leftarrow h_i+1,\ m_i\leftarrow 0,\ t_{i,\mathrm{update}}\leftarrow t_k$\;
+	\If{$\tau_i=\texttt{Tentative}\land h_i\ge H_{\mathrm{conf}}$}{
+		$\tau_i\leftarrow \texttt{Confirmed}$\;
+	}
+}
+\ForEach{未匹配轨迹 $\tau_i$}{
+	$m_i\leftarrow m_i+1$\;
+}
+\ForEach{未匹配检测 $\mathbf{c}_{j,k}$}{
+	初始化新轨迹并置状态为 $\texttt{Tentative}$，同时设定 $h_i=1,\ m_i=0$\;
+}
+删除满足以下任一条件的轨迹：$\tau_i=\texttt{Tentative}\land m_i>2$，或 $m_i>M_{\mathrm{miss}}$，或 $t_k-t_{i,\mathrm{update}}>T_{\mathrm{miss}}$\;
+\end{algorithm}
+
+预测轨迹采用常速度外推
+\begin{equation}
+\hat{\mathbf{p}}(t+\tau)=\mathbf{p}(t)+\mathbf{v}(t)\,\tau,
+\qquad
+\tau\in[0,T_p],
+\end{equation}
+其中 $T_p=2.0\,\mathrm{s}$，离散步长为 $0.2\,\mathrm{s}$。
+
+在输出语义上，跟踪模块发布的是目标级状态结果，单目标信息覆盖身份标识、当前状态、空间位姿、速度估计、存续时长及最近更新情况等关键统计量。与仅提供目标中心位置的轻量输出相比，该类状态结果为第4章风险评估提供了更完整的时序信息基础。
 
 因此，第3.3.4 的输出不是“完整风险结论”，而是已经具备连续 ID、平面速度和短时预测轨迹的候选目标状态。它回答的是“该动态目标是否持续存在、下一小段时间会往哪里移动”，而 TTC 计算、相向运动升级和预警分级则留待第4章在融合语义与安全规则后继续完成。
 
@@ -253,17 +364,17 @@ M-detector 原始输出的动态点云话题为 \texttt{/m\_detector/point\_out}
 	\label{fig:ch3_tracking_placeholder}
 \end{figure}
 
-综上，第3.3节通过“已配准点云输入 → 短时历史深度图构建 → Case1/2/3 动态点判别 → 世界系桥接与欧式聚类 → 短时跟踪”这一完整管线，将第3.2节输出的配准结果进一步组织为可供后续预警模块使用的候选目标状态信息。
-
 \section{本章小结}\label{sec:ch3_summary}
 
 本章围绕“为吊钩端风险检测提供稳定、可复用的三维空间参考”这一目标，构建了从融合点云输入到动态目标状态量输出的完整点云处理链。核心结论是：预警性能不取决于单帧点云形态，而取决于统一时空语义下可重复的空间度量（距离、速度与时间裕度）。因此，本章优先解决了多传感器异步、坐标不一致与平台自运动引入的非刚体误差，并将不确定性以参数化方式传递到后续判别环节。
 
-在融合输入侧，本章完成了双雷达点云的时间对齐、坐标统一与轻量发布，并引入基于 IMU 重力方向的自动调平。该流程将多雷达观测稳定地适配为单点云流接口，为定位和任务处理提供可控时延、统一参考系与更稳定的近场几何结构。
+在融合输入层面，完成了双雷达点云的时间对齐、坐标统一与轻量发布，并引入了基于IMU重力方向的自动调平。该流程将多雷达观测稳定适配为单点云流接口，为定位和任务处理提供了可控时延、统一参考系与更稳定的近场几何结构。
 
-在定位侧，本章基于 LIO-SAM 建立了"IMU 去畸变与初值 + LiDAR 几何校正 + 因子图平滑"的位姿输出机制，形成连续可查询的位姿序列。该序列用于后续的坐标变换与点云配准，确保动态检测在统一时空参考系中进行，使"变化"主要对应外界目标运动而非平台自运动残差。
+定位环节将双雷达融合系统适配到LIO-SAM框架，解决了扫描线扩展、时间同步一致性与坐标系链维护等挑战，形成了连续可查询的位姿序列与已配准点云输出。该输出为动态检测提供了统一的时空参考系与平台自运动补偿，确保“变化”主要对应外界目标运动而非平台自运动残差。
 
-在目标生成侧，本章采用基于遮挡原理的 M-detector 模块对已配准点云进行逐点动态检测，通过短时历史深度图和 Case1/2/3 判别逻辑识别动态事件；随后通过点云桥接和欧式聚类把动态点提升为候选目标，再利用二维常速度跟踪器输出连续 ID、平面速度和短时预测轨迹。相比于直接在原始点云上做差分，这一路径更符合当前代码的模块边界，也更有利于把“动态点”转化为“可用于后续决策的对象状态”。
+目标生成环节采用基于遮挡原理的 M-detector\cite{Wu2024MDetector} 对已配准点云进行逐点动态检测，通过短时历史深度图与 Case1/2/3 判别逻辑识别动态事件；随后经点云桥接与欧式聚类将动态点提升为候选目标，再由二维常速度跟踪器输出连续 ID、平面速度和短时预测轨迹。相比直接在原始点云上进行帧差分，该路径更符合当前系统模块边界，也更有利于将“动态点”转化为“可用于后续决策的对象状态”。
 
-综上，本章为下一章雷视融合与分级预警提供两类基础信息：其一是位姿与静态地图，用于定义稳定空间尺度与安全边界；其二是动态目标候选及短时运动状态，用于后续视觉语义关联、接近趋势分析和预警等级判定。第4章将在此基础上引入视觉高风险语义，并完成在线融合关联与预警决策。
+从工程实现角度看，本章方法通过“点级抑噪 + 目标级确认”的分层机制兼顾了误检抑制与在线可部署性：点级阶段利用无效点/自体点剔除及多帧证据累积抑制瞬时噪声，目标级阶段利用聚类与轨迹确认机制抑制孤立波动。与此同时，系统采用固定上限历史队列、固定门控与固定预测时域，使计算负载保持在可控范围内；对应主导开销分别为动态判别 $\mathcal{O}(N_p\cdot K_h)$、聚类 $\mathcal{O}(N_c\log N_c)$ 与关联匹配 $\mathcal{O}(P\log P)$。因此，该管线具备参数含义明确、复杂度有界且便于调参与复现实验的工程特征。
+
+综上，本章为下一章的雷视融合与分级预警提供了两类基础信息：其一是位姿与静态地图，用于定义稳定的空间尺度与安全边界；其二是动态目标候选及短时运动状态，用于后续的视觉语义关联、接近趋势分析和预警等级判定。第4章将在此基础上引入视觉高风险语义，并完成在线融合关联与预警决策。
 
