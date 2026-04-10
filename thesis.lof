@@ -23,23 +23,22 @@
 \contentsline {figure}{\numberline {2.21}{\ignorespaces 多传感器时间同步与延迟补偿时序示意}}{41}{figure.caption.43}%
 \contentsline {figure}{\numberline {2.22}{\ignorespaces 系统实际 TF 树与坐标系关系}}{42}{figure.caption.44}%
 \contentsline {figure}{\numberline {3.1}{\ignorespaces 第3章从双雷达融合到动态目标生成的总体流程}}{46}{figure.caption.46}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces 双雷达时间窗口同步与扫描线重映射占位图}}{48}{figure.caption.47}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces 融合 IMU 排序与一次性自动调平占位图}}{49}{figure.caption.48}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces 定位系统输出与动态检测接口占位图}}{53}{figure.caption.49}%
-\contentsline {figure}{\numberline {3.5}{\ignorespaces 近场 ROI 裁剪在动态检测输入组织中的作用示意占位图}}{54}{figure.caption.50}%
-\contentsline {figure}{\numberline {3.6}{\ignorespaces M-detector 三类动态判别原理示意图\blx@tocontentsinit {0}\cite {Wu2024MDetector}}}{55}{figure.caption.51}%
-\contentsline {figure}{\numberline {3.7}{\ignorespaces 动态点桥接与欧式聚类占位图}}{56}{figure.caption.52}%
-\contentsline {figure}{\numberline {3.8}{\ignorespaces 动态目标短时跟踪与预测占位图}}{59}{figure.caption.54}%
-\contentsline {figure}{\numberline {4.1}{\ignorespaces YOLO26 模型整体架构}}{62}{figure.caption.55}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces YOLO26 模型训练、导出与边缘端部署流程示意图}}{64}{figure.caption.56}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces 基于分割掩码的点云投影回查与实例点集提取流程示意图}}{67}{figure.caption.57}%
-\contentsline {figure}{\numberline {4.4}{\ignorespaces 多层级预警机制总体流程图（优化布局）}}{70}{figure.caption.58}%
-\contentsline {figure}{\numberline {4.5}{\ignorespaces 静态净空、动态净空与预测净空定义示意}}{71}{figure.caption.59}%
-\contentsline {figure}{\numberline {4.6}{\ignorespaces 预警判级细化流程图}}{75}{figure.caption.60}%
-\contentsline {figure}{\numberline {4.7}{\ignorespaces 风险状态到控制建议的映射流程图}}{78}{figure.caption.61}%
-\contentsline {figure}{\numberline {5.1}{\ignorespaces 吊钩端感知平台与典型工况示意图（占位）}}{81}{figure.caption.64}%
-\contentsline {figure}{\numberline {5.2}{\ignorespaces 吊装构件识别与三维定位结果示意图（占位）}}{83}{figure.caption.68}%
-\contentsline {figure}{\numberline {5.3}{\ignorespaces 动态风险升级与预警判级时序图（占位）}}{84}{figure.caption.71}%
-\contentsline {figure}{\numberline {5.4}{\ignorespaces 端到端时延预算分解图（占位）}}{86}{figure.caption.77}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces 双雷达时间窗口同步示意图}}{48}{figure.caption.47}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces 定位系统输出与动态检测接口占位图}}{53}{figure.caption.48}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces 近场 ROI 裁剪在动态检测输入组织中的作用示意占位图}}{54}{figure.caption.49}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces M-detector 三类动态判别原理示意图\blx@tocontentsinit {0}\cite {Wu2024MDetector}}}{55}{figure.caption.50}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces 动态点桥接与欧式聚类占位图}}{56}{figure.caption.51}%
+\contentsline {figure}{\numberline {3.7}{\ignorespaces 动态目标短时跟踪与预测占位图}}{59}{figure.caption.53}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces YOLO26 模型整体架构}}{62}{figure.caption.54}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces YOLO26 模型训练、导出与边缘端部署流程示意图}}{64}{figure.caption.55}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces 基于分割掩码的点云投影回查与实例点集提取流程示意图}}{67}{figure.caption.56}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces 多层级预警机制总体流程图（优化布局）}}{70}{figure.caption.57}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces 静态净空、动态净空与预测净空定义示意}}{71}{figure.caption.58}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces 预警判级细化流程图}}{75}{figure.caption.59}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces 风险状态到控制建议的映射流程图}}{78}{figure.caption.60}%
+\contentsline {figure}{\numberline {5.1}{\ignorespaces 吊钩端感知平台与典型工况示意图（占位）}}{81}{figure.caption.63}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces 吊装构件识别与三维定位结果示意图（占位）}}{83}{figure.caption.67}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces 动态风险升级与预警判级时序图（占位）}}{84}{figure.caption.70}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces 端到端时延预算分解图（占位）}}{86}{figure.caption.76}%
 \contentsfinish 
 \contentsfinish 

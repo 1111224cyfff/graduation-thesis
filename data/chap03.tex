@@ -42,11 +42,9 @@
 
 \begin{figure}[htbp]
 	\centering
-	\fbox{\parbox[c][5.6cm][c]{0.9\textwidth}{\centering
-	占位图：双雷达时间窗口同步与线号重映射示意图\\[0.5em]
-	建议内容：左侧展示两路 \texttt{CustomMsg} 进入独立缓冲区并以 $[t_k,t_{k+1}]$ 窗口抽取有效点，右侧展示第2路雷达 \texttt{ring} 加偏移后由 0--3 变为 4--7，最终形成等效 8 线融合点云。}}
-	\caption{双雷达时间窗口同步与扫描线重映射占位图}
-	\label{fig:ch3_dual_lidar_alignment_placeholder}
+	\includegraphics[width=0.98\textwidth]{双雷达时间同步窗口.pdf}
+	\caption{双雷达时间窗口同步示意图}
+	\label{fig:ch3_dual_lidar_alignment}
 \end{figure}
 
 \subsection{IMU 合并、时序发布与一次性自动调平}\label{ux70b9ux4e91ux5b9eux65f6ux878dux5408ux4e0eux53d1ux5e03}
@@ -62,15 +60,6 @@
 该校正建立\texttt{body}到\texttt{body\_leveled}的重力一致姿态关系，消除横滚和俯仰引起的整体倾斜，不额外引入航向观测。调平完成后，同一旋转应用于融合点云、Livox消息和融合IMU，并同步发布\texttt{body -> body\_leveled}的TF静态变换。调平完成前，相关输出被抑制以保证后续模块数据姿态一致性。
 
 该步骤为LIO-SAM提供重力对齐的惯性与几何输入，并使后续地面处理在近似水平参考系下执行：地面法向与$z$轴一致后，地面点抑制、近地噪声过滤与目标相对高度估计可采用更稳定阈值。同时，第3.3节的高度阈值、ROI边界与近场距离约束获得一致坐标基准，降低平台姿态扰动对动态目标判别稳定性的影响。
-
-\begin{figure}[htbp]
-	\centering
-	\fbox{\parbox[c][5.8cm][c]{0.9\textwidth}{\centering
-	占位图：融合 IMU 排序与一次性自动调平链路图\\[0.5em]
-	建议内容：展示多路 IMU 先变换到 \texttt{body}、再按时间窗口排序输出到 \texttt{/merged\_imu}，以及调平节点通过平均加速度估计重力方向并发布 \texttt{body -> body\_leveled} 的过程。}}
-	\caption{融合 IMU 排序与一次性自动调平占位图}
-	\label{fig:ch3_merge_publish_placeholder}
-\end{figure}
 
 综上所述，第3.1节的工程产出可归纳为一组可直接接入定位链路的标准化接口：融合点云与融合IMU在重力对齐坐标系下保持统一语义，并保留点级时间信息以支撑后续去畸变。与此同时，双雷达重映射后的\texttt{ring}范围与\texttt{N\_SCAN}满足一致性约束，保证前端不会因扫描结构不匹配而丢失有效观测。由此，第3.1节完成了从多源异构输入到统一前端接口的重构，为第3.2节的位姿估计与建图流程提供直接输入。
 

@@ -1,18 +1,18 @@
 \contentsline {table}{\numberline {1.1}{\ignorespaces 施工现场常见传感器特性对比（面向吊钩端避障）}}{7}{table.caption.18}%
 \contentsline {table}{\numberline {2.1}{\ignorespaces 吊钩端感知系统关键组件与作用}}{21}{table.caption.24}%
 \contentsline {table}{\numberline {2.2}{\ignorespaces 吊钩端感知系统关键 ROS 接口内容}}{38}{table.caption.41}%
-\contentsline {table}{\numberline {2.3}{\ignorespaces 关键坐标系定义与用途}}{42}{table.caption.45}%
-\contentsline {table}{\numberline {5.1}{\ignorespaces 实验平台关键参数与评估关联}}{80}{table.caption.63}%
-\contentsline {table}{\numberline {5.2}{\ignorespaces D1：吊装构件识别有效性统计表（待补数据）}}{82}{table.caption.65}%
-\contentsline {table}{\numberline {5.3}{\ignorespaces D2：吊装构件分割质量统计表（待补数据）}}{82}{table.caption.66}%
-\contentsline {table}{\numberline {5.4}{\ignorespaces D3：投影关联与三维定位一致性统计表（待补数据）}}{82}{table.caption.67}%
-\contentsline {table}{\numberline {5.5}{\ignorespaces D4：静态阈值判级有效性统计表（待补数据）}}{83}{table.caption.69}%
-\contentsline {table}{\numberline {5.6}{\ignorespaces D5：动态趋势与相向升级验证统计表（待补数据）}}{84}{table.caption.70}%
-\contentsline {table}{\numberline {5.7}{\ignorespaces D6：预警到控制建议接口验证统计表（待补数据）}}{84}{table.caption.72}%
-\contentsline {table}{\numberline {5.8}{\ignorespaces D7：视觉推理时延统计表（待补数据）}}{85}{table.caption.73}%
-\contentsline {table}{\numberline {5.9}{\ignorespaces D8：投影关联阶段时延统计表（待补数据）}}{85}{table.caption.74}%
-\contentsline {table}{\numberline {5.10}{\ignorespaces D9：动态跟踪与风险评估时延统计表（待补数据）}}{86}{table.caption.75}%
-\contentsline {table}{\numberline {5.11}{\ignorespaces D10：端到端时延预算与安全余量统计表（待补数据）}}{86}{table.caption.76}%
-\contentsline {table}{\numberline {5.12}{\ignorespaces D11：多模块协同稳定性统计表（待补数据）}}{87}{table.caption.78}%
+\contentsline {table}{\numberline {2.3}{\ignorespaces 关键坐标系定义与用途}}{43}{table.caption.45}%
+\contentsline {table}{\numberline {5.1}{\ignorespaces 实验平台关键参数与评估关联}}{80}{table.caption.62}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces D1：吊装构件识别有效性统计表（待补数据）}}{82}{table.caption.64}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces D2：吊装构件分割质量统计表（待补数据）}}{82}{table.caption.65}%
+\contentsline {table}{\numberline {5.4}{\ignorespaces D3：投影关联与三维定位一致性统计表（待补数据）}}{82}{table.caption.66}%
+\contentsline {table}{\numberline {5.5}{\ignorespaces D4：静态阈值判级有效性统计表（待补数据）}}{83}{table.caption.68}%
+\contentsline {table}{\numberline {5.6}{\ignorespaces D5：动态趋势与相向升级验证统计表（待补数据）}}{84}{table.caption.69}%
+\contentsline {table}{\numberline {5.7}{\ignorespaces D6：预警到控制建议接口验证统计表（待补数据）}}{84}{table.caption.71}%
+\contentsline {table}{\numberline {5.8}{\ignorespaces D7：视觉推理时延统计表（待补数据）}}{85}{table.caption.72}%
+\contentsline {table}{\numberline {5.9}{\ignorespaces D8：投影关联阶段时延统计表（待补数据）}}{85}{table.caption.73}%
+\contentsline {table}{\numberline {5.10}{\ignorespaces D9：动态跟踪与风险评估时延统计表（待补数据）}}{86}{table.caption.74}%
+\contentsline {table}{\numberline {5.11}{\ignorespaces D10：端到端时延预算与安全余量统计表（待补数据）}}{86}{table.caption.75}%
+\contentsline {table}{\numberline {5.12}{\ignorespaces D11：多模块协同稳定性统计表（待补数据）}}{87}{table.caption.77}%
 \contentsfinish 
 \contentsfinish 
