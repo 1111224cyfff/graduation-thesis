@@ -117,7 +117,7 @@
 - 输出：T_l^c + 投影验证图（点云投影到图像）。
 - 待补充：重投影误差统计与“可接受阈值”口径。
 
-#### 2.3 数据链路与接口规范
+#### 2.3 通信链路与接口规范
 
 **2.3.1 通信链路搭建**
 - 要解决的问题：多源数据大吞吐下的丢包与延迟不可控会破坏融合。
@@ -207,17 +207,11 @@
 - 输出：逐点动态标签 \{STATIC, CASE1, CASE2, CASE3, INVALID\}。
 - 待补充：\texttt{occluded\_map\_thr1}、\texttt{occluded\_times\_thr2}、\texttt{occluding\_times\_thr3} 及各类深度阈值的说明。
 
-**3.3.3 动态点世界系桥接与欧式聚类候选生成**
-- 要解决的问题：逐点动态标签无法直接用于目标级分析，必须先统一到固定世界系并提升为候选目标表示。
-- 方法：\texttt{pointcloud\_tf\_bridge} 将 \texttt{/m\_detector/point\_out} 变换为 \texttt{/m\_detector/point\_out\_map}，随后 \texttt{dyn\_cluster\_node} 执行欧式聚类并输出包围盒中心。
-- 输出：\texttt{/m\_detector/dynamic\_clusters}、聚类标记和聚类点云。
-- 待补充：聚类半径、最小点数、桥接 frame 与中心点定义方式。
-
-**3.3.4 短时目标跟踪与状态输出**
-- 要解决的问题：候选目标在单帧层面仍有抖动和漏检，需要跨帧关联才能形成连续状态量。
-- 方法：\texttt{dynamicTracker} 采用二维常速度模型、时间扩张门控和确认/删除规则，对候选中心进行短时跟踪，并对 z 方向做低通平滑。
-- 输出：连续 ID、平面速度、\texttt{tracked\_centers} 和短时预测轨迹。
-- 待补充：门控参数、确认/删除阈值以及预测时域对后续预警模块的接口说明。
+**3.3.3 欧式聚类候选生成与短时目标跟踪**
+- 要解决的问题：逐点动态标签无法直接用于目标级分析，需提升为候选目标表示并跨帧关联形成连续状态量。
+- 方法：M-detector 已输出 \texttt{odom} 系动态点云，\texttt{pointcloud\_tf\_bridge} 将其对齐至 \texttt{map} 系后，由 \texttt{dyn\_cluster\_node} 执行欧式聚类并输出包围盒中心；随后 \texttt{dynamicTracker} 采用二维常速度模型、时间扩张门控和确认/删除规则进行短时跟踪，并对 z 方向做低通平滑。
+- 输出：候选中心序列（\texttt{PoseArray}）、聚类标记、聚类点云，以及连续 ID、平面速度、\texttt{tracked\_centers} 和短时预测轨迹。
+- 待补充：聚类半径与规模阈值、桥接的 TF 回退机制、门控参数、确认/删除阈值以及预测时域对后续预警模块的接口说明。
 
 ---
 

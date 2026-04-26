@@ -45,3 +45,6 @@ origin/
 *.tmp
 *.bak
 *~
+
+# macOS Finder metadata
+.DS_Store

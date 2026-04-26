@@ -1,0 +1,81 @@
+\documentclass[tikz,border=4pt]{standalone}
+\usepackage[UTF8]{ctex}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+
+\begin{document}
+\begin{tikzpicture}[
+	x=1.2cm,y=1.2cm,>=Latex,font=\scriptsize,
+	io/.style={draw, rounded corners=2pt, thick, fill=gray!18, align=center, minimum width=3.0cm, minimum height=1.0cm},
+	proc/.style={draw, rounded corners=2pt, thick, fill=gray!8, align=center, minimum width=3.0cm, minimum height=1.0cm},
+	resultbox/.style={draw, rounded corners=2pt, thick, fill=gray!14, align=center, minimum width=3.2cm, minimum height=1.0cm}
+]
+
+	% --- 左列：感知 ---
+	\node[io] (img) at (0,0) {YOLO26 分割\\图像输入};
+	\node[proc] (seg) at (0,-1.6) {实例分割结果};
+
+	\node[io] (map) at (0,-6.4) {LIO-SAM 局部地图\\\texttt{map\_local}};
+	\node[proc] (staticeval) at (0,-8.0) {静态净空评估};
+	\node[proc] (staticlevel) at (0,-9.6) {静态风险等级};
+
+	% --- 中列：主处理链 ---
+	\node[io] (cloud) at (4.0,0) {Leveled\\点云输入};
+	\node[proc] (proj) at (4.0,-1.6) {3D 点投影到\\2D 图像};
+	\node[proc] (lookup) at (4.0,-3.2) {按 mask 回查\\实例点云集合};
+	\node[resultbox] (obj) at (4.0,-4.8) {吊装目标对象状态\\质心 尺寸 包络半径\\最近距离 点数};
+
+	\node[proc] (vel) at (4.0,-6.4) {目标速度估计};
+
+	\node[proc] (fusion) at (4.0,-11.2) {融合判级\\取静态与动态最大等级};
+	\node[proc] (hyst) at (4.0,-12.8) {迟滞状态机\\升级立即生效\\降级延时 1 s};
+	\node[resultbox] (state) at (4.0,-14.4) {WarningState 输出\\\texttt{/warning/state}};
+
+	\node[proc] (markers) at (1.2,-16.0) {RViz 预警可视化\\\texttt{/warning/markers}};
+	\node[proc] (controller) at (6.8,-16.0) {Warning Controller};
+	\node[resultbox] (command) at (6.8,-17.6) {ControlCommand 输出\\\texttt{/warning/control\_command}};
+
+	% --- 右列：动态 ---
+	\node[io] (dyn) at (8.0,0) {动态点检测\\与聚类};
+	\node[proc] (tracker) at (8.0,-1.6) {Dynamic Tracker};
+	\node[resultbox] (tracks) at (8.0,-3.2) {动态轨迹状态\\ID 位置 速度\\预测轨迹};
+
+	\node[proc] (dyneval) at (8.0,-6.4) {动态风险评估};
+	\node[proc] (dynlevel) at (8.0,-8.0) {动态风险等级};
+	\node[proc] (upgrade) at (8.0,-9.6) {是否相向运动升级};
+	\node[proc] (dynadj) at (8.0,-11.2) {动态等级修正};
+
+	% --- 连线 ---
+	\draw[->, thick] (img) -- (seg);
+	\draw[->, thick] (seg) -- (proj);
+	\draw[->, thick] (cloud) -- (proj);
+	\draw[->, thick] (proj) -- (lookup);
+	\draw[->, thick] (lookup) -- (obj);
+
+	\draw[->, thick] (obj) -- (vel);
+
+	\draw[->, thick] (map) -- (staticeval);
+	\draw[->, thick] (obj.west) -- ++(-0.6,0) |- (staticeval.east);
+	\draw[->, thick] (staticeval) -- (staticlevel);
+
+	\draw[->, thick] (vel) -- (dyneval);
+	\draw[->, thick] (tracks) -- (dyneval);
+	\draw[->, thick] (dyneval) -- (dynlevel);
+	\draw[->, thick] (dynlevel) -- (upgrade);
+	\draw[->, thick] (upgrade) -- (dynadj);
+
+	\draw[->, thick] (staticlevel) |- (fusion);
+	\draw[->, thick] (dynadj) -- (fusion);
+
+	\draw[->, thick] (fusion) -- (hyst);
+	\draw[->, thick] (hyst) -- (state);
+
+	\draw[->, thick] (state) -- (markers);
+	\draw[->, thick] (state) -- (controller);
+	\draw[->, thick] (controller) -- (command);
+
+	\draw[->, thick] (dyn) -- (tracker);
+	\draw[->, thick] (tracker) -- (tracks);
+
+\end{tikzpicture}
+\end{document}

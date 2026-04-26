@@ -10,31 +10,31 @@
   %
   %
   % 中文信息
-  ctitle={基于雷视融合的塔吊吊装过程动态避障, \\ 与预警方法研究}, % 可手动加入换行符 \\ 控制换行
+  ctitle={基于雷视融合的塔吊吊装过程动态避障 \\ 与预警方法研究}, % 可手动加入换行符 \\ 控制换行
   cauthor={陈宇凡},
   studentnumber={2330894},
   cdepartment={土木工程学院},
   csubjectcategory={工学}, % 学科门类
-  cmajorfirst={土木工程}, % 专业学位类别
+  cmajorfirst={土木水利}, % 专业学位类别
   cmajorsecond={土木工程}, % 专业领域
-  cresearchfield={雷视融合感知与安全预警}, % 研究方向
+  cresearchfield={智能建造}, % 研究方向
   csupervisor={卢昱杰 教授},
   cassosupervisor={}, % 副指导老师/行业导师
   cjointinstitution={}, % 联合培养单位
-  cdate={\zhdigits{2026}年\zhnumber{2}月}, % 手动指定日期, 否则自动使用当前时间
+  cdate={\zhdigits{2026}年\zhnumber{4}月}, % 手动指定日期, 否则自动使用当前时间
   cfunds={}, % 中文版基金信息
   % 英文信息
   etitle={Research on Dynamic Obstacle Avoidance and Early Warning Method for Tower Crane Hoisting Process Based on Radar-Vision Fusion},
   eauthor={Yufan Chen},
-  edepartment={School of Civil Engineering},
+  edepartment={College of Civil Engineering},
   esubjectcategory={Engineering}, % 学科门类
-  emajorfirst={Civil Engineering}, % 专业学位类别
+  emajorfirst={Civil and Hydraulic Engineering}, % 专业学位类别
   emajorsecond={Civil Engineering}, % 专业领域
-  eresearchfield={Radar-vision fusion perception and safety early warning}, % 研究方向
+  eresearchfield={Intelligent Construction}, % 研究方向
   esupervisor={Prof. Yujie Lu},
   eassosupervisor={}, % 副指导老师/行业导师
   ejointinstitution={}, % 联合培养单位
-  edate={February, 2026}, % 手动指定日期, 否则自动使用当前时间
+  edate={April, 2026}, % 手动指定日期, 否则自动使用当前时间
   efunds={} % 英文版基金信息
 }
 
@@ -48,9 +48,9 @@
 
 % 定义中英文摘要和关键字
 \begin{cabstract}
-  塔式起重机（塔吊）承担了建筑施工中大量的垂直与水平运输任务，其作业过程具有载荷大、作业半径长、人员与设备交叉作业频繁等特点，安全风险长期处于高位。传统塔吊安全管理多依赖司机视野、指挥信号及固定式监控，难以对吊钩端附近的临近人员、临时障碍物以及动态变化的施工环境形成稳定、定量、可闭环的安全感知。
+  针对塔吊吊装作业中吊钩端近场空间运动不确定、风险集中、环境遮挡复杂等核心问题，本文构建了以双激光雷达与工业相机为核心的集成式吊钩端感知系统，研究了面向工程落地的多传感器时空标定、融合点云定位与动态目标检测、雷视融合分级预警方法，形成了”感知—定位—判级—控制建议”的完整预警闭环。
 
-  针对上述问题，本文面向“吊钩端”这一关键危险源位置，构建双激光雷达与工业相机协同的轻量化感知系统，研究雷视融合条件下的空间定位、危险区域检测以及分级预警方法。首先，建立多传感器一体化安装与数据链路，完成相机内参、双雷达外参以及雷达—相机外参标定，并给出时间同步与延迟补偿策略；其次，提出双雷达点云实时融合与坐标统一方法，引入LIO-SAM实现吊钩端位姿估计与静态地图构建，在此基础上通过ROI裁剪、时空对齐和静动态分离实现目标生成与跟踪；最后，针对高风险动态目标（如作业工人）引入视觉侧识别结果，设计雷视一致性关联与置信度融合机制，构建基于距离、相对速度与时间到碰撞（TTC）的风险判定模型，实现静态障碍与动态目标的分级预警与策略输出。
+  首先，完成双激光雷达与工业相机的一体化防护盒体设计与装配验证，采用双雷达侧向对称布置（38°俯仰角）与相机垂直向下安装实现近场盲区互补与覆盖优化；通过PTPv2软件授时与融合层时间窗门控建立跨模态时间同步，提出”粗配准初值构造+自动精配准优化”的两阶段双雷达外参标定方法，建立”动态定位主链+静态感知支链”相分离的分层式空间参考体系。其次，基于外参实现双雷达点云实时融合与坐标统一，通过扫描线拓扑重映射与时间窗口同步适配LIO-SAM紧耦合定位系统，输出连续位姿轨迹与静态地图；以配准点云为输入，经近场ROI裁剪后采用基于遮挡机理的M-detector进行逐点动态判别，结合欧式聚类与二维常速度卡尔曼滤波实现动态候选目标生成与短时跟踪。同时，采用YOLO26实例分割网络对吊装构件进行实时识别与像素级分割，通过TensorRT FP16半精度量化部署至Jetson Orin NX边缘平台；基于分割掩码将三维点云逐点投影至二维图像平面并回查实例点云集合，构建”静态包络球+动态包络圆柱”双基准安全包络模型。最后，建立基于三维净空的静态分级判据与基于当前净空、预测净空及碰撞时间（TTC）协同判定的动态风险升级机制，结合迟滞状态机输出结构化预警等级与避障控制建议。
 
   通过典型施工工况的对比实验，验证了所构建系统在定位精度、目标关联一致性以及实时性与稳定性方面的有效性，可为塔吊吊装过程的动态避障与风险预警提供工程化参考。
 \end{cabstract}
@@ -58,11 +58,11 @@
 \ckeywords{雷视融合，塔吊吊装，吊钩端感知，动态避障，风险预警}
 
 \begin{eabstract}
-  Tower cranes play a critical role in construction logistics, yet hoisting operations involve high loads and complex, dynamic environments, where workers and equipment often coexist within the working radius. Conventional safety approaches mainly rely on the operator's experience, manual signaling, or fixed surveillance, which lack reliable and quantitative perception around the hook end, leading to insufficient collision avoidance capability and delayed risk response.
+  This thesis addresses the critical safety challenge of near-field perception around the hook end of tower cranes during hoisting operations, where spatial motion uncertainty, concentrated risk, and complex environmental occlusion are prevalent. An integrated perception system combining dual LiDARs and an industrial camera is developed, along with methods for multi-sensor spatiotemporal calibration, fused-point-cloud localization and dynamic object detection, and radar-vision fusion-based graded warning, forming a complete closed loop of "perception, localization, grading, and control suggestion."
 
-  This thesis focuses on hook-end safety perception and proposes a dynamic obstacle avoidance and early warning method based on radar-vision fusion. A compact perception platform integrating dual LiDARs and an industrial camera is designed for hook-end deployment. A complete multi-sensor calibration pipeline is established, including camera intrinsics, LiDAR-LiDAR extrinsics, and LiDAR-camera extrinsics, together with time synchronization and delay compensation. For online perception, a real-time dual-LiDAR point cloud fusion method and unified coordinate transformation are developed. Hook-end localization and mapping are achieved using LIO-SAM, enabling motion compensation and consistent point cloud generation. On this basis, ROI cropping, spatio-temporal alignment, static-dynamic separation, and tracking are applied to produce reliable obstacle hypotheses. For high-risk dynamic objects (e.g., workers), vision-side detection results are fused with LiDAR observations via bidirectional consistency association and confidence fusion. A risk assessment model combining distance, relative velocity, and time-to-collision (TTC) is then proposed to drive a graded warning state machine.
+  First, an integrated protective enclosure is designed and verified, with dual LiDARs arranged symmetrically at a 38° pitch and a camera installed vertically downward to achieve blind-spot complementarity and coverage optimization. Cross-modal temporal synchronization is established via PTPv2 software timestamping and a fusion-layer time window gating mechanism. A two-stage extrinsic calibration method combining coarse initial guess construction and automatic fine registration is proposed for dual-LiDAR alignment, and a hierarchical spatial reference framework with separate "dynamic localization main chain" and "static perception branch chain" is developed. Second, real-time dual-LiDAR point cloud fusion and coordinate unification are achieved; the fused point cloud is adapted to the LIO-SAM tightly-coupled localization system through scan-line topology remapping and time-window synchronization, producing continuous pose trajectories and a static map. Based on motion-compensated point clouds, the occlusion-based M-detector performs point-wise dynamic discrimination after near-field ROI cropping, and Euclidean clustering together with a 2D constant-velocity Kalman filter generates dynamic object candidates with short-term tracking. Meanwhile, the YOLO26 instance segmentation network is deployed on a Jetson Orin NX edge platform via TensorRT FP16 quantization for real-time hoisting component recognition. Point clouds are projected onto image planes using segmentation masks to retrieve instance-level 3D points, and a dual-baseline safety envelope model combining a static bounding sphere and a dynamic bounding cylinder is constructed. Finally, a static clearance-based three-level warning criterion and a dynamic risk escalation mechanism jointly determined by current clearance, predicted clearance, and time-to-collision (TTC) are established, with a hysteresis state machine outputting structured warning levels and control suggestions.
 
-  Experiments under representative hoisting scenarios demonstrate the effectiveness of the proposed system in localization performance, fusion consistency, and real-time stability, providing practical support for intelligent safety management in hoisting operations.
+  Experiments under representative hoisting scenarios demonstrate the effectiveness of the proposed system in localization accuracy, association consistency, real-time performance, and stability, providing a practical solution for dynamic obstacle avoidance and risk warning in tower crane hoisting operations.
 \end{eabstract}
 
 \ekeywords{Radar-vision fusion, tower crane hoisting, hook-end perception, dynamic obstacle avoidance, risk early warning}
