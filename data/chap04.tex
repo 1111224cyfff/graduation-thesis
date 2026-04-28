@@ -29,7 +29,7 @@ YOLO26 的核心创新集中于推理流程简化、训练机制优化与部署�
 \begin{equation}
 \mathbf{y}_i=\{(\mathbf{b}_{i,j},\mathbf{m}_{i,j},c_{i,j})\}_{j=1}^{n_i}
 \end{equation}
-其中 $\mathbf{b}_{i,j}$ 为目标框，$\mathbf{m}_{i,j}$ 为二值实例掩码，$c_{i,j}\in\mathcal{C}$ 为类别标记，$n_i$ 为样本内实例数。标注示例如图\ref{fig:ch4_annotation_example}所示。图中展示了工地白天场景下吊装构件的实例级标注效果。
+其中， $\mathbf{b}_{i,j}$ 为目标框，$\mathbf{m}_{i,j}$ 为二值实例掩码，$c_{i,j}\in\mathcal{C}$ 为类别标记，$n_i$ 为样本内实例数。标注示例如图\ref{fig:ch4_annotation_example}所示。图中展示了工地白天场景下吊装构件的实例级标注效果。
 
 \begin{figure}[htbp]
 \centering
@@ -45,7 +45,7 @@ YOLO26 的核心创新集中于推理流程简化、训练机制优化与部署�
 \lambda_{\mathrm{box}}\mathcal{L}_{\mathrm{box}}+
 \lambda_{\mathrm{mask}}\mathcal{L}_{\mathrm{mask}}
 \end{equation}
-其中 $\lambda_{\mathrm{cls}}$、$\lambda_{\mathrm{box}}$、$\lambda_{\mathrm{mask}}$ 为损失权重。训练超参数取 $\lambda_{\mathrm{cls}}=0.5$、$\lambda_{\mathrm{box}}=7.5$、$\lambda_{\mathrm{mask}}=7.5$，分割项与框回归项共用 box 增益。为便于说明三项损失在训练中的作用，分类项用于约束目标类别判别，框回归项用于约束目标几何定位，掩码项用于约束像素级分割质量，其表达式可写为
+其中， $\lambda_{\mathrm{cls}}$、$\lambda_{\mathrm{box}}$、$\lambda_{\mathrm{mask}}$ 为损失权重。训练超参数取 $\lambda_{\mathrm{cls}}=0.5$、$\lambda_{\mathrm{box}}=7.5$、$\lambda_{\mathrm{mask}}=7.5$，分割项与框回归项共用 box 增益。为便于说明三项损失在训练中的作用，分类项用于约束目标类别判别，框回归项用于约束目标几何定位，掩码项用于约束像素级分割质量，其表达式可写为
 \begin{equation}
 \mathcal{L}_{\mathrm{cls}}
 =-\frac{1}{|\mathcal{P}|}\sum_{q\in\mathcal{P}}\sum_{k=1}^{K}y_{q,k}\log \hat{y}_{q,k}
@@ -61,7 +61,7 @@ YOLO26 的核心创新集中于推理流程简化、训练机制优化与部署�
 \sum_{(u,v)\in\Omega_q}
 \mathrm{BCE}\!\left(m_q(u,v),\hat{m}_q(u,v)\right)
 \end{equation}
-其中 $\mathcal{P}$ 为正样本集合，$\Omega_q$ 为实例 $q$ 的掩码像素域。
+其中， $\mathcal{P}$ 为正样本集合，$\Omega_q$ 为实例 $q$ 的掩码像素域。
 
 在本文部署链路中，预测阶段采用与部署一致的分割推理流程：输入分辨率为
 $640\times640$，掩码二值化阈值为 $0.5$，候选置信度阈值为 $0.2$，后处理抑制阈值为
@@ -199,7 +199,7 @@ FP16 半精度量化的采用，主要是为了在不显著牺牲推理稳定性
 \begin{equation}
 |t_{\mathrm{img}}-t_{\mathrm{pc}}| \leq \Delta t_{\max}
 \end{equation}
-其中 $\Delta t_{\max}$ 表示允许的近似同步窗口。该参数既影响投影稳定性，也影响系统可用性，第5章可将其作为时延与效果分析的控制变量之一。
+其中， $\Delta t_{\max}$ 表示允许的近似同步窗口。该参数既影响投影稳定性，也影响系统可用性，第5章可将其作为时延与效果分析的控制变量之一。
 
 在坐标系统一方面，方法采用“TF 优先、静态配置兜底”的方式构建投影模型。也就是说，当运行时 TF 能够给出相机与点云坐标系之间的实时变换时，系统优先使用 TF 结果；若 TF 不可用或暂时查询失败，则回退到 YAML 中预先标定的静态外参。该机制能够在保证在线运行灵活性的同时，避免单一外参来源失效导致投影链路中断，属于提升系统稳健性的关键工程策略。
 
@@ -314,7 +314,7 @@ d_{ij}^{\mathrm{xy}}=\max\bigl(0,\,\|\tilde{\mathbf{p}}_{d,j}-[x_i,\,y_i]^\maths
 \mathbf{x}_{i,k+1}=\mathbf{F}(\Delta t)\mathbf{x}_{i,k}+\mathbf{w}_k,\quad
 \mathbf{y}_{i,k}=\mathbf{H}\mathbf{x}_{i,k}+\mathbf{n}_k
 \end{equation}
-其中
+其中，
 \begin{equation}
 \mathbf{F}(\Delta t)=
 \begin{bmatrix}
@@ -343,7 +343,7 @@ d_{ij}^{\mathrm{xy}}=\max\bigl(0,\,\|\tilde{\mathbf{p}}_{d,j}-[x_i,\,y_i]^\maths
 \begin{equation}
 \mathbf{z}_i=\{t_i,c_i,s_i,\bar{\mathbf{p}}_i,d_i,\eta_i\}
 \end{equation}
-其中 $t_i$ 为时间戳，$c_i$ 为类别标签，$s_i$ 为置信度，$\bar{\mathbf{p}}_i$ 为三维位置估计，$d_i$ 为最小距离或边界距离，$\eta_i$ 为数据有效性标志。若后续需要承接动态风险评估，还可在接口中补充速度、预测轨迹句柄或包络信息。通过这一设计，感知模块输出将不再只是“好看的结果图”，而是能够真正进入风险计算与控制决策的规范化对象状态，并与后续的预警和控制接口自然衔接。
+其中， $t_i$ 为时间戳，$c_i$ 为类别标签，$s_i$ 为置信度，$\bar{\mathbf{p}}_i$ 为三维位置估计，$d_i$ 为最小距离或边界距离，$\eta_i$ 为数据有效性标志。若后续需要承接动态风险评估，还可在接口中补充速度、预测轨迹句柄或包络信息。通过这一设计，感知模块输出将不再只是“好看的结果图”，而是能够真正进入风险计算与控制决策的规范化对象状态，并与后续的预警和控制接口自然衔接。
 
 \section{吊装作业风险分级预警机制设计}\label{sec_ch4_warning_design}
 
@@ -651,7 +651,7 @@ L_{\mathrm{des}}=\max(L_s,L_d)
 \begin{equation}
 \mathbf{w}=\{L_{\mathrm{act}},L_{\mathrm{des}},\sigma,\phi,\mathbf{z},\eta\}
 \end{equation}
-其中 $\sigma$ 表示风险来源归因，$\phi$ 表示触发机理说明，$\mathbf{z}$ 表示距离、相对运动与时域预测等证据向量，$\eta$ 表示系统输入是否满足有效性约束。
+其中， $\sigma$ 表示风险来源归因，$\phi$ 表示触发机理说明，$\mathbf{z}$ 表示距离、相对运动与时域预测等证据向量，$\eta$ 表示系统输入是否满足有效性约束。
 
 值得强调的是，风险接口不仅提供“结果等级”，还提供“触发依据与状态质量”。当上游输入不足、时空对齐失败或监测对象缺失时，系统显式输出未就绪状态及对应诊断语义，而非沉默或误触发高等级告警。该机制增强了链路可解释性与可验证性，并为下游控制模块执行结果采信与降级处理提供了明确依据。由此，第4.3节形成了从风险判定到接口表达的完整结构化预警链路。
 
@@ -665,7 +665,7 @@ L_{\mathrm{des}}=\max(L_s,L_d)
 \begin{equation}
 \mathbf{u}=\{a,\rho,h,e,\alpha,\mathbf{d}_{\mathrm{rec}},\eta\}
 \end{equation}
-其中 $a$ 为动作类型，$\rho$ 为速度约束比例，$h$ 为保持位姿标志，$e$ 为紧急停机标志，$\alpha$ 为人工确认需求，$\mathbf{d}_{\mathrm{rec}}$ 为建议退让方向，$\eta$ 为系统就绪性标志。该接口强调“如何响应风险”，而非重复解释“风险来自何处”。
+其中， $a$ 为动作类型，$\rho$ 为速度约束比例，$h$ 为保持位姿标志，$e$ 为紧急停机标志，$\alpha$ 为人工确认需求，$\mathbf{d}_{\mathrm{rec}}$ 为建议退让方向，$\eta$ 为系统就绪性标志。该接口强调“如何响应风险”，而非重复解释“风险来自何处”。
 
 需要指出的是，本文实现的是控制建议接口原型，而非已闭环接入执行机构的全自动避障系统。当前接口主要完成风险语义到动作语义的规范化映射，尚未覆盖设备侧执行确认、权限联锁与故障反馈闭环。该边界设定有助于在不夸大系统能力的前提下保持模块职责清晰。
 
@@ -677,7 +677,7 @@ L_{\mathrm{des}}=\max(L_s,L_d)
 \begin{equation}
 a=\pi(L_{\mathrm{act}},\sigma;\Theta)
 \end{equation}
-其中 $L_{\mathrm{act}}$ 为稳定风险等级，$\sigma$ 为风险来源归因，$\Theta$ 为策略参数集合。通过调整 $\Theta$ 中的速度约束、保持条件与确认规则，可在不改变接口结构的前提下实现保守程度切换。
+其中， $L_{\mathrm{act}}$ 为稳定风险等级，$\sigma$ 为风险来源归因，$\Theta$ 为策略参数集合。通过调整 $\Theta$ 中的速度约束、保持条件与确认规则，可在不改变接口结构的前提下实现保守程度切换。
 
 除动作类型外，系统还提供建议退让方向以支持人机协同与下游控制先验。设被监测对象速度为 $\mathbf{v}_o$，建议方向定义为
 \begin{equation}
@@ -687,7 +687,7 @@ a=\pi(L_{\mathrm{act}},\sigma;\Theta)
 \mathbf{0}, & \text{otherwise}
 \end{cases}
 \end{equation}
-其中 $L_{\mathrm{warn}}$ 为触发方向建议的风险等级阈值，$v_{\min}$ 为最小速度阈值。该方向信息属于保守型局部建议，不等价于全局最优轨迹规划。
+其中， $L_{\mathrm{warn}}$ 为触发方向建议的风险等级阈值，$v_{\min}$ 为最小速度阈值。该方向信息属于保守型局部建议，不等价于全局最优轨迹规划。
 
 综合而言，该策略的价值在于：其一，将风险等级稳定转化为标准化动作建议；其二，在尚未形成设备级闭环前维持足够安全边界。该层因此可视为连接风险评估与执行系统的接口桥接机制。
 

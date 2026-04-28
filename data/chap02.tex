@@ -140,8 +140,7 @@
 \begin{equation}
 \bar{B}_i = f_i\,S_i
 \end{equation}
-
-其中 $f_i$ 为发布频率，$S_i$ 为单帧消息大小。系统总吞吐量 $\bar{B}=\sum_i\bar{B}_i$ 需保留峰值流量与协议开销裕量。该约束将链路可持续性转化为可量化判据，为频率配置与压缩策略提供统一依据。
+其中，$f_i$ 为发布频率，$S_i$ 为单帧消息大小。系统总吞吐量 $\bar{B}=\sum_i\bar{B}_i$ 需保留峰值流量与协议开销裕量。该约束将链路可持续性转化为可量化判据，为频率配置与压缩策略提供统一依据。
 
 视觉链路采用“频率匹配+流量整形”的联合策略。系统频率由工程配置给定：双路 LiDAR 均设置为 $10\,\mathrm{Hz}$，该频率在满足近场传感需求的同时，能够兼顾链路带宽占用与边缘侧续航约束。在此基础上，为降低跨模态时间对齐复杂度并提高对应稳定性，本文将视觉观测频率匹配设置为 $10\,\mathrm{Hz}$，使视觉与点云观测在统一时基下保持一致。
 
@@ -228,20 +227,17 @@ PTP时间同步原理图如图\ref{fig:ptp_timing}所示，在此给出PTP传输
 \begin{equation}
 \Delta = \Delta_{\text{acq}} + \Delta_{\text{tx}} + \Delta_{\text{decode}} + \Delta_{\text{proc}}
 \end{equation}
-
-其中 $\Delta_{\text{acq}}$ 表示曝光/扫描与驱动采集延迟，$\Delta_{\text{tx}}$ 表示传输延迟，$\Delta_{\text{decode}}$ 表示解码与拷贝开销，$\Delta_{\text{proc}}$ 表示消息进入 ROS 后的调度与回调处理耗时。本文不直接给出固定数值，而将其视为可测量、可更新的系统参数，通过日志时间戳统计获得估计 $\hat{\Delta}$，并在融合侧执行时间补偿：
+其中，$\Delta_{\text{acq}}$ 表示曝光/扫描与驱动采集延迟，$\Delta_{\text{tx}}$ 表示传输延迟，$\Delta_{\text{decode}}$ 表示解码与拷贝开销，$\Delta_{\text{proc}}$ 表示消息进入 ROS 后的调度与回调处理耗时。本文不直接给出固定数值，而将其视为可测量、可更新的系统参数，通过日志时间戳统计获得估计 $\hat{\Delta}$，并在融合侧执行时间补偿：
 \begin{equation}
 \tilde{t} = t - \hat{\Delta}
 \end{equation}
-
-其中 $t$ 为原始时间戳，$\tilde{t}$ 为补偿后的有效时间戳。
+其中，$t$ 为原始时间戳，$\tilde{t}$ 为补偿后的有效时间戳。
 
 为抑制跨帧误配，本文在融合关联阶段引入时间窗门控。对任意候选观测对，要求其时间差满足
 \begin{equation}
 \lvert t_a - t_b \rvert \le \tau
 \end{equation}
-
-其中 $\tau$ 为时间窗阈值，由系统稳态时延与可接受运动误差共同确定。$\tau$ 取值过大将增加误关联概率，取值过小则会提升有效观测拒绝率；因此需结合发布频率、链路负载与处理时延进行联合标定。结合本系统双路 LiDAR（$10\,\mathrm{Hz}$）与相机（$10\,\mathrm{Hz}$）配置，本文在实验中以最近邻时间差统计结果为依据设置 $\tau$，并以有效匹配率与误配率联合评估其合理性。综上，本文通过“PTPv2（软件时间戳）授时 + 融合层对齐补偿 + 时间窗门控”形成端到端时间一致性保障，为后续雷视关联与风险判定提供可靠时序基础。具体的传感器时间对齐逻辑如图\ref{fig:time_sync_timeline}所示。
+其中，$\tau$ 为时间窗阈值，由系统稳态时延与可接受运动误差共同确定。$\tau$ 取值过大将增加误关联概率，取值过小则会提升有效观测拒绝率；因此需结合发布频率、链路负载与处理时延进行联合标定。结合本系统双路 LiDAR（$10\,\mathrm{Hz}$）与相机（$10\,\mathrm{Hz}$）配置，本文在实验中以最近邻时间差统计结果为依据设置 $\tau$，并以有效匹配率与误配率联合评估其合理性。综上，本文通过“PTPv2（软件时间戳）授时 + 融合层对齐补偿 + 时间窗门控”形成端到端时间一致性保障，为后续雷视关联与风险判定提供可靠时序基础。具体的传感器时间对齐逻辑如图\ref{fig:time_sync_timeline}所示。
 
 \begin{figure}[htbp]
   \centering
@@ -341,13 +337,11 @@ PTP时间同步原理图如图\ref{fig:ptp_timing}所示，在此给出PTP传输
 \mathbf{0}^{\mathsf{T}} & 1
 \end{bmatrix} \in SE(3)
 \end{equation}
-
-其中 $\mathbf{R}_b^a \in SO(3)$ 为旋转矩阵，$\mathbf{t}_b^a \in \mathbb{R}^3$ 为平移向量。该变换将坐标系 $\{b\}$ 中的点 $\mathbf{p}^b$ 映射到坐标系 $\{a\}$ 中：
+其中，$\mathbf{R}_b^a \in SO(3)$ 为旋转矩阵，$\mathbf{t}_b^a \in \mathbb{R}^3$ 为平移向量。该变换将坐标系 $\{b\}$ 中的点 $\mathbf{p}^b$ 映射到坐标系 $\{a\}$ 中：
 \begin{equation}
 \tilde{\mathbf{p}}^a = \mathbf{T}_b^a \tilde{\mathbf{p}}^b = \mathbf{R}_b^a \mathbf{p}^b + \mathbf{t}_b^a
 \end{equation}
-
-其中 $\tilde{\mathbf{p}} = [\mathbf{p}^{\mathsf{T}}, 1]^{\mathsf{T}}$ 为齐次坐标表示。
+其中，$\tilde{\mathbf{p}} = [\mathbf{p}^{\mathsf{T}}, 1]^{\mathsf{T}}$ 为齐次坐标表示。
 
 基于上述数学框架，本文提出一种分层式空间参考体系，将动态定位与静态感知解耦。该体系由“动态定位主链”与“静态感知支链”构成：动态定位主链负责吊钩主体的连续位姿估计与运动跟踪，形成从全局地图到本体系的主体运动描述；静态感知支链则管理多传感器之间的固定几何关系，确保跨模态观测在统一参考系下的对齐一致性。这种分层设计使得运动估计与传感器外参管理相互独立，提高了系统的模块化程度与可维护性。
 
@@ -401,8 +395,7 @@ map                                    # 全局地图系
 \begin{equation}
 \mathbf{T}_{\text{map}}^{\text{base\_link}}(t) = \mathbf{T}_{\text{map}}^{\text{odom}}(t) \cdot \mathbf{T}_{\text{odom}}^{\text{base\_link}}(t)
 \end{equation}
-
-其中 $\mathbf{T}_{\text{map}}^{\text{odom}}(t)$ 表示全局地图到局部里程计坐标系的时变变换，包含全局定位的校正信息；$\mathbf{T}_{\text{odom}}^{\text{base\_link}}(t)$ 表示局部里程计到吊钩主体坐标系的时变变换，描述连续无跳变的局部运动。这种分解遵循 ROS 导航堆栈的通用实践，将全局不确定性隔离于 $\mathbf{T}_{\text{map}}^{\text{odom}}(t)$ 中，而保持 $\mathbf{T}_{\text{odom}}^{\text{base\_link}}(t)$ 的连续性，从而支持局部路径规划与避障决策。
+其中，$\mathbf{T}_{\text{map}}^{\text{odom}}(t)$ 表示全局地图到局部里程计坐标系的时变变换，包含全局定位的校正信息；$\mathbf{T}_{\text{odom}}^{\text{base\_link}}(t)$ 表示局部里程计到吊钩主体坐标系的时变变换，描述连续无跳变的局部运动。这种分解遵循 ROS 导航堆栈的通用实践，将全局不确定性隔离于 $\mathbf{T}_{\text{map}}^{\text{odom}}(t)$ 中，而保持 $\mathbf{T}_{\text{odom}}^{\text{base\_link}}(t)$ 的连续性，从而支持局部路径规划与避障决策。
 
 传感器安装外参与中间参考帧之间的变换在系统运行期间视为静态刚体变换，这些变换通过第2.3节的标定过程获得。以融合参考系 $\{\text{body}\}$ 为基准，各传感器坐标系的相对位姿可形式化表示如下：
 \begin{equation}
@@ -417,8 +410,7 @@ map                                    # 全局地图系
 \begin{equation}
 \mathbf{T}_{\text{body}}^{\text{imu\_1}} = \hat{\mathbf{T}}_{\text{body}}^{\text{lidar}_1}
 \end{equation}
-
-其中 $\mathbf{I}_{4\times 4}$ 为单位矩阵，表示传感器坐标系与融合参考系重合；$\hat{\mathbf{T}}_{\text{body}}^{\text{lidar}_1}$ 为通过第2.3.3节双雷达外参标定获得的刚体变换。由于 IMU-1 传感器与 LiDAR-1 刚性连接于同一安装底座，两者之间的相对位姿固定不变，故采用相同的外参矩阵。这种统一表达确保了多源观测数据能够在同一空间框架下进行融合处理，避免了不同算法模块重复维护等价外参所导致的不一致性问题。
+其中，$\mathbf{I}_{4\times 4}$ 为单位矩阵，表示传感器坐标系与融合参考系重合；$\hat{\mathbf{T}}_{\text{body}}^{\text{lidar}_1}$ 为通过第2.3.3节双雷达外参标定获得的刚体变换。由于 IMU-1 传感器与 LiDAR-1 刚性连接于同一安装底座，两者之间的相对位姿固定不变，故采用相同的外参矩阵。这种统一表达确保了多源观测数据能够在同一空间框架下进行融合处理，避免了不同算法模块重复维护等价外参所导致的不一致性问题。
 
 为确保空间参考体系的一致性与可维护性，坐标系约定采用右手坐标系，其中 X 轴指向前方，Y 轴指向左侧，Z 轴指向上方；单位制统一规定长度单位采用国际单位制米（m），角度单位采用弧度（rad），确保数值计算的一致性；旋转表示采用四元数 $\mathbf{q}=[q_w, q_x, q_y, q_z]^{\mathsf{T}}$ 或旋转矩阵 $\mathbf{R}\in SO(3)$，避免欧拉角奇异性问题；坐标变换需通过 TF 库的统一接口进行查询。以链式变换为例，点从 body 系变换到 body\_leveled 系可表示为
 \begin{equation}
@@ -471,8 +463,7 @@ y \\
 1
 \end{bmatrix}
 \end{equation}
-
-其中 $(u,v)$ 为像素坐标，$s$ 为尺度因子，相机内参矩阵 $\mathbf{K}$ 定义为
+其中，$(u,v)$ 为像素坐标，$s$ 为尺度因子，相机内参矩阵 $\mathbf{K}$ 定义为
 \begin{equation}
 \label{eq:intrinsic_matrix}
 \mathbf{K}=
@@ -510,8 +501,7 @@ x_d = x\left(1+k_1 r^2+k_2 r^4+k_3 r^6\right)+2p_1xy+p_2\left(r^2+2x^2\right)
 \label{eq:distortion_model_y}
 y_d = y\left(1+k_1 r^2+k_2 r^4+k_3 r^6\right)+p_1\left(r^2+2y^2\right)+2p_2xy
 \end{equation}
-
-其中 $k_1,k_2,k_3$ 为径向畸变系数，$p_1,p_2$ 为切向畸变系数。将 $(x_d,y_d)$ 代入式\eqref{eq:camera_projection}即可得到带畸变的像素坐标预测值。
+其中，$k_1,k_2,k_3$ 为径向畸变系数，$p_1,p_2$ 为切向畸变系数。将 $(x_d,y_d)$ 代入式\eqref{eq:camera_projection}即可得到带畸变的像素坐标预测值。
 
 在实现层面，本文相机内参标定使用 MATLAB（Computer Vision Toolbox）完成，采用棋盘格标定板进行数据采集与参数求解，选用平面棋盘格标定板并记录方格边长 $L$（mm），在固定焦距与曝光等关键参数的前提下采集了24张多姿态图像，覆盖不同距离、不同角度及不同画面位置，避免样本长期集中在图像中心或姿态变化过小。图\ref{fig:cam_calib_setup}展示了各种角度、远近的棋盘格图像采集情况。角点提取阶段在 MATLAB 中使用 Camera Calibrator 应用自动检测棋盘角点，核验每张图像角点是否完整、是否存在误检，并剔除模糊、强反光或角点缺失严重的样本。参数求解阶段在 MATLAB 中设置方格边长 $L$后计算 $\mathbf{K}$ 与畸变系数，并自动给出每张图像的外参。
 
@@ -528,8 +518,7 @@ y_d = y\left(1+k_1 r^2+k_2 r^4+k_3 r^6\right)+p_1\left(r^2+2y^2\right)+2p_2xy
 \label{eq:reproj_error}
 e_{\mathrm{rms}}=\sqrt{\frac{1}{N}\sum_{i=1}^{M}\sum_{j=1}^{n_i}\left\lVert \mathbf{p}_{ij}-\hat{\mathbf{p}}_{ij} \right\rVert_2^2}
 \end{equation}
-
-其中 $M$ 为图像数量，$n_i$ 为第 $i$ 张图像可用角点数，$N=\sum_i n_i$ 为总角点数。MATLAB 通常同时给出每张图像的重投影误差分布，便于发现离群样本并迭代剔除。误差统计与可视化结果在文中预留，如图\ref{fig:cam_calib_reproj}所示。
+其中，$M$ 为图像数量，$n_i$ 为第 $i$ 张图像可用角点数，$N=\sum_i n_i$ 为总角点数。MATLAB 通常同时给出每张图像的重投影误差分布，便于发现离群样本并迭代剔除。误差统计与可视化结果在文中预留，如图\ref{fig:cam_calib_reproj}所示。
 
 \begin{figure}[H]
   \centering
@@ -553,8 +542,7 @@ e_{\mathrm{rms}}=\sqrt{\frac{1}{N}\sum_{i=1}^{M}\sum_{j=1}^{n_i}\left\lVert \mat
 \mathbf{0}^{\mathsf{T}} & 1
 \end{bmatrix}\in SE(3)
 \end{equation}
-
-其中 $\mathbf{R}\in SO(3)$，$\mathbf{t}\in \mathbb{R}^3$。对任一点 $\mathbf{p}^{l_2}$，其在 $\{l_1\}$ 中的表达为
+其中，$\mathbf{R}\in SO(3)$，$\mathbf{t}\in \mathbb{R}^3$。对任一点 $\mathbf{p}^{l_2}$，其在 $\{l_1\}$ 中的表达为
 \begin{equation}
 \tilde{\mathbf{p}}^{l_1}=\mathbf{R}_{l_2}^{l_1}\,\mathbf{p}^{l_2}+\mathbf{t}_{l_2}^{l_1}
 \end{equation}
@@ -570,8 +558,7 @@ e_{\mathrm{rms}}=\sqrt{\frac{1}{N}\sum_{i=1}^{M}\sum_{j=1}^{n_i}\left\lVert \mat
 \label{eq:gicp_cost}
 \min_{\mathbf{T}}\sum_{i}\left(\mathbf{p}_i-\mathbf{T}\mathbf{q}_i\right)^{\mathsf{T}}\mathbf{C}_i^{-1}\left(\mathbf{p}_i-\mathbf{T}\mathbf{q}_i\right)
 \end{equation}
-
-其中 $\mathbf{q}_i$ 为源点云中的点，$\mathbf{p}_i$ 为地图中与其对应的匹配点（或局部子地图点），$\mathbf{C}_i$ 为由两侧局部几何估计得到的协方差矩阵。优化得到的配准变换用于更新外参估计，例如
+其中，$\mathbf{q}_i$ 为源点云中的点，$\mathbf{p}_i$ 为地图中与其对应的匹配点（或局部子地图点），$\mathbf{C}_i$ 为由两侧局部几何估计得到的协方差矩阵。优化得到的配准变换用于更新外参估计，例如
 \begin{equation}
 \label{eq:extrinsic_update}
 \mathbf{T}_{l_2}^{l_1}\leftarrow \Delta \mathbf{T}_k\,\mathbf{T}_{l_2}^{l_1}
@@ -623,7 +610,6 @@ data
 \sin\theta & 0 & \cos\theta
 \end{bmatrix}
 \end{equation}
-
 其中，$\mathbf{R}_z(\pi)$ 对应镜像安装下的方位翻转，$\mathbf{R}_y(\theta)$ 对应两主视轴在 $x$-$z$ 剖面内的夹角补偿。本系统根据结构模型测得 $\theta\approx 76^{\circ}$，因此式\eqref{eq:lidar_init_rotation}中的 $-\cos\theta$ 与 $\sin\theta$ 分别对应后续矩阵中的 $-0.2419$ 与 $0.9703$。也就是说，初值矩阵中第二行的 $-1$ 并非经验设定，而是由双雷达左右对称安装导致的轴向翻转；而 $x$-$z$ 平面上的非零项则反映了两雷达主视轴之间的固定开角。
 
 在旋转初值确定后，平移项由两台雷达中心点在盒体坐标系中的相对位置给出，并统一到基准雷达参考系下。若 SolidWorks 中读出的基线偏置最初是按目标雷达当前局部轴定义，则在装配齐次矩阵前应先利用当前旋转初值完成参考系转换，记为
@@ -634,8 +620,7 @@ data
 \Delta x & \Delta y & \Delta z
 \end{bmatrix}^{\mathsf{T}}
 \end{equation}
-
-其中 $\mathbf{t}_{\mathrm{local}}$ 表示目标雷达局部坐标系下定义的中心点偏置，$\Delta x,\Delta y,\Delta z$ 分别表示转换后在基准雷达参考系中的前后、左右和上下偏置。结合当前盒体的左右对称布置，$\Delta y$ 近似为 0，而 $\Delta x$ 与 $\Delta z$ 由 SolidWorks 模型中两底座中心点的几何距离直接读取。依据 SolidWorks 设计模型，可以得到理想状态的双雷达底座中心点间相对位置，如图\ref{fig:lidar_calib_estimate}所示，进而写出完整的粗配准初值矩阵如式\eqref{eq:lidar_init_guess}所示。
+其中，$\mathbf{t}_{\mathrm{local}}$ 表示目标雷达局部坐标系下定义的中心点偏置，$\Delta x,\Delta y,\Delta z$ 分别表示转换后在基准雷达参考系中的前后、左右和上下偏置。结合当前盒体的左右对称布置，$\Delta y$ 近似为 0，而 $\Delta x$ 与 $\Delta z$ 由 SolidWorks 模型中两底座中心点的几何距离直接读取。依据 SolidWorks 设计模型，可以得到理想状态的双雷达底座中心点间相对位置，如图\ref{fig:lidar_calib_estimate}所示，进而写出完整的粗配准初值矩阵如式\eqref{eq:lidar_init_guess}所示。
 
 \begin{figure}[htbp]
   \centering
@@ -708,8 +693,7 @@ data
 \mathbf{0}^{\mathsf{T}} & 1
 \end{bmatrix}\in SE(3)
 \end{equation}
-
-其中 $\mathbf{R}_{c}^{l_1} \in SO(3)$ 为旋转矩阵，$\mathbf{t}_{c}^{l_1} \in \mathbb{R}^3$ 为平移向量。
+其中，$\mathbf{R}_{c}^{l_1} \in SO(3)$ 为旋转矩阵，$\mathbf{t}_{c}^{l_1} \in \mathbb{R}^3$ 为平移向量。
 
 在实际投影计算中，需要将雷达点转换到相机坐标系。因此，运行时使用逆变换：
 \begin{equation}
@@ -733,8 +717,7 @@ data
 \hat{u}=f_x\frac{X_c}{Z_c}+c_x,\qquad
 \hat{v}=f_y\frac{Y_c}{Z_c}+c_y
 \end{equation}
-
-其中 $(f_x, f_y)$ 为等效焦距，$(c_x, c_y)$ 为主点坐标。设实际观测的像素坐标为 $(u,v)$，则单个角点的重投影残差为：
+其中，$(f_x, f_y)$ 为等效焦距，$(c_x, c_y)$ 为主点坐标。设实际观测的像素坐标为 $(u,v)$，则单个角点的重投影残差为：
 \begin{equation}
 \label{eq:reproj_residual_uv}
 \mathbf{r}=\begin{bmatrix}\hat{u}-u\\\hat{v}-v\end{bmatrix}
