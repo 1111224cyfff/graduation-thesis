@@ -56,7 +56,7 @@
 \label{tab:ch5_platform_key_config}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{4.2cm}p{3.2cm}p{6.2cm}}
 \hline
-参数项 & 当前配置值 & 对应评估含义 \\
+\textbf{参数项} & \textbf{当前配置值} & \textbf{对应评估含义} \\
 \hline
 一次性水平化标定时长 & 1.0 s & 影响姿态基准收敛速度与初始化稳定性 \\
 最小 IMU 标定样本数 & 200 & 影响重力方向估计可靠性 \\
@@ -88,21 +88,21 @@
 
 具体而言，设视频序列第 $t$ 帧模型输出的吊装构件实例掩码为 $\hat{\mathbf{M}}_t$，边界框中心像素坐标为 $(u_t,v_t)$，视频总帧数为 $T$。帧间实例关联采用置信度优先策略：每帧选取置信度最高的吊装构件实例作为该帧代表目标；若存在多个同类实例，则取与前一帧边界框 IoU 最大者进行关联。
 
-\textbf{掩码时序 IoU} 用于衡量相邻帧分割边界的像素级重叠程度，反映掩码在时域上的稳定性：
+掩码时序 IoU 用于衡量相邻帧分割边界的像素级重叠程度，反映掩码在时域上的稳定性：
 \begin{equation}
 \mathrm{TIoU}_t=\frac{|\hat{\mathbf{M}}_t\cap\hat{\mathbf{M}}_{t+1}|}{|\hat{\mathbf{M}}_t\cup\hat{\mathbf{M}}_{t+1}|},
 \qquad
 \overline{\mathrm{TIoU}}=\frac{1}{T-1}\sum_{t=1}^{T-1}\mathrm{TIoU}_t
 \end{equation}
 
-\textbf{框中心漂移} 用于衡量相邻帧检测框中心点的像素距离，反映目标定位稳定性：
+框中心漂移 用于衡量相邻帧检测框中心点的像素距离，反映目标定位稳定性：
 \begin{equation}
 d_t=\sqrt{(u_{t+1}-u_t)^2+(v_{t+1}-v_t)^2},
 \qquad
 \bar{d}=\frac{1}{T-1}\sum_{t=1}^{T-1}d_t
 \end{equation}
 
-\textbf{漏检率} 用于衡量视频连续监测中的目标丢失比例。从首次成功检出目标的帧序号 $t_0$ 开始统计，设有效监测帧数为 $T_{\mathrm{eff}}=T-t_0+1$，漏检帧数为 $N_{\mathrm{miss}}$，则
+漏检率 用于衡量视频连续监测中的目标丢失比例。从首次成功检出目标的帧序号 $t_0$ 开始统计，设有效监测帧数为 $T_{\mathrm{eff}}=T-t_0+1$，漏检帧数为 $N_{\mathrm{miss}}$，则
 \begin{equation}
 R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
 \end{equation}
@@ -116,7 +116,7 @@ R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
 \label{tab:ch5_d1_detection_effectiveness}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{2.4cm}p{2.6cm}p{2.0cm}p{2.8cm}p{1.8cm}}
 \hline
-样本帧数 & 掩码时序IoU & 框中心漂移(px) & 漏检帧占比 & 连续漏检最大帧数 \\
+\textbf{样本帧数} & \textbf{掩码时序IoU} & \textbf{框中心漂移(px)} & \textbf{漏检帧占比} & \textbf{连续漏检最大帧数} \\
 \hline
 2826 & 0.888 & 13.02 & 1.06\% & 2 \\
 \hline
@@ -137,7 +137,7 @@ R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
 \label{tab:ch5_confusion_terms}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{3.2cm}p{4.5cm}p{4.5cm}}
 \hline
-\diagbox{算法输出}{实际情况} & 实际属于真值 & 实际不属于真值 \\
+\textbf{\diagbox{算法输出}{实际情况}} & \textbf{实际属于真值} & \textbf{实际不属于真值} \\
 \hline
 算法成功关联 & TP：正确关联 & FP：误关联 \\
 算法未关联 & FN：漏关联 & TN：正确未关联 \\
@@ -145,22 +145,22 @@ R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
 \end{tabular*}
 \end{table}
 
-\textbf{精确率}反映算法投影点云中属于真值的比例：
+精确率反映算法投影点云中属于真值的比例：
 \begin{equation}
 \mathrm{Precision}=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}}
 \end{equation}
 
-\textbf{召回率}反映真值点云中被算法成功检出的比例：
+召回率反映真值点云中被算法成功检出的比例：
 \begin{equation}
 \mathrm{Recall}=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FN}}
 \end{equation}
 
-\textbf{F1 分数}为精确率与召回率的调和平均：
+F1 分数为精确率与召回率的调和平均：
 \begin{equation}
 \mathrm{F1}=\frac{2\cdot\mathrm{Precision}\cdot\mathrm{Recall}}{\mathrm{Precision}+\mathrm{Recall}}
 \end{equation}
 
-\textbf{交并比}反映算法投影点云与真值点云的空间重叠程度：
+交并比反映算法投影点云与真值点云的空间重叠程度：
 \begin{equation}
 \mathrm{IoU}=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}+\mathrm{FN}}
 \end{equation}
@@ -173,7 +173,7 @@ R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
 \label{tab:ch5_d3_projection_localization}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{3.5cm}p{3.5cm}p{3.5cm}}
 \hline
-指标项 & 数值 & 说明 \\
+\textbf{指标项} & \textbf{数值} & \textbf{说明} \\
 \hline
 真阳性（TP） & 13751 & 正确关联的投影点数 \\
 假阳性（FP） & 1168 & 误关联的投影点数 \\
@@ -194,7 +194,7 @@ F1 分数 & 84.69\% & 精确率与召回率的调和平均 \\
 	\vspace{0.5em}
 	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}C{2cm}c@{\hspace{1.5em}}c}
 		\hline
-		& \raisebox{-0.5\height}{塔吊标准节} & \raisebox{-0.5\height}{围栏} \\[0.5em]
+		& \textbf{\raisebox{-0.5\height}{塔吊标准节}} & \textbf{\raisebox{-0.5\height}{围栏}} \\[0.5em]
 		\hline\noalign{\vskip 1.5em}
 		原图 &
 		\raisebox{-0.5\height}{\includegraphics[width=4.5cm]{塔吊标准节-原图.jpg}} &
@@ -231,23 +231,23 @@ F1 分数 & 84.69\% & 精确率与召回率的调和平均 \\
 
 为量化静态判级有效性，本节从分类精度与有序误差两个维度建立评价指标。设视频帧序列的真值等级为 $y_t\in\{\text{无危险},\text{提示},\text{报警},\text{紧急}\}$，系统输出等级为 $\hat{y}_t$。各指标定义如下：
 
-\textbf{精确率/召回率/F1（按等级）}：精确率、召回率与 F1 分数的定义见第~\ref{subsec_ch5_projection_localization_eval}~节。设等级 $i$ 对应的真阳性、假阳性、假阴性计数分别为 $\mathrm{TP}_i$、$\mathrm{FP}_i$、$\mathrm{FN}_i$，则各等级指标按上述公式计算。其中 $i\in\{\text{提示},\text{报警},\text{紧急}\}$ 为预警等级。
+精确率/召回率/F1（按等级）：精确率、召回率与 F1 分数的定义见第~\ref{subsec_ch5_projection_localization_eval}~节。设等级 $i$ 对应的真阳性、假阳性、假阴性计数分别为 $\mathrm{TP}_i$、$\mathrm{FP}_i$、$\mathrm{FN}_i$，则各等级指标按上述公式计算。其中 $i\in\{\text{提示},\text{报警},\text{紧急}\}$ 为预警等级。
 
-\textbf{分级准确率}：预测等级与真值等级完全一致的帧数占总帧数的比例：
+分级准确率：预测等级与真值等级完全一致的帧数占总帧数的比例：
 \begin{equation}
 \mathrm{Acc}=\frac{|\{t:\hat{y}_t=y_t\}|}{T}
 \label{eq:acc}
 \end{equation}
 其中，$T$ 为视频总帧数；$\mathrm{Acc}$ 为分级准确率；$y_t$ 与 $\hat{y}_t$ 分别为第 $t$ 帧的真值等级与系统输出等级。
 
-\textbf{误报率（过度预警率）}：系统将实际低等级危险判定为高等级（预测等级高于真值等级）的帧数占比：
+误报率（过度预警率）：系统将实际低等级危险判定为高等级（预测等级高于真值等级）的帧数占比：
 \begin{equation}
 \mathrm{FAR}=\frac{|\{t:\hat{y}_t>y_t\}|}{T}
 \label{eq:far}
 \end{equation}
 其中，$\mathrm{FAR}$ 为误报率；$>$ 表示预测等级高于真值等级的有序关系。
 
-\textbf{漏报率（预警不足率）}：系统将实际高等级危险判定为低等级（预测等级低于真值等级）的帧数占比：
+漏报率（预警不足率）：系统将实际高等级危险判定为低等级（预测等级低于真值等级）的帧数占比：
 \begin{equation}
 \mathrm{MDR}=\frac{|\{t:\hat{y}_t<y_t\}|}{T}
 \label{eq:mdr}
@@ -260,7 +260,7 @@ F1 分数 & 84.69\% & 精确率与召回率的调和平均 \\
 \label{tab:ch5_d4a_static_warning}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{3.2cm}p{2.6cm}p{2.6cm}p{2.6cm}}
 \hline
-指标项 & 提示级(3.0m) & 报警级(2.0m) & 紧急级(1.0m) \\
+\textbf{指标项} & \textbf{提示级(3.0m)} & \textbf{报警级(2.0m)} & \textbf{紧急级(1.0m)} \\
 \hline
 精确率  & 0.5664 & 0.2431 & 0.7646 \\
 召回率  & 0.6409 & 0.3081 & 0.8199 \\
@@ -286,7 +286,7 @@ F1分数  & 0.6014 & 0.2718 & 0.7912 \\
 \label{tab:ch5_d4b_confusion_matrix}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}c|cccc}
 \hline
-真值$\backslash$预测 & 无危险 & 提示 & 报警 & 紧急 \\
+\textbf{真值$\backslash$预测} & \textbf{无危险} & \textbf{提示} & \textbf{报警} & \textbf{紧急} \\
 \hline
 无危险 & 721 & 66 & 37 & 238 \\
 提示   & 50  & 307 & 65 & 57 \\
@@ -316,7 +316,7 @@ F1分数  & 0.6014 & 0.2718 & 0.7912 \\
 
 本节重点考察动态判级准确性。若相向接近场景能在误报可控前提下实现更早触发，则可证明趋势项对风险识别具有实际增益。
 
-为量化动态预警有效性，本节从判级准确性维度建立评价指标。\textbf{分级准确率/误报率/漏报率}：与静态判级口径一致，真值等级 $y_t$ 由动态净空与TTC联合阈值确定，系统输出等级为 $\hat{y}_t$，直接采用式\eqref{eq:acc}--\eqref{eq:mdr}计算 $\mathrm{Acc}$、$\mathrm{FAR}$、$\mathrm{MDR}$，其中 $T$ 为视频总帧数。
+为量化动态预警有效性，本节从判级准确性维度建立评价指标。分级准确率/误报率/漏报率：与静态判级口径一致，真值等级 $y_t$ 由动态净空与TTC联合阈值确定，系统输出等级为 $\hat{y}_t$，直接采用式\eqref{eq:acc}--\eqref{eq:mdr}计算 $\mathrm{Acc}$、$\mathrm{FAR}$、$\mathrm{MDR}$，其中 $T$ 为视频总帧数。
 
 \begin{table}[H]
 \centering
@@ -324,7 +324,7 @@ F1分数  & 0.6014 & 0.2718 & 0.7912 \\
 \label{tab:ch5_d5_dynamic_warning}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{3.0cm}p{2.2cm}p{2.2cm}p{2.2cm}p{2.2cm}}
 \hline
-指标项 & 提示级(2.5m) & 报警级(1.5m) & 紧急级(0.8m) & 说明 \\
+\textbf{指标项} & \textbf{提示级(2.5m)} & \textbf{报警级(1.5m)} & \textbf{紧急级(0.8m)} & \textbf{说明} \\
 \hline
 精确率 & 0.4989 & 0.4578 & 0.7896 & 动态判级准确性 \\
 召回率 & 0.4512 & 0.3167 & 0.7779 & 动态判级准确性 \\
@@ -343,7 +343,7 @@ F1分数 & 0.4739 & 0.3744 & 0.7837 & 动态判级准确性 \\
 \label{tab:ch5_d5b_confusion_matrix}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}c|cccc}
 \hline
-真值$\backslash$预测 & 无危险 & 提示 & 报警 & 紧急 \\
+\textbf{真值$\backslash$预测} & \textbf{无危险} & \textbf{提示} & \textbf{报警} & \textbf{紧急} \\
 \hline
 无危险 & 2913 & 110 & 24 & 60 \\
 提示   & 125  & 236 & 49 & 113 \\
@@ -394,26 +394,26 @@ T_{\mathrm{all}}=T_{\mathrm{sensor}}+T_{\mathrm{vision}}+T_{\mathrm{projection}}
 
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{3.2cm}p{1.6cm}p{1.6cm}p{1.6cm}p{1.6cm}p{2.5cm}}
 \hline
-模块/阶段 & 均值/ms & 标准差/ms & 95\%{}分位/ms & 最大值/ms & 备注 \\
+\textbf{模块/阶段} & \textbf{均值/ms} & \textbf{标准差/ms} & \textbf{95\%{}分位/ms} & \textbf{最大值/ms} & \textbf{备注} \\
 \hline
-\multicolumn{6}{l}{\textbf{一、视觉推理模块}} \\
+\multicolumn{6}{l}{一、视觉推理模块} \\
 \hline
 图像预处理与推理 & 19.71 & 3.34 & 25.39 & 61.08 & YOLO26 实例分割 \\
 \hline
-\multicolumn{6}{l}{\textbf{二、点云投影与图像关联模块}} \\
+\multicolumn{6}{l}{二、点云投影与图像关联模块} \\
 \hline
 点云预处理 & 0.66 & 0.22 & 0.94 & 2.50 & 含格式转换与降采样 \\
 坐标查询与变换 & 0.06 & 0.03 & 0.08 & 0.69 & 受查询超时影响 \\
 投影与像素关联 & 63.79 & 17.18 & 80.65 & 148.99 & 受点数规模影响 \\
 结果组织与发布 & 4.77 & 1.59 & 7.09 & 19.91 & 含消息封装 \\
 \hline
-\multicolumn{6}{l}{\textbf{三、动态跟踪与风险评估模块}} \\
+\multicolumn{6}{l}{三、动态跟踪与风险评估模块} \\
 \hline
 动态输入处理与关联 & 0.01 & 0.00 & 0.01 & 0.02 & 含门限匹配与航迹确认 \\
 状态估计与短时预测 & 0.00 & 0.00 & 0.00 & 0.02 & 含预测窗遍历 \\
 风险融合与判级输出 & 42.75 & 27.35 & 83.87 & 110.68 & 含迟滞状态处理 \\
 \hline
-\multicolumn{6}{l}{\textbf{四、端到端总时延}} \\
+\multicolumn{6}{l}{四、端到端总时延} \\
 \hline
 传感器采集到输出发布 & 101.43 & 18.82 & 123.17 & 200.58 & callback 触发至发布 \\
 \hline
@@ -428,11 +428,11 @@ T_{\mathrm{all}}=T_{\mathrm{sensor}}+T_{\mathrm{vision}}+T_{\mathrm{projection}}
 
 本章围绕第4章所提出的雷视融合感知与安全预警方法链路，在上海工业博物馆项目施工现场开展了系统性实验验证与性能评估，从识别定位精度、动态预警效果与全链路实时性三个维度验证了本文方法在真实吊装工况下的可行性。具体结论如下：
 
-\textbf{（1）吊装构件视觉识别与三维定位精度验证}。基于 YOLO26 的实例分割模型在 2826 帧视频序列上实现了稳定的检测与分割性能，掩码时序 IoU 均值达 0.888，框中心漂移仅 13.02 px，漏检率 1.06\%；点云投影关联精确率达 92.17\%，F1 分数为 84.69\%，验证了二维分割约束下的点云回查定位方法具有较高的一致性与可靠性。
+（1）吊装构件视觉识别与三维定位精度验证。基于 YOLO26 的实例分割模型在 2826 帧视频序列上实现了稳定的检测与分割性能，掩码时序 IoU 均值达 0.888，框中心漂移仅 13.02 px，漏检率 1.06\%；点云投影关联精确率达 92.17\%，F1 分数为 84.69\%，验证了二维分割约束下的点云回查定位方法具有较高的一致性与可靠性。
 
-\textbf{（2）动态风险分级预警有效性验证}。在动态目标接近场景中，分级准确率达 82.13\%，误报率 8.21\%，漏报率 9.66\%，表明基于 TTC 与预测净空的动态风险升级机制能够在真实工况下实现合理判级，在相向接近场景中能够提供有效的时间提前量。
+（2）动态风险分级预警有效性验证。在动态目标接近场景中，分级准确率达 82.13\%，误报率 8.21\%，漏报率 9.66\%，表明基于 TTC 与预测净空的动态风险升级机制能够在真实工况下实现合理判级，在相向接近场景中能够提供有效的时间提前量。
 
-\textbf{（3）全链路实时性验证}。端到端总时延均值为 101.43 ms（约 9.9 Hz），95\% 分位为 123.17 ms（约 8.1 Hz），各模块时延均处于可控范围。模块间通过流水线重叠与异步并行机制实现了计算资源的有效利用，在以 20 m/s 速度接近的典型工况下具备充分的时效裕量。
+（3）全链路实时性验证。端到端总时延均值为 101.43 ms（约 9.9 Hz），95\% 分位为 123.17 ms（约 8.1 Hz），各模块时延均处于可控范围。模块间通过流水线重叠与异步并行机制实现了计算资源的有效利用，在以 20 m/s 速度接近的典型工况下具备充分的时效裕量。
 
 综上，本章通过多组现场实验数据验证了第4章所提方法链路在真实吊装场景中的有效性、准确性与实时性，为本文方法从原型验证走向工程化应用提供了定量评估依据。
 
