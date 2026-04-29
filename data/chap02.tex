@@ -393,12 +393,12 @@ map                                    # 全局地图系
 
 传感器安装外参与中间参考帧之间的变换在系统运行期间视为静态刚体变换，这些变换通过第2.3节的标定过程获得。以融合参考系 $\{\text{body}\}$ 为基准，各传感器坐标系的相对位姿可形式化表示如下：
 \begin{gather}
-\mathbf{T}_{\text{body}}^{\text{lidar\_0}} = \mathbf{I}_{4\times 4} \\[5pt]
-\mathbf{T}_{\text{body}}^{\text{lidar\_1}} = \hat{\mathbf{T}}_{\text{body}}^{\text{lidar\_1}} \\[5pt]
-\mathbf{T}_{\text{body}}^{\text{imu\_0}} = \mathbf{I}_{4\times 4} \\[5pt]
-\mathbf{T}_{\text{body}}^{\text{imu\_1}} = \hat{\mathbf{T}}_{\text{body}}^{\text{lidar\_1}}
+\mathbf{T}_{\text{body}}^{\text{lidar\_1}} = \mathbf{I}_{4\times 4} \\[5pt]
+\mathbf{T}_{\text{body}}^{\text{lidar\_2}} = \hat{\mathbf{T}}_{\text{body}}^{\text{lidar\_2}} \\[5pt]
+\mathbf{T}_{\text{body}}^{\text{imu\_1}} = \mathbf{I}_{4\times 4} \\[5pt]
+\mathbf{T}_{\text{body}}^{\text{imu\_2}} = \hat{\mathbf{T}}_{\text{body}}^{\text{lidar\_2}}
 \end{gather}
-其中，$\mathbf{I}_{4\times 4}$ 为单位矩阵，$\mathbf{T}_{\text{body}}^{\text{lidar\_0}} = \mathbf{I}_{4\times 4}$ 表示基准雷达坐标系 LiDAR-0 坐标系与融合参考系重合，$\mathbf{T}_{\text{body}}^{\text{imu\_0}}$ 同理，但需要说明的是，Mid-360 内置 IMU 与 LiDAR 之间的刚体变换由 Livox SDK 在驱动层内部维护，应用层直接使用已对齐至 LiDAR 帧的 IMU 观测；$\hat{\mathbf{T}}_{\text{body}}^{\text{lidar\_1}}$ 为通过第\ref{sec:lidar_lidar_calib}节双雷达外参标定获得的刚体变换；$\mathbf{T}_{\text{body}}^{\text{imu\_1}}$ 采用与 $\mathbf{T}_{\text{body}}^{\text{lidar\_1}}$ 相同的外参矩阵，因为 IMU-1 与 LiDAR-1 刚性连接于同一安装底座，相对位姿固定不变。
+其中，$\mathbf{I}_{4\times 4}$ 为单位矩阵，$\mathbf{T}_{\text{body}}^{\text{lidar\_1}} = \mathbf{I}_{4\times 4}$ 表示基准雷达坐标系 LiDAR-1 坐标系与融合参考系重合，$\mathbf{T}_{\text{body}}^{\text{imu\_1}}$ 同理，但需要说明的是，Mid-360 内置 IMU 与 LiDAR 之间的刚体变换由 Livox SDK 在驱动层内部维护，应用层直接使用已对齐至 LiDAR 帧的 IMU 观测；$\hat{\mathbf{T}}_{\text{body}}^{\text{lidar\_2}}$ 为通过第\ref{sec:lidar_lidar_calib}节双雷达外参标定获得的刚体变换；$\mathbf{T}_{\text{body}}^{\text{imu\_2}}$ 采用与 $\mathbf{T}_{\text{body}}^{\text{lidar\_2}}$ 相同的外参矩阵，因为 IMU-2 与 LiDAR-2 刚性连接于同一安装底座，相对位姿固定不变。
 
 为确保空间参考体系的一致性与可维护性，坐标系约定采用右手坐标系，其中 X 轴指向前方，Y 轴指向左侧，Z 轴指向上方；单位制统一规定长度单位采用国际单位制米（m），角度单位采用弧度（rad），确保数值计算的一致性；旋转表示采用四元数 $\mathbf{q}=[q_w, q_x, q_y, q_z]^{\mathsf{T}}$ 或旋转矩阵 $\mathbf{R}\in SO(3)$，避免欧拉角奇异性问题；坐标变换需通过 TF 库的统一接口进行查询。以链式变换为例，点从 body 系变换到 body\_leveled 系可表示为
 \begin{equation}
@@ -519,7 +519,7 @@ e_{\mathrm{rms}}=\sqrt{\frac{1}{N}\sum_{i=1}^{M}\sum_{j=1}^{n_i}\left\lVert \mat
 \end{bmatrix}
 \end{equation}
 
-本文将 $\mathbf{K}$ 用于图像去畸变与”点云到图像”的投影计算，为后续雷视外参标定与跨模态关联提供统一的几何基础。
+本文将 $\mathbf{K}$ 用于图像去畸变与“点云到图像”的投影计算，为后续雷视外参标定与跨模态关联提供统一的几何基础。
 
 \subsection{双雷达外参标定}\label{sec:lidar_lidar_calib}
 
@@ -539,26 +539,72 @@ e_{\mathrm{rms}}=\sqrt{\frac{1}{N}\sum_{i=1}^{M}\sum_{j=1}^{n_i}\left\lVert \mat
 \tilde{\mathbf{p}}^{l_1}=\mathbf{R}_{l_2}^{l_1}\,\mathbf{p}^{l_2}+\mathbf{t}_{l_2}^{l_1}
 \end{equation}
 
-这一表达不仅给出了目标雷达点到基准雷达坐标系的统一方式，更是粗配准阶段必须先固定下来的矩阵方向约定。本文统一以基准雷达 $\{l_1\}$ 作为双雷达公共参考系，后续自动精配准与运行时调用均沿用该定义，因此本节仅讨论外参的离线构造与验证，不再展开在线阶段的坐标链组织。
+这一表达不仅给出了目标雷达点到基准雷达坐标系的统一方式，更是粗配准阶段必须先固定下来的矩阵方向约定。本文统一以基准雷达 $\{l_1\}$ 作为双雷达公共参考系，后续自动精配准与运行时调用均沿用该定义。
 
-粗配准阶段的任务并非追求最终精度，而是依据盒体结构设计、安装姿态与孔位基准给出物理上合理的初始位姿，其核心目的在于为精配准阶段的外参求解提供可靠的初值——初值不当将导致优化过程陷入局部最优解，甚至无法正确收敛。依据吊钩端一体化结构的 SolidWorks 模型，可得到双雷达安装底座的相对位置和姿态关系，并据此构造初始变换矩阵 $\mathbf{T}_0$。该初值随后被写入自动标定工具的初始化文件，用作后续逐帧配准的起点。
+（1）粗配准：基于结构模型的初值构造
 
-自动精配准部分参考 Livox 开源的多雷达外参自动标定工具实现思路\footnote{Livox\ Automatic\ Calibration\ Tools: \url{https://github.com/Livox-SDK/Livox_automatic_calibration}}，其核心流程为“基准雷达先建图，目标雷达逐帧与地图配准并迭代外参，最后基于一致性筛选得到稳定外参”。该方法要求初值具备合理的空间位置与重叠方向，且对时间同步与运动畸变较为敏感。为此，数据采集时应保持缓慢平稳运动，避免急转弯，并确保双雷达帧序列在时间上尽可能对齐。
+粗配准阶段的任务并非追求最终精度，而是依据盒体结构设计、安装姿态与孔位基准给出物理上合理的初始位姿，其核心目的在于为精配准阶段的外参求解提供可靠的初值，避免因不当的初值导致优化过程陷入局部最优解甚至无法收敛的情况。本文依据吊钩端一体化结构的 SolidWorks 模型，得到双雷达安装底座的相对位置和姿态关系，并据此构造初始变换矩阵 $\mathbf{T}_0$。
 
-自动标定首先在固定参考系 $\{w\}$ 下用基准雷达的多帧点云构建地图 $\mathcal{M}$，然后将目标雷达的每帧点云 $\mathcal{P}_k^{(2)}$ 通过当前外参估计变换到基准雷达或世界坐标下，并与地图 $\mathcal{M}$ 进行配准，得到增量变换 $\Delta \mathbf{T}_k$ 用于修正外参。本文采用广义 ICP（Generalized ICP, GICP）进行点云配准，在点到点最近邻基础上引入局部协方差近似点到平面的约束，以提升稀疏或噪声场景下的稳定性，其优化形式为
+本文依据激光雷达间的刚体空间旋转与平移关系构造粗配准初值。以基准雷达 $\{l_1\}$ 为参考，根据 SolidWorks 设计模型获取两台雷达的安装面法向、设备中心点及主视场方向。由该模型可直接测得理想状态下双雷达底座中心点的相对位置与主视轴夹角，如图\ref{fig:lidar_calib_estimate}所示，该图提供了两雷达主视轴在 $x$-$z$ 剖面内的固定夹角 $\theta$ 及目标雷达局部坐标系下的中心点偏置 $\mathbf{t}_{\mathrm{local}}$。
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.88\textwidth]{初始矩阵的位置估计}
+  \caption{初始矩阵的位置估计}
+  \label{fig:lidar_calib_estimate}
+\end{figure}
+
+旋转初值的构造需满足两个几何约束。由于两台 Mid-360 在盒体左右两侧呈侧向镜像布置，且安装高度与俯仰姿态基本一致，其一，两台雷达的横向语义相反，即目标雷达坐标系中的左右方向需翻转到与基准雷达一致；其二，两台雷达主视轴在盒体纵向剖面内存在固定夹角，需施加俯仰补偿将目标雷达的前向轴转换到基准雷达参考系下。若结构设计说明将该俯仰关系拆解为多个绕同一轴的连续角度，则应在参数层面合并为等效夹角 $\theta$ 后写入旋转矩阵。按照本文的坐标定义，先对目标雷达坐标系施加绕 $z$ 轴的 $180^{\circ}$ 旋转以完成镜像安装带来的轴向翻转，再依据图\ref{fig:lidar_calib_estimate}中测得的主视轴夹角 $\theta$ 施加绕 $y$ 轴的补偿旋转，从而得到粗配准旋转初值
 \begin{equation}
-\label{eq:gicp_cost}
-\min_{\mathbf{T}}\sum_{i}\left(\mathbf{p}_i-\mathbf{T}\mathbf{q}_i\right)^{\mathsf{T}}\mathbf{C}_i^{-1}\left(\mathbf{p}_i-\mathbf{T}\mathbf{q}_i\right)
+\label{eq:lidar_init_rotation}
+\mathbf{R}_0=\mathbf{R}_y(\theta)\,\mathbf{R}_z(\pi)=
+\begin{bmatrix}
+-\cos\theta & 0 & \sin\theta \\
+0 & -1 & 0 \\
+\sin\theta & 0 & \cos\theta
+\end{bmatrix}
 \end{equation}
-其中，$\mathbf{q}_i$ 为源点云中的点，$\mathbf{p}_i$ 为地图中与其对应的匹配点（或局部子地图点），$\mathbf{C}_i$ 为由两侧局部几何估计得到的协方差矩阵。优化得到的配准变换用于更新外参估计，例如
+其中，$\mathbf{R}_z(\pi)$ 对应镜像安装下的方位翻转，$\mathbf{R}_y(\theta)$ 对应两主视轴在 $x$-$z$ 剖面内的夹角补偿。需要说明的是，初值矩阵中第二行的 $-1$ 并非经验设定，而是由双雷达左右对称安装导致的轴向翻转。
+
+由于双雷达间同时存在旋转与平移关系，从设计模型直接获取的仅为两底座中心点的直线距离 $d$，需将其表示为目标雷达局部坐标系下的基线偏置 $\mathbf{t}_{\mathrm{local}}=[d,0,0]^{\mathsf{T}}$，并经旋转初值变换至基准雷达参考系，即
 \begin{equation}
-\label{eq:extrinsic_update}
-\mathbf{T}_{l_2}^{l_1}\leftarrow \Delta \mathbf{T}_k\,\mathbf{T}_{l_2}^{l_1}
+\label{eq:lidar_init_translation}
+\mathbf{t}_0=\mathbf{R}_0\,\mathbf{t}_{\mathrm{local}}
+=
+\mathbf{R}_0
+\begin{bmatrix}
+d \\ 0 \\ 0
+\end{bmatrix}
+=
+\begin{bmatrix}
+-d\cos\theta \\ 0 \\ d\sin\theta
+\end{bmatrix}
+\end{equation}
+其中，$\mathbf{t}_{\mathrm{local}}=[d,0,0]^{\mathsf{T}}$ 为两雷达底座中心点在目标雷达局部坐标系下的直线偏置，$d$ 可由图\ref{fig:lidar_calib_estimate}中两底座中心点的实际几何布局直接读取。代入该式计算即得 $\mathbf{t}_0$ 在基准雷达参考系下的各分量。
+
+\begin{equation}
+\label{eq:lidar_init_guess}
+\mathbf{T}_0 =
+\begin{bmatrix}
+\mathbf{R}_0 & \mathbf{t}_0 \\
+\mathbf{0}^{\mathsf{T}} & 1
+\end{bmatrix}
+=
+\begin{bmatrix}
+-0.2419 & 0 & 0.9703 & 0.1395 \\
+0 & -1 & 0 & 0 \\
+0.9703 & 0 & 0.2419 & -0.1090 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
 \end{equation}
 
-通过配准质量评估机制，引入 fitness score 阈值、最大对应距离与迭代次数上限作为判别准则，可抑制错误匹配导致的外参估计发散。当配准质量不满足预设阈值时，系统将跳过当前帧的外参更新或回退至初始猜测值，以避免不可靠观测对估计结果的影响。逐帧配准过程产生外参估计序列 $\{\mathbf{T}_k\}$，该序列可能因动态目标、遮挡、运动畸变及局部几何退化等因素引入离群值。借鉴 Livox 开源标定工具的实现思路，在平移与欧拉角参数空间对 $\{\mathbf{T}_k\}$ 进行稳健拟合与一致性检验，筛选配准质量较高的帧并剔除离群估计，从而得到稳定的外参估计 $\hat{\mathbf{T}}$。该方法利用“刚性安装下外参为常值”的物理约束，使标定结果在长时序数据中具备更高的稳定性与可复现性。
+该初值随后被写入自动标定工具的初始化文件，用作后续精配准阶段逐帧配准的起点。$\mathbf{T}_0$ 不必达到最终标定精度，但必须保证两路点云在同一场景下具有足够重叠，以提高 GICP 收敛到正确极值的概率。
 
-数据准备阶段，本文选择结构稳定且环境几何特征丰富的室内场景进行数据采集，确保两台雷达在时间上尽可能对齐，并以较慢速度移动以降低单帧运动畸变。本文采用 ROS 录制两台 LiDAR 的 rosbag 数据，在离线阶段将两路 LiDAR 数据按固定时间片导出为 .pcd 帧，同时确保两路点云在帧序号与时间戳层面一一对应，保持统一的读取顺序与目录组织方式，以便后续自动标定工具的处理。数据整理与帧对齐的示意如图\ref{fig:lidar_calib_dataset}所示。
+（2）精配准：自动标定与一致性验证
+
+自动精配准的核心流程为：基准雷达先建图，目标雷达逐帧与地图配准并迭代外参，最后基于一致性筛选得到稳定外参。该方法要求初值具备合理的空间位置与重叠方向，且对时间同步与运动畸变较为敏感。
+
+在数据准备阶段，本文选择结构稳定且环境几何特征丰富的室内场景进行数据采集，确保两台雷达在时间上尽可能对齐，并以较慢速度移动以降低单帧运动畸变。本文采用 ROS 录制两台 LiDAR 的 rosbag 数据，在离线阶段将两路 LiDAR 数据按固定时间片导出为 .pcd 帧，同时确保两路点云在帧序号与时间戳层面一一对应，保持统一的读取顺序与目录组织方式，以便后续自动标定工具的处理。数据整理与帧对齐的示意如图\ref{fig:lidar_calib_dataset}所示。
 
 \begin{figure}[htbp]
   \centering
@@ -590,64 +636,29 @@ data
   \label{fig:lidar_calib_dataset}
 \end{figure}
 
-粗配准外参 $\mathbf{T}_0$ 可由吊钩端盒体的结构设计模型和安装位姿计算得到，并在工程实现中写入初始化配置文件，作为逐帧配准更新的初始猜测。该初值不必达到最终标定精度，但必须保证两路点云在同一场景下具有足够重叠，以提高 GICP 收敛到正确极值的概率。需要指出的是，粗配准并不是“直接把 CAD 里的镜像关系抄成矩阵”，因为外参旋转必须满足 $\mathbf{R}\in SO(3)$，即只能由正规旋转组成，而不能把结构上的镜像关系误写成反射变换。因此，在给出初值矩阵前，需要先明确其旋转项的几何来源。
+自动标定在离线阶段按“建图—配准—筛选”三步执行。首先在固定参考系 $\{w\}$ 下用基准雷达的多帧点云构建地图 $\mathcal{M}$；然后将目标雷达的每帧点云 $\mathcal{P}_k^{(2)}$ 通过当前外参估计变换到基准雷达或世界坐标下，并与地图 $\mathcal{M}$ 进行配准，得到增量变换 $\Delta \mathbf{T}_k$ 用于修正外参；最后对逐帧配准产生的外参估计序列进行一致性筛选，输出稳定的外参结果。
 
-本文依据激光雷达间的刚体空间旋转与平移关系构造粗配准初值。以基准雷达 $\{l_1\}$ 为参考，根据 SolidWorks 模型中的设计值获取两台雷达的安装面法向、设备中心点及主视场方向。由于两台 Mid-360 在盒体左右两侧呈侧向镜像布置，且安装高度与俯仰姿态基本一致，粗配准旋转需满足两个几何约束：其一，两台雷达的横向语义相反，即目标雷达坐标系中的左右方向需翻转到与基准雷达一致；其二，两台雷达主视轴在盒体纵向剖面内存在固定夹角，需施加俯仰补偿将目标雷达的前向轴转换到基准雷达参考系下。若结构设计说明将该俯仰关系拆解为多个绕同一轴的连续角度，则应在参数层面合并为等效夹角 $\theta$ 后写入旋转矩阵。按照本文的坐标定义，先对目标雷达坐标系施加绕 $z$ 轴的 $180^{\circ}$ 旋转以完成镜像安装带来的轴向翻转，再依据 CAD 中测得的主视轴夹角 $\theta$ 施加绕 $y$ 轴的补偿旋转，从而得到粗配准旋转初值
+点云配准算法采用广义 ICP（Generalized ICP, GICP），在点到点最近邻基础上引入局部协方差近似点到平面的约束，以提升稀疏或噪声场景下的稳定性，其优化形式为
 \begin{equation}
-\label{eq:lidar_init_rotation}
-\mathbf{R}_0=\mathbf{R}_y(\theta)\,\mathbf{R}_z(\pi)=
-\begin{bmatrix}
--\cos\theta & 0 & \sin\theta \\
-0 & -1 & 0 \\
-\sin\theta & 0 & \cos\theta
-\end{bmatrix}
+\label{eq:gicp_cost}
+\min_{\mathbf{T}}\sum_{i}\left(\mathbf{p}_i-\mathbf{T}\mathbf{q}_i\right)^{\mathsf{T}}\mathbf{C}_i^{-1}\left(\mathbf{p}_i-\mathbf{T}\mathbf{q}_i\right)
 \end{equation}
-其中，$\mathbf{R}_z(\pi)$ 对应镜像安装下的方位翻转，$\mathbf{R}_y(\theta)$ 对应两主视轴在 $x$-$z$ 剖面内的夹角补偿。本系统根据结构模型测得 $\theta\approx 76^{\circ}$，因此式\eqref{eq:lidar_init_rotation}中的 $-\cos\theta$ 与 $\sin\theta$ 分别对应后续矩阵中的 $-0.2419$ 与 $0.9703$。也就是说，初值矩阵中第二行的 $-1$ 并非经验设定，而是由双雷达左右对称安装导致的轴向翻转；而 $x$-$z$ 平面上的非零项则反映了两雷达主视轴之间的固定开角。
-
-旋转初值确定后，平移项由两台雷达中心点在盒体坐标系中的相对位置给出，并统一到基准雷达参考系下。若 SolidWorks 中读出的基线偏置最初按目标雷达的局部轴定义，则在装配齐次矩阵前应先利用当前旋转初值完成参考系转换，记为
+其中，$\mathbf{q}_i$ 为源点云中的点，$\mathbf{p}_i$ 为地图中与其对应的匹配点（或局部子地图点），$\mathbf{C}_i$ 为由两侧局部几何估计得到的协方差矩阵。优化得到的配准变换用于更新外参估计，例如
 \begin{equation}
-\label{eq:lidar_init_translation}
-\mathbf{t}_0=\mathbf{R}_0\,\mathbf{t}_{\mathrm{local}}=
-\begin{bmatrix}
-\Delta x & \Delta y & \Delta z
-\end{bmatrix}^{\mathsf{T}}
-\end{equation}
-其中，$\mathbf{t}_{\mathrm{local}}$ 表示目标雷达局部坐标系下定义的中心点偏置，$\Delta x,\Delta y,\Delta z$ 分别表示转换后在基准雷达参考系中的前后、左右和上下偏置。结合当前盒体的左右对称布置，$\Delta y$ 近似为 0，而 $\Delta x$ 与 $\Delta z$ 由 SolidWorks 模型中两底座中心点的几何距离直接读取。依据 SolidWorks 设计模型，可以得到理想状态的双雷达底座中心点间相对位置，如图\ref{fig:lidar_calib_estimate}所示，进而写出完整的粗配准初值矩阵如式\eqref{eq:lidar_init_guess}所示。
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.88\textwidth]{初始矩阵的位置估计}
-  \caption{初始矩阵的位置估计}
-  \label{fig:lidar_calib_estimate}
-\end{figure}
-
-\begin{equation}
-\label{eq:lidar_init_guess}
-\mathbf{T}_0=
-\begin{bmatrix}
--\cos\theta & 0 & \sin\theta & \Delta x \\
-0 & -1 & 0 & \Delta y \\
-\sin\theta & 0 & \cos\theta & \Delta z \\
-0 & 0 & 0 & 1
-\end{bmatrix}
-=
-\begin{bmatrix}
--0.2419 & 0 & 0.9703 & 0.1395 \\
-0 & -1 & 0 & 0 \\
-0.9703 & 0 & 0.2419 & -0.1090 \\
-0 & 0 & 0 & 1
-\end{bmatrix}
+\label{eq:extrinsic_update}
+\mathbf{T}_{l_2}^{l_1}\leftarrow \Delta \mathbf{T}_k\,\mathbf{T}_{l_2}^{l_1}
 \end{equation}
 
-随后，以基准雷达帧序列构建地图 $\mathcal{M}$ 作为后续配准参考；在外参迭代阶段，将目标雷达每帧点云在当前外参下变换后与地图或局部子地图进行 GICP 配准，得到增量修正 $\Delta \mathbf{T}_k$ 并更新外参，同时记录每帧配准质量指标以支撑一致性筛选。标定过程中前后点云叠加效果如图\ref{fig:lidar_calib_overlay}所示。
+通过配准质量评估机制，引入 fitness score 阈值、最大对应距离与迭代次数上限作为判别准则，可抑制错误匹配导致的外参估计发散。当配准质量不满足预设阈值时，系统将跳过当前帧的外参更新或回退至初始猜测值，以避免不可靠观测对估计结果的影响。逐帧配准过程产生外参估计序列 $\{\mathbf{T}_k\}$，该序列可能因动态目标、遮挡、运动畸变及局部几何退化等因素引入离群值。利用刚性安装下外参为常值的物理约束，在平移与欧拉角参数空间对 $\{\mathbf{T}_k\}$ 进行稳健拟合与一致性检验，筛选配准质量较高的帧并剔除离群估计，从而得到稳定的外参估计 $\hat{\mathbf{T}}$。该方法使标定结果在长时序数据中具备更高的稳定性与可复现性。标定过程中前后点云配准过程如图\ref{fig:lidar_calib_overlay}所示。
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.88\textwidth]{双雷达自动标定的点云配准效果示意.png}
-  \caption{双雷达自动标定的点云配准效果示意}
+  \caption{双雷达自动标定的点云配准过程}
   \label{fig:lidar_calib_overlay}
 \end{figure}
-基于逐帧配准获得的外参估计序列，采用稳健筛选与拟合方法得到最终外参 $\hat{\mathbf{T}}_{l_2}^{l_1}$。同时，系统输出标定质量统计指标（包括有效帧比例与 fitness score 分布），为标定过程的可解释性与可靠性提供量化评估依据。图\ref{fig:lidar_calib_result}展示了自动标定过程的输出结果。
+
+基于逐帧配准获得的外参估计序列，采用稳健筛选与拟合方法得到最终外参 $\hat{\mathbf{T}}_{l_2}^{l_1}$。图\ref{fig:lidar_calib_result}展示了自动标定过程的输出结果。
 
 \begin{figure}[htbp]
   \centering
@@ -668,9 +679,7 @@ data
 \end{bmatrix}
 \end{equation}
 
-式\eqref{eq:lidar_lidar_result}给出了从 $\{l_2\}$ 到 $\{l_1\}$ 的最终刚体变换。为确保该结果可直接用于后续在线融合，本文除检查标定前后点云叠加效果外，还在静止场景下统计重叠区域最近邻距离分布，并以最近邻距离均值不超过 $0.10\,\mathrm{m}$、95\% 分位不超过 $0.20\,\mathrm{m}$ 作为可用性判据。当该条件成立时，可认为双雷达在后续特征提取、配准和近场目标生成中具备可接受的几何一致性。
-
-本章获得的 $\hat{\mathbf{T}}_{l_2}^{l_1}$ 将直接配置于 livox\_merge 的静态外参中，为第3章的双雷达实时融合提供输入。
+式\eqref{eq:lidar_lidar_result}给出了从 $\{l_2\}$ 到 $\{l_1\}$ 的最终刚体变换矩阵，本章获得的 $\hat{\mathbf{T}}_{l_2}^{l_1}$ 将直接配置于 livox\_merge 的静态外参中，为第3章的双雷达实时融合提供输入。
 
 \subsection{雷达-相机外参标定}\label{ux96f7ux8fbeux76f8ux673aux5916ux53c2ux6807ux5b9a}
 
