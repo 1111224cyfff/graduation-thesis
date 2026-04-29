@@ -200,7 +200,7 @@ FP16 半精度量化在不显著牺牲推理稳定性的前提下降低显存占
 
 在坐标系统一方面，方法采用“TF 优先、静态配置兜底”的方式构建投影模型。当运行时 TF 能够给出相机与点云坐标系之间的实时变换时，系统优先使用 TF 结果；若 TF 不可用或查询失败，则回退到 YAML 中预先标定的静态外参。该机制在保证在线运行灵活性的同时，避免单一外参来源失效导致投影链路中断。
 
-综上，时空同步与坐标统一构成了第 4.2 节全部后续方法的前提。若这一基础链路不稳定，即使视觉分割或点云质量本身较好，最终得到的投影对应关系也会出现错位。因此，吊装构件空间定位的前提是同步与坐标语义的统一；只有在此基础上，视觉语义与点云几何之间的对应关系才具有工程可信性。
+综上，时空同步与坐标统一构成了第 4.2 节全部后续方法的前提。若这一基础链路不稳定，即使视觉分割或点云质量本身较好，最终得到的投影对应关系也会出现错位。因此，吊装构件空间定位的前提是同步与坐标语义的统一；唯有如此，视觉语义与点云几何之间的对应关系才具有工程可信性。
 
 \subsection{基于分割掩码的点云-图像投影关联}\label{subsec_ch4_mask_projection}
 
@@ -292,7 +292,7 @@ d_i^{\mathrm{static}}=\min_{\mathbf{q}\in\mathcal{M}_{\mathrm{local}}}d_{\mathrm
 \label{fig:ch4_cylinder_envelope_placeholder}
 \end{figure}
 
-其中，$r_i^{\mathrm{c}}$ 反映吊装构件在水平面的安全冗余范围，$h_i=z_i^{\mathrm{t}}-z_i^{\mathrm{b}}$ 反映竖向有效作业空间。进一步地，定义圆柱在地面平面的投影边界为
+其中，$r_i^{\mathrm{c}}$ 反映吊装构件在水平面的安全冗余范围，$h_i=z_i^{\mathrm{t}}-z_i^{\mathrm{b}}$ 反映竖向有效作业空间。进而，定义圆柱在地面平面的投影边界为
 \begin{equation}
 \mathcal{B}_i=\left\{(x,y)\ \middle|\ (x-x_i)^2+(y-y_i)^2\le (r_i^{\mathrm{c}})^2\right\}
 \end{equation}
@@ -511,7 +511,7 @@ d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o)
 \begin{equation}
 d_{\mathrm{cur}}=\max\bigl(0,\,\|\tilde{\mathbf{r}}\|-r_o-r_d\bigr)
 \end{equation}
-进一步地，定义平面相对接近速度为
+进而，定义平面相对接近速度为
 \begin{equation}
 v_{\mathrm{close}}=-\tilde{\mathbf{v}}_{\mathrm{rel}}^\mathsf{T}\frac{\tilde{\mathbf{r}}}{\|\tilde{\mathbf{r}}\|}
 \end{equation}
@@ -735,7 +735,7 @@ a=\pi(L_{\mathrm{act}},\sigma;\Theta)
 
 为明确控制建议接口的运行机理，本文将其抽象为单帧映射流程。与风险判级阶段不同，该流程不重新计算几何关系，而是在既有风险状态基础上执行就绪性判定、动作决策与输出规范化。
 
-算法~\ref{alg:ch4_warning_control_mapping}给出了该映射流程的紧凑形式，将实现逻辑归纳为“就绪短路—分级动作映射—方向修正—一致性发布”四步。
+算法~\ref{alg:ch4_warning_control_mapping}给出了该映射流程的紧凑形式，将实现逻辑归纳为就绪短路、分级动作映射、方向修正和一致性发布四个环节。
 
 \begin{algorithm}[H]
 \caption{风险状态到控制建议的映射流程（单帧）}
