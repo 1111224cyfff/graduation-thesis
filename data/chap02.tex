@@ -679,13 +679,13 @@ data
 \end{bmatrix}
 \end{equation}
 
-式\eqref{eq:lidar_lidar_result}给出了从 $\{l_2\}$ 到 $\{l_1\}$ 的最终刚体变换矩阵，本章获得的 $\hat{\mathbf{T}}_{l_2}^{l_1}$ 将直接配置于 livox\_merge 的静态外参中，为第3章的双雷达实时融合提供输入。
+式\eqref{eq:lidar_lidar_result}给出了从 $\{l_2\}$ 到 $\{l_1\}$ 的最终刚体变换矩阵，本章获得的 $\hat{\mathbf{T}}_{l_2}^{l_1}$ 将直接作为静态外参配置到双雷达融合节点中，为第3章的双雷达实时融合提供输入。
 
 \subsection{雷达-相机外参标定}\label{ux96f7ux8fbeux76f8ux673aux5916ux53c2ux6807ux5b9a}
 
 雷达—相机外参标定旨在建立激光雷达点云与相机图像之间的精确投影关系，为第4章的雷视数据关联奠定几何基础。本文基于 Livox 开源标定工具\footnote{Livox\ Camera-LiDAR\ Calibration: \url{https://github.com/Livox-SDK/livox_camera_lidar_calibration}}，利用已知尺寸的立体靶标角点构建跨模态特征对应，通过非线性优化求解相机与雷达间的稳定刚体变换。
 
-从数学形式上看，雷达—相机外参标定可表述为求解相机坐标系 $\{c\}$ 与基准雷达坐标系 $\{l_1\}$ 之间的刚体变换 $\mathbf{T}_{c}^{l_1} \in SE(3)$。本文采用统一的坐标变换记号：$\mathbf{T}_{b}^{a}$ 表示将坐标系 $\{b\}$ 下的点变换到坐标系 $\{a\}$。相机到雷达的变换矩阵定义为：
+从数学形式上看，雷达-相机外参标定可表述为求解相机坐标系 $\{c\}$ 与基准雷达坐标系 $\{l_1\}$ 之间的刚体变换 $\mathbf{T}_{c}^{l_1} \in SE(3)$。本文采用统一的坐标变换记号：$\mathbf{T}_{b}^{a}$ 表示将坐标系 $\{b\}$ 下的点变换到坐标系 $\{a\}$。相机到雷达的变换矩阵定义为：
 \begin{equation}
 \label{eq:lidar_cam_extrinsic}
 \mathbf{T}_{c}^{l_1}=
@@ -730,9 +730,9 @@ data
 \displaystyle\min_{\mathbf{R}_{c}^{l_1},\mathbf{t}_{c}^{l_1}}\sum_{k=1}^{K}\sum_{i=1}^{N_k}\left\lVert \mathbf{r}_{k,i}\right\rVert_2^2
 \end{equation}
 
-求解最优外参 $\mathbf{T}_{c}^{l_1}$。为规避欧拉角奇异值问题，优化过程中采用四元数 $\mathbf{q}$ 参数化旋转，并施加单位约束。
+通过求解上述优化问题得到最优外参 $\mathbf{T}_{c}^{l_1}$。为避免欧拉角奇异值问题，优化中采用四元数 $\mathbf{q}$ 对旋转进行参数化，并施加单位范数约束。
 
-标定流程采用“先数据录制、后离线处理”的工程化方式。首先，在开阔场地布置已知尺寸的矩形立体靶标，同步采集雷达点云（ROS bag）与相机图像，共采集12组不同距离（约3\,m）与姿态的数据，确保靶标在两种模态中均清晰可见。其次，在图像中提取靶标角点像素坐标 $(u,v)$（图\ref{fig:cam_lidar_corner_photo}），并在对应点云帧中提取相同角点的三维坐标 $\mathbf{P}_{l_1}$（图\ref{fig:cam_lidar_corner_picking}），采用一致的角点编号顺序（如顺时针）以避免特征对应错误，得到待标定的原始数据（图\ref{fig:cam_lidar_calib_dataset}）。接着，基于结构设计模型或安装测量提供外参初值 $\mathbf{T}_{c}^{l_1,(0)}$ 作为优化起点。然后固定已知内参，对外参进行非线性优化，根据重投影误差剔除异常数据后重新优化直至收敛。最后，将优化所得外参 $\mathbf{T}_{c}^{l_1}$ 用于点云到图像的投影，通过视觉对齐效果与点云着色验证标定精度（图\ref{fig:cam_lidar_calib_effect}）。
+标定具体流程如下：首先，在开阔场地布置已知尺寸的矩形立体靶标，同步采集雷达点云与相机图像，共采集12组不同距离与姿态的数据，确保靶标在两种模态中均清晰可见。其次，在图像中提取靶标角点像素坐标 $(u,v)$（图\ref{fig:cam_lidar_corner_photo}），并在对应点云帧中提取相同角点的三维坐标 $\mathbf{P}_{l_1}$（图\ref{fig:cam_lidar_corner_picking}），采用一致的角点编号顺序得到待标定的原始数据（图\ref{fig:cam_lidar_calib_dataset}）。接着，基于结构设计模型或安装测量提供外参初值 $\mathbf{T}_{c}^{l_1,(0)}$ 作为优化起点。初值构造方法与\secref{sec:lidar_lidar_calib}中粗配准阶段一致，均根据SolidWorks设计模型中的安装面法向与相对位置关系给出可收敛的初始位姿。然后固定已知内参，对外参进行非线性优化，根据重投影误差剔除异常数据后重新优化直至收敛。最后，将优化所得外参 $\mathbf{T}_{c}^{l_1}$ 用于点云到图像的投影，通过视觉对齐效果与点云着色验证标定精度（图\ref{fig:cam_lidar_calib_effect}）。
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.88\textwidth]{相机侧角点像素坐标获取.png}
