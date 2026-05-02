@@ -449,7 +449,7 @@ d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o)
 \end{equation}
 该定义将静态风险统一到“包络球三维边界净空”这一可解释几何量上，与 KD-tree 最近邻计算流程一致。
 
-在本文配置中，静态净空被划分为三级阈值区间：当 $d_{\mathrm{static}}\leq 1.0\,\mathrm{m}$ 时触发紧急等级，当 $1.0\,\mathrm{m}<d_{\mathrm{static}}\leq 2.0\,\mathrm{m}$ 时触发警告等级，当 $2.0\,\mathrm{m}<d_{\mathrm{static}}\leq 3.0\,\mathrm{m}$ 时触发提示等级，超过 $3.0\,\mathrm{m}$ 则视为静态净空充分。为便于统一对照，表\ref{tab:ch4_static_risk_criteria} 汇总了静态风险分级判据。
+在本文配置中，静态净空被划分为三级阈值区间：当 $d_{\mathrm{static}}\leq 1.0\,\mathrm{m}$ 时触发紧急等级，当 $1.0\,\mathrm{m}<d_{\mathrm{static}}\leq 3.0\,\mathrm{m}$ 时触发警告等级，当 $3.0\,\mathrm{m}<d_{\mathrm{static}}\leq 5.0\,\mathrm{m}$ 时触发提示等级，超过 $5.0\,\mathrm{m}$ 则视为静态净空充分。为便于统一对照，表\ref{tab:ch4_static_risk_criteria} 汇总了静态风险分级判据。
 
 \begin{table}[htbp]
 	\centering
@@ -460,8 +460,8 @@ d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o)
 	\textbf{风险等级} & \textbf{静态净空阈值 $d_{\mathrm{static}}$} \\
 	\hline
 	紧急（Emergency） & $\leq 1.0\,\mathrm{m}$ \\
-	警告（Warning） & $\leq 2.0\,\mathrm{m}$ \\
-	提示（Info） & $\leq 3.0\,\mathrm{m}$ \\
+	警告（Warning） & $\leq 3.0\,\mathrm{m}$ \\
+	提示（Notice） & $\leq 5.0\,\mathrm{m}$ \\
 	\hline
 	\end{tabular*}
 \end{table}
@@ -529,7 +529,7 @@ v_{\mathrm{close}}=-\tilde{\mathbf{v}}_{\mathrm{rel}}^\mathsf{T}\frac{\tilde{\ma
 \begin{equation}
 d_{\mathrm{pred}}=\max\bigl(0,\,\|\tilde{\mathbf{r}}+\tau^*\tilde{\mathbf{v}}_{\mathrm{rel}}\|-r_o-r_d\bigr)
 \end{equation}
-在本文配置中，动态分级阈值采用三级结构：当前净空、预测净空或 TTC 任一指标进入 $2.5\,\mathrm{m}/4.0\,\mathrm{s}$ 区间时触发提示；进入 $1.5\,\mathrm{m}/2.5\,\mathrm{s}$ 区间时触发警告；进入 $0.8\,\mathrm{m}/1.0\,\mathrm{s}$ 区间时触发紧急。这种取多指标中更危险者的策略能够覆盖动态接近中的不同演化模式。
+在本文配置中，动态分级阈值采用三级结构：当前净空、预测净空或 TTC 任一指标进入 $5.0\,\mathrm{m}/6.0\,\mathrm{s}$ 区间时触发提示；进入 $3.0\,\mathrm{m}/3.0\,\mathrm{s}$ 区间时触发警告；进入 $1.0\,\mathrm{m}/1.5\,\mathrm{s}$ 区间时触发紧急。这种取多指标中更危险者的策略能够覆盖动态接近中的不同演化模式。
 
 为便于与后续实验统计口径统一，表\ref{tab:ch4_dynamic_risk_criteria} 汇总了动态风险分级判据。系统在实现中对三列判据采用“任一触发即升级，并按最高风险输出”的规则。
 
@@ -541,9 +541,9 @@ d_{\mathrm{pred}}=\max\bigl(0,\,\|\tilde{\mathbf{r}}+\tau^*\tilde{\mathbf{v}}_{\
 \hline
 \textbf{风险等级} & \textbf{当前净空阈值 $d_{\mathrm{cur}}$} & \textbf{预测净空阈值 $d_{\mathrm{pred}}$} & \textbf{时间到接触阈值 TTC} \\
 \hline
-紧急（Emergency） & $\leq 0.8\,\mathrm{m}$ & $\leq 0.8\,\mathrm{m}$ & $\leq 1.0\,\mathrm{s}$ \\
-警告（Warning） & $\leq 1.5\,\mathrm{m}$ & $\leq 1.5\,\mathrm{m}$ & $\leq 2.5\,\mathrm{s}$ \\
-提示（Info） & $\leq 2.5\,\mathrm{m}$ & $\leq 2.5\,\mathrm{m}$ & $\leq 4.0\,\mathrm{s}$ \\
+紧急（Emergency） & $\leq 1.0\,\mathrm{m}$ & $\leq 1.0\,\mathrm{m}$ & $\leq 1.5\,\mathrm{s}$ \\
+警告（Warning） & $\leq 3.0\,\mathrm{m}$ & $\leq 3.0\,\mathrm{m}$ & $\leq 3.0\,\mathrm{s}$ \\
+提示（Notice） & $\leq 5.0\,\mathrm{m}$ & $\leq 5.0\,\mathrm{m}$ & $\leq 6.0\,\mathrm{s}$ \\
 \hline
 \end{tabular*}
 \end{table}
