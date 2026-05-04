@@ -477,9 +477,9 @@ d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o)
 
 本节聚焦于动态风险评估的判级环节，结合第 3 章输出的动态轨迹状态进行风险分析。核心问题是：当动态目标尚未与被监控构件贴近但已形成持续接近趋势时，系统应否提前升级预警等级。
 
-动态候选输入聚焦于对象级轨迹状态量，涵盖连续轨迹标识、位置、速度、轨迹年龄与更新状态等字段。为抑制短时误聚类与单帧噪声干扰，预警模块默认仅以确认轨迹参与风险评估，确保风险判级建立在稳定输入之上。趋势预测输入将短时趋势预测提供的时间先验与当前几何关系联合，构建由当前净空、相对接近速度、预测净空与 TTC 协同判定的动态升级机制。
+动态候选输入聚焦于对象级轨迹状态量，涵盖连续轨迹标识、位置、速度、轨迹持续时长与更新状态等字段。为抑制短时误聚类与单帧噪声干扰，预警模块默认仅以确认轨迹参与风险评估，确保风险判级建立在稳定输入之上。趋势预测输入将短时趋势预测提供的时间先验与当前几何关系联合，构建由当前净空、相对接近速度、预测净空与 TTC 协同判定的动态升级机制。
 
-在静态净空与动态状态输入均已就绪的基础上，系统还需回答一个更关键的问题：对于当前尚未贴近但正在快速逼近的场景，应否提前提高预警等级。仅凭瞬时距离，容易漏掉相向接近带来的提前量风险；对于吊装作业，吊装构件正下方同样属于禁入区域，因此动态判定不采用垂向分离即可放行的策略，而是直接在地面投影平面上评估接近风险。
+在静态净空与动态状态输入均已就绪的基础上，仅凭瞬时距离仍容易漏掉相向接近带来的提前量风险。施工场景中，人员与机械等危险源的移动主要发生在平面内，垂向运动有限，将动态预警投影至二维平面已能覆盖主要的接近碰撞风险；同时，吊装构件正下方也属于禁入区域，垂向分离并不意味着可放行。因此，动态判定直接在地面投影平面上评估接近风险。
 
 设吊装构件包络圆柱轴线在地面平面的投影位置与速度分别为 $\tilde{\mathbf{p}}_o=[x_o,y_o]^\mathsf{T}$ 和 $\tilde{\mathbf{v}}_o=[v_{x,o},v_{y,o}]^\mathsf{T}$，动态目标在地面平面的投影位置与速度分别为 $\tilde{\mathbf{p}}_d=[x_d,y_d]^\mathsf{T}$ 和 $\tilde{\mathbf{v}}_d=[v_{x,d},v_{y,d}]^\mathsf{T}$。定义平面相对位置与相对速度为
 \begin{equation}
@@ -487,28 +487,33 @@ d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o)
 \qquad
 \tilde{\mathbf{v}}_{\mathrm{rel}}=\tilde{\mathbf{v}}_d-\tilde{\mathbf{v}}_o
 \end{equation}
+
 令 $r_o$ 为吊装构件包络圆柱半径，$r_d$ 为动态目标平面等效包络半径，则当前平面净空定义为
 \begin{equation}
 d_{\mathrm{cur}}=\max\bigl(0,\,\|\tilde{\mathbf{r}}\|-r_o-r_d\bigr)
 \end{equation}
+
 进而，定义平面相对接近速度为
 \begin{equation}
 v_{\mathrm{close}}=-\tilde{\mathbf{v}}_{\mathrm{rel}}^\mathsf{T}\frac{\tilde{\mathbf{r}}}{\|\tilde{\mathbf{r}}\|}
 \end{equation}
+
 则当 $v_{\mathrm{close}}>v_{\min}$ 时，可得到时间到接触指标
 \begin{equation}
 \mathrm{TTC}=\frac{d_{\mathrm{cur}}}{v_{\mathrm{close}}}
 \end{equation}
 若当前已重叠则记为 $0$，若不存在有效接近则记为无穷大。由此，系统不仅获得平面边界净空的估计，还可获得平面接近速度的量化。
 
-为了抑制仅凭单时刻速度做出的误判，系统还进一步计算预测窗口内的最近接平面净空。设预测时域为 $T_p$，则最近接近时刻可表示为
+为了抑制仅凭单时刻速度做出的误判，系统还进一步计算预测窗口内的最近接平面净空。在匀速运动假设下，相对距离 $\|\tilde{\mathbf{r}}+\tau\tilde{\mathbf{v}}_{\mathrm{rel}}\|$ 在 $\tau$ 处的导数为零，解得无约束最近接近时刻为 $-\tilde{\mathbf{r}}^\mathsf{T}\tilde{\mathbf{v}}_{\mathrm{rel}}/\|\tilde{\mathbf{v}}_{\mathrm{rel}}\|^2$。将其截断至预测时域 $[0,T_p]$ 内，得到有效最近接近时刻：
 \begin{equation}
 \tau^*=\operatorname{clip}\left(-\frac{\tilde{\mathbf{r}}^\mathsf{T}\tilde{\mathbf{v}}_{\mathrm{rel}}}{\|\tilde{\mathbf{v}}_{\mathrm{rel}}\|^2},\,0,\,T_p\right)
 \end{equation}
+
 相应的预测净空为
 \begin{equation}
 d_{\mathrm{pred}}=\max\bigl(0,\,\|\tilde{\mathbf{r}}+\tau^*\tilde{\mathbf{v}}_{\mathrm{rel}}\|-r_o-r_d\bigr)
 \end{equation}
+
 在本文配置中，动态分级阈值采用三级结构：当前净空、预测净空或 TTC 任一指标进入 $5.0\,\mathrm{m}/6.0\,\mathrm{s}$ 区间时触发提示；进入 $3.0\,\mathrm{m}/3.0\,\mathrm{s}$ 区间时触发警告；进入 $1.0\,\mathrm{m}/1.5\,\mathrm{s}$ 区间时触发紧急。这种取多指标中更危险者的策略能够覆盖动态接近中的不同演化模式。
 
 为便于与后续实验统计口径统一，表\ref{tab:ch4_dynamic_risk_criteria} 汇总了动态风险分级判据。系统在实现中对三列判据采用“任一触发即升级，并按最高风险输出”的规则。
@@ -532,83 +537,8 @@ d_{\mathrm{pred}}=\max\bigl(0,\,\|\tilde{\mathbf{r}}+\tau^*\tilde{\mathbf{v}}_{\
 \begin{equation}
 \cos\theta_{xy}=\frac{\tilde{\mathbf{v}}_o^\mathsf{T}\tilde{\mathbf{v}}_d}{\|\tilde{\mathbf{v}}_o\|\,\|\tilde{\mathbf{v}}_d\|}
 \end{equation}
+
 当二者均存在有效平面速度，且 $v_{\mathrm{close}}$ 足够大、$\cos\theta_{xy}<-0.2$ 时，系统将当前动态等级上调一级，最高不超过紧急等级；在低速场景下，则退化为基于接近速度和预测净空的保守升级逻辑。该机制能够对相向接近场景给出提前预警。需要进一步补充的部分主要是这些阈值在不同吊装场景中的标定依据与统计验证。
-
-\begin{figure}[htbp]
-	\centering
-	\resizebox{!}{0.90\textheight}{%
-	\begin{tikzpicture}[
-		x=0.9cm,y=0.9cm,>=Latex,font=\scriptsize,
-		proc/.style={draw, rounded corners=2pt, thick, fill=gray!8, align=center, minimum width=3.0cm, minimum height=0.95cm},
-		judge/.style={draw, rounded corners=2pt, thick, dashed, fill=gray!14, align=center, minimum width=3.0cm, minimum height=0.95cm},
-		term/.style={draw, rounded corners=2pt, thick, fill=gray!18, align=center, minimum width=2.8cm, minimum height=0.95cm}
-	]
-		% 输入验证流程（纵向主链）
-		\node[proc] (recv) at (4.5,0) {接收对象状态\\\texttt{object\_states}};
-		\node[judge] (valid) at (4.5,-1.6) {对象状态是否有效};
-		\node[term] (clear1) at (-1,-1.6) {输出 \texttt{clear}\\\texttt{reason=waiting\_for\_inputs}};
-		\node[proc] (select) at (4.5,-3.2) {筛选监控目标};
-		\node[judge] (found) at (4.5,-4.8) {是否找到满足条件目标};
-		\node[term] (clear2) at (-1,-4.8) {输出 \texttt{clear}\\\texttt{reason=no\_monitored\_object}};
-		\node[proc] (tf) at (4.5,-6.4) {坐标变换到 \texttt{map}};
-		\node[judge] (tfok) at (4.5,-8.0) {TF 是否成功};
-		\node[term] (clear3) at (-1,-8.0) {输出 \texttt{clear}\\\texttt{reason=object\_tf\_failed}};
-		\node[proc] (vel) at (4.5,-9.6) {估计目标速度};
-
-		% 静态分支（左侧）
-		\node[proc] (staticcalc) at (1.4,-11.6) {静态净空计算\\包络球三维边界到\\静态点集最近距离};
-		\node[proc] (staticlevel) at (1.4,-13.4) {静态阈值分级\\1.0 / 2.0 / 3.0 m};
-
-		% 动态分支（右侧）
-		\node[proc] (dyncalc) at (8.0,-11.6) {动态风险计算\\二维平面净空 相对速度\\TTC 预测净空};
-		\node[proc] (dynlevel) at (8.0,-13.4) {动态阈值或 TTC 分级\\0.8 / 1.5 / 2.5 m\\1 / 2.5 / 4 s};
-		\node[judge] (headon) at (8.0,-15.2) {是否相向运动};
-		\node[proc] (up) at (6.2,-17.0) {动态等级上调一级\\最高不超过 Emergency};
-		\node[proc] (keep) at (9.8,-17.0) {保持当前动态等级};
-
-		% 融合与输出流程（底部）
-		\node[proc] (fusion) at (4.8,-19.0) {融合静态与动态等级};
-		\node[proc] (desired) at (4.8,-20.6) {\texttt{desired\_level}};
-		\node[proc] (hys) at (4.8,-22.2) {迟滞状态机};
-		\node[proc] (active) at (4.8,-23.8) {\texttt{active\_level}};
-		\node[term] (pub) at (4.8,-25.4) {发布 \texttt{WarningState}};
-
-		% 连接线
-		\draw[->, thick] (recv) -- (valid);
-		\draw[->, thick] (valid) -- node[midway, fill=white, inner sep=1pt]{是} (select);
-		\draw[->, thick] (valid) -- node[midway, fill=white, inner sep=1pt]{否} (clear1);
-		\draw[->, thick] (select) -- (found);
-		\draw[->, thick] (found) -- node[midway, fill=white, inner sep=1pt]{是} (tf);
-		\draw[->, thick] (found) -- node[midway, fill=white, inner sep=1pt]{否} (clear2);
-		\draw[->, thick] (tf) -- (tfok);
-		\draw[->, thick] (tfok) -- node[midway, fill=white, inner sep=1pt]{是} (vel);
-		\draw[->, thick] (tfok) -- node[midway, fill=white, inner sep=1pt]{否} (clear3);
-
-		% 从速度估计分支到静态和动态计算
-		\draw[->, thick] (vel) -- (staticcalc);
-		\draw[->, thick] (vel) -- (dyncalc);
-
-		% 静态分支连接
-		\draw[->, thick] (staticcalc) -- (staticlevel);
-		\draw[->, thick] (staticlevel) |- (fusion.west);
-
-		% 动态分支连接
-		\draw[->, thick] (dyncalc) -- (dynlevel);
-		\draw[->, thick] (dynlevel) -- (headon);
-		\draw[->, thick] (headon) -- node[midway, fill=white, inner sep=1pt]{是} (up);
-		\draw[->, thick] (headon) -- node[midway, fill=white, inner sep=1pt]{否} (keep);
-		\draw[->, thick] (up) -- (fusion);
-		\draw[->, thick] (keep) |- (fusion.east);
-
-		% 融合输出连接
-		\draw[->, thick] (fusion) -- (desired);
-		\draw[->, thick] (desired) -- (hys);
-		\draw[->, thick] (hys) -- (active);
-		\draw[->, thick] (active) -- (pub);
-	\end{tikzpicture}}
-	\caption{预警判级细化流程图}
-	\label{fig:ch4_warning_state_machine_placeholder}
-\end{figure}
 
 \subsection{预警状态机与消息接口设计}\label{subsec_ch4_warning_interface}
 
@@ -616,6 +546,7 @@ d_{\mathrm{pred}}=\max\bigl(0,\,\|\tilde{\mathbf{r}}+\tau^*\tilde{\mathbf{v}}_{\
 \begin{equation}
 L_{\mathrm{des}}=\max(L_s,L_d)
 \end{equation}
+
 该融合规则体现了安全优先原则：当任一风险分支达到更高等级时，系统不以另一分支的较低结果抵消该判定。由此可在多源证据并存时保持风险表达的一致性与保守性。
 
 为抑制阈值邻域内的频繁切换，系统引入带迟滞的状态转移策略：等级上升即时生效，等级下降需在持续保持时间 $\Delta t_h$ 内稳定满足后才确认。该策略使预警输出在突发风险出现时保持快速响应，同时降低由瞬时测量波动引起的等级抖动，从而提升下游可视化与控制接口的时序稳定性。
