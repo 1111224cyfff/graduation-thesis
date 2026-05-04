@@ -1,12 +1,12 @@
 \chapter{基于雷视融合的吊物状态估计与安全预警方法}\label{chap4_yolo26_projection_warning}
 
-在吊装场景中，LiDAR 承担三维几何感知任务，直接提供点云坐标、空间尺度与距离信息，是后续净空计算和碰撞判定的几何基础。视觉模块则通过类别先验和像素级实例掩码，为点云投影回查提供明确的目标边界。本文将视觉定位为吊装构件本体的实时识别与分割模块，而非对所有危险源的开放式识别器。先由视觉网络输出实例分割掩码，再通过点云-图像投影关联将二维语义转化为具有明确三维坐标的实例点云子集，使吊物及其吊挂状态能够被稳定提取，进而与静态环境以及人员、车辆、机械等动态障碍物的几何信息结合，完成碰撞风险评估。
+在吊装场景中，LiDAR 承担三维几何感知任务，直接提供点云坐标、空间尺度与距离信息，是后续净空计算和碰撞判定的几何基础。视觉模块则通过类别先验和像素级实例掩码，为点云投影回查提供明确的目标边界。本文将视觉定位为吊装构件本体的实时识别与分割模块，而非对所有危险源的开放式识别器。先由视觉网络输出实例分割掩码，再通过点云-图像投影关联将二维语义转化为具有明确三维坐标的实例点云子集，使吊物及其吊挂状态能够被稳定提取，进而与静态环境以及人员、机械等动态障碍物的几何信息结合，完成碰撞风险评估。
 
 \section{基于YOLO26的吊装构件视觉识别与嵌入式部署}\label{sec_ch4_yolo26_deploy}
 
 \subsection{YOLO26模型选型与原理}\label{subsec_ch4_yolo26_selection}
 
-常规目标检测方法在通用场景中表现优异，但其输出的边界框对后续空间定位的精确性支持有限，尤其在吊装构件可能存在遮挡、形变或背景复杂的工地环境中。相比之下，实例分割能够提供更细粒度的目标区域信息，从而更有效地约束点云投影的空间对应关系。基于这一需求，本文选用 YOLO26 作为视觉分割网络的基础架构。YOLO26 是 YOLO 系列的最新模型，针对边缘端部署场景进行优化，在推理效率和分割性能之间取得平衡，能够满足吊装作业对实时性与准确性的双重要求。具体而言，相比 YOLO11，YOLO26 移除了 DFL 和 NMS 模块，简化架构在分割任务中仍能保持足够精度，CPU 推理速度提升约 43\%。
+常规目标检测方法在通用场景中表现优异，但其输出的边界框对后续空间定位的精确性支持有限，尤其在吊装构件可能存在遮挡、形变或背景复杂的工地环境中。相比之下，实例分割能够提供更细粒度的目标区域信息，从而更有效地约束点云投影的空间对应关系。基于这一需求，本文选用 YOLO26 作为视觉分割网络的基础架构。作为 YOLO 系列的最新模型，YOLO26 针对边缘端部署场景进行了充分优化，在推理效率和分割性能之间取得平衡，能够满足吊装作业对实时性与准确性的双重要求。
 
 在整体架构上，YOLO26 遵循单阶段目标检测范式，由骨干特征提取网络、轻量级特征融合颈部与端到端检测头三部分构成。骨干网络引入高效 C3k2 模块与 C2PSA 空间注意力结构，在保障多尺度特征提取能力的同时有效降低计算冗余；颈部通过多尺度上采样、特征拼接及卷积融合，增强对不同尺度目标——尤其是小目标——的特征表达；检测头采用无锚框、解耦设计，直接输出目标类别与边界框信息，无需冗余后处理模块，结构精简，硬件适配性更强。其整体架构如图\ref{fig:ch4_yolo26_architecture}所示\cite{Ultralytics2026YOLO26}。
 
@@ -17,9 +17,9 @@
 	\label{fig:ch4_yolo26_architecture}
 \end{figure}
 
-YOLO26 的核心创新集中于推理流程简化、训练机制优化与部署友好性提升四个方面。第一，移除分布焦点损失（DFL），将边界框回归简化为标准回归任务，在检测精度基本无损的前提下降低计算开销与模型导出复杂度，提升对 ONNX、TensorRT、CoreML 等推理引擎的兼容性。第二，实现原生无 NMS 端到端推理，通过优化预测头输出与标签分配策略直接消除非极大值抑制后处理环节，降低延迟波动与阈值调参负担，使 CPU 推理速度最高提升约 43\%，更适配低延迟边缘场景。第三，引入渐进式损失平衡（ProgLoss）与小目标感知标签分配（STAL），前者动态调节损失权重以抑制模型对简单样本的过拟合，后者优先为小目标与遮挡目标分配正样本，提升小目标检测召回率。第四，采用 MuSGD 混合优化器，融合 SGD 的泛化能力与 Muon 优化器的自适应收敛特性，将大语言模型优化思想引入目标检测训练，使收敛更快速、训练更稳定，并降低超参数调优成本。
+YOLO26 的核心创新集中于推理流程简化、训练机制优化与部署友好性提升四个方面。第一，移除分布焦点损失（DFL），将边界框回归替换为 L1 损失，在检测精度基本无损的前提下降低计算开销与模型导出复杂度，提升对 ONNX、TensorRT、CoreML 等推理引擎的兼容性。第二，实现原生无 NMS 端到端推理，通过优化预测头输出与标签分配策略直接消除非极大值抑制后处理环节，降低延迟波动与阈值调参负担，使 CPU 推理速度最高提升约 43\%，更适配低延迟边缘场景。第三，引入渐进式损失平衡（ProgLoss）与小目标感知标签分配（STAL），前者动态调节损失权重以抑制模型对简单样本的过拟合，后者优先为小目标与遮挡目标分配正样本，提升小目标检测召回率。第四，采用 MuSGD 混合优化器，融合 SGD 的泛化能力与 Muon 优化器的自适应收敛特性，将大语言模型优化思想引入目标检测训练，使收敛更快速、训练更稳定，并降低超参数调优成本。
 
-在工程部署层面，YOLO26 具备良好的量化表现与跨平台适配能力。模型支持 FP16 半精度及 INT8 量化，在压缩体积与计算量的同时，精度损失低于 YOLOv11、YOLOv12 及 Transformer 类检测模型。YOLO26 可原生导出为 TensorRT、ONNX、TFLite、OpenVINO 等主流格式，能够部署于 NVIDIA Jetson 系列、ARM CPU、移动端 NPU 等低功耗硬件，满足实时性要求严苛的工业与嵌入式应用场景。在 COCO 数据集上，YOLO26x-seg 实例分割模型的端到端掩码 mAP（50–95）为 47.0\%，在 T4 GPU 上 TensorRT FP16 推理仅 16.4 ms/帧，兼顾了实例分割精度、检测速度与边缘部署可行性。
+在工程部署层面，YOLO26 具备良好的量化表现与跨平台适配能力。模型支持 FP16 半精度及 INT8 量化，在压缩体积与计算量的同时，精度损失低于 YOLOv11、YOLOv12 及 Transformer 类检测模型。YOLO26 可原生导出为 TensorRT、ONNX、TFLite、OpenVINO 等主流格式，能够部署于 NVIDIA Jetson 系列、ARM CPU、移动端 NPU 等低功耗硬件，满足实时性要求严苛的工业与嵌入式应用场景。在 COCO 数据集上，YOLO26s-seg 实例分割模型的端到端掩码 mAP（50–95）为 40.0\%，在 T4 GPU 上 TensorRT FP16 推理仅 3.3 ms/帧，兼顾了实例分割精度、检测速度与边缘部署可行性。
 
 \subsection{吊装构件识别模型训练与验证}\label{subsec_ch4_train_validate_predict}
 
@@ -52,7 +52,7 @@ YOLO26 的核心创新集中于推理流程简化、训练机制优化与部署�
 \end{equation}
 \begin{equation}
 \mathcal{L}_{\mathrm{box}}
-=\frac{1}{|\mathcal{P}|}\sum_{q\in\mathcal{P}}\left(1-\mathrm{IoU}(\mathbf{b}_q,\hat{\mathbf{b}}_q)\right)
+=\frac{1}{|\mathcal{P}|}\sum_{q\in\mathcal{P}}\left(1-\mathrm{IoU}(\mathbf{b}_q,\hat{\mathbf{b}}_q)+\mathrm{L1}(\mathbf{b}_q,\hat{\mathbf{b}}_q)\right)
 \end{equation}
 \begin{equation}
 \mathcal{L}_{\mathrm{mask}}
@@ -86,20 +86,34 @@ $w_d$ & 权重衰减 & 0.0005 \\
 \end{tabular*}
 \end{table}
 
-验证阶段采用像素级与实例级联合指标。设预测掩码为 $\hat{\mathbf{M}}$、真值掩码为 $\mathbf{M}$，则
+验证阶段采用像素级与实例级联合指标。设预测掩码为 $\hat{\mathbf{M}}$、真值掩码为 $\mathbf{M}$，各指标定义如下。
+
+交并比（IoU）衡量预测掩码与真值掩码的重叠程度：
 \begin{equation}
-\mathrm{IoU}_{\mathrm{mask}}=\frac{|\mathbf{M}\cap\hat{\mathbf{M}}|}{|\mathbf{M}\cup\hat{\mathbf{M}}|},
-\quad
-\mathrm{Precision}=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}},
-\quad
+\mathrm{IoU}_{\mathrm{mask}}=\frac{|\mathbf{M}\cap\hat{\mathbf{M}}|}{|\mathbf{M}\cup\hat{\mathbf{M}}|}
+\end{equation}
+其中， $\mathbf{M}\cap\hat{\mathbf{M}}$ 表示掩码交集区域的像素（或面积），$\mathbf{M}\cup\hat{\mathbf{M}}$ 表示掩码并集区域的像素（或面积）。
+
+精确率（Precision）和召回率（Recall）分别衡量检测结果的准确性与完整性：
+\begin{equation}
+\mathrm{Precision}=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}},\qquad
 \mathrm{Recall}=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FN}}
 \end{equation}
+其中， TP（True Positive）为正确检测出的正样本数量，FP（False Positive）为误检的负样本数量，FN（False Negative）为漏检的正样本数量。
+
+$F_1$ 分数（F1-Score）是精确率与召回率的调和均值，综合反映二者的平衡情况：
 \begin{equation}
-\mathrm{F1}=\frac{2\cdot \mathrm{Precision}\cdot \mathrm{Recall}}{\mathrm{Precision}+\mathrm{Recall}},
-\quad
-\mathrm{mAP}_{50:95}=
-\frac{1}{10K}\sum_{k=1}^{K}\sum_{t\in\{0.50,\dots,0.95\}}\mathrm{AP}_{k}^{t}
+\mathrm{F1}=\frac{2\cdot \mathrm{Precision}\cdot \mathrm{Recall}}{\mathrm{Precision}+\mathrm{Recall}}
 \end{equation}
+
+平均精度均值（mAP）衡量模型在多类别上的整体检测性能。在 COCO 评价协议中，对每个类别 $k$ 分别计算其在 IoU 阈值从 0.50 起以 0.05 为步长递增至 0.95 共 10 个阈值下的平均精度 $\mathrm{AP}_k$，再对所有类别的结果取均值：
+\begin{equation}
+\mathrm{mAP}_{50:95}=
+\frac{1}{K}\sum_{k=1}^{K}\mathrm{AP}_{k}^{\mathrm{IoU}=0.50:0.95}
+\end{equation}
+其中， $K$ 为类别总数，$\mathrm{AP}_{k}^{\mathrm{IoU}=0.50:0.95}$ 为第 $k$ 类别在上述 10 个 IoU 阈值下的平均精度。
+
+实验环境配置见表\ref{tab:ch4_exp_env}。训练过程在 RTX 3070 Ti GPU 上进行，使用 PyTorch 1.13 框架，CUDA 11.7 加速。训练过程中采用早停策略，当验证指标连续 10 个 epoch 无提升时提前终止训练，以避免过拟合。
 
 \begin{table}[htbp]
 \centering
@@ -120,11 +134,11 @@ $w_d$ & 权重衰减 & 0.0005 \\
 \end{tabular*}
 \end{table}
 
-实验环境配置见表\ref{tab:ch4_exp_env}。训练过程在 RTX 3070 Ti GPU 上进行，使用 PyTorch 1.13 框架，CUDA 11.7 加速。训练过程中采用早停策略，当验证指标连续 10 个 epoch 无提升时提前终止训练，以避免过拟合。
+图\ref{fig:ch4_train_val_loss_curves}展示了训练与验证阶段的损失收敛过程，包含 8 个子图：训练集边界框回归损失、分割损失、分类损失、L1 回归损失，以及对应的验证集边界框回归损失、分割损失、分类损失和L1 回归损失。在训练前期各损失项快速下降，中后期逐步进入平稳收敛区间，训练损失与验证损失未出现明显发散，表明当前配置下模型优化过程总体稳定。图\ref{fig:ch4_mask_metric_curves}进一步给出了 Mask 分支的 Precision、Recall、F1 与 PR 曲线，结果显示模型在分割分支上兼顾了查准率与查全率。综合上述结果，模型总体识别与分割性能可满足后续点云投影定位与风险评估链路的输入需求。
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.96\textwidth]{loss曲线.jpeg}
+\includegraphics[width=0.96\textwidth]{loss_curves.png}
 \caption{训练与验证损失曲线}
 \label{fig:ch4_train_val_loss_curves}
 \end{figure}
@@ -161,8 +175,6 @@ $w_d$ & 权重衰减 & 0.0005 \\
 \caption{Mask 分支性能曲线汇总}
 \label{fig:ch4_mask_metric_curves}
 \end{figure}
-
-图\ref{fig:ch4_train_val_loss_curves}展示了训练与验证阶段的损失收敛过程，包含 8 个子图：训练集边界框回归损失、分割损失、分类损失、分布式焦点损失，以及对应的验证集边界框回归损失、分割损失、分类损失和分布式焦点损失。在训练前期各损失项快速下降，中后期逐步进入平稳收敛区间，训练损失与验证损失未出现明显发散，表明当前配置下模型优化过程总体稳定。图\ref{fig:ch4_mask_metric_curves}进一步给出了 Mask 分支的 Precision、Recall、F1 与 PR 曲线，结果显示模型在分割分支上兼顾了查准率与查全率。综合上述结果，模型总体识别与分割性能可满足后续点云投影定位与风险评估链路的输入需求。
 
 \subsection{TensorRT边缘部署与FP16量化优化}\label{subsec_ch4_tensorrt_fp16}
 
