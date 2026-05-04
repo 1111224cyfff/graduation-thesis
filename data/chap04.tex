@@ -243,19 +243,19 @@ u=\frac{u'}{w'},\; v=\frac{v'}{w'}
 
 \subsection{吊装构件位置估计与安全包络建模}\label{subsec_ch4_3d_localization}
 
-当目标实例对应的点云子集 $\mathcal{P}_i$ 被提取后，三维位置估计的目标应从“目标中心点表达”进一步提升为“可直接用于风险判定的几何基准表达”。考虑吊装作业中静态风险与动态风险的判别语义不同：静态风险关注构件与环境边界的三维净空，动态风险关注作业平面内的接近趋势，并将吊装构件下方区域视为禁入带。因此，本文采用“静态包络球 + 动态包络圆柱投影”的双基准建模策略，其几何关系如图\ref{fig:ch4_dual_envelope_placeholder}所示。
+提取出目标实例的点云子集 $\mathcal{P}_i$ 后，仅靠质心这样的"中心点表达"无法获知构件在空间中的实际占据范围，需要一种能直接与障碍物进行距离计算的几何基准。但静态风险与动态风险对此基准的维度要求不同，静态风险面对的是环境中的固定结构物，构件可能从任意三维方向与之接近，因此需要一个各向同性的包络体来统一衡量三维净空，采用包络球最为自然，单个半径参数即可覆盖所有方向的最近距离；动态风险面对的是地面移动的人员或机械，接近行为主要发生在水平面内，且吊物下方区域应视为禁入带，与垂直方向无关，因此需要在水平面上给出明确的边界投影。据此，本文构建静态包络球与动态包络圆柱投影两种几何基元，其形态如图\ref{fig:ch4_dual_envelope_placeholder}所示。
 
 \begin{figure}[htbp]
 \centering
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[height=10.0cm]{包络球.pdf}
+\includegraphics[height=9.0cm]{包络球.pdf}
 \caption{包络球模型}
 \label{fig:ch4_dual_envelope_sphere}
 \end{subfigure}\hfill
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[height=10.0cm]{包络圆柱.pdf}
+\includegraphics[height=9.0cm]{包络圆柱.pdf}
 \caption{包络圆柱模型}
 \label{fig:ch4_dual_envelope_cylinder}
 \end{subfigure}
@@ -263,29 +263,7 @@ u=\frac{u'}{w'},\; v=\frac{v'}{w'}
 \label{fig:ch4_dual_envelope_placeholder}
 \end{figure}
 
-首先，以实例点集质心作为目标位置估计的统一基准。设实例点集包含 $n_i$ 个三维点，则其质心为
-\begin{equation}
-\bar{\mathbf{p}}_i=\frac{1}{n_i}\sum_{k=1}^{n_i}\mathbf{p}_{i,k}
-\end{equation}
-
-在静态分支中，设包络球半径为 $r_i^{\mathrm{s}}$，则吊装构件的三维静态危险域可表示为
-\begin{equation}
-\mathcal{S}_i=\left\{(x,y,z)\ \middle|\ (x-\bar{x}_i)^2+(y-\bar{y}_i)^2+(z-\bar{z}_i)^2\leq (r_i^{\mathrm{s}})^2\right\}
-\end{equation}
-记静态障碍点集为 $\mathcal{M}_{\mathrm{local}}$，则点到包络球边界距离定义为
-\begin{equation}
-d_{\mathrm{sph}}(\mathbf{q},\mathcal{S}_i)=\max\bigl(0,\,\|\mathbf{q}-\bar{\mathbf{p}}_i\|-r_i^{\mathrm{s}}\bigr),\quad \mathbf{q}\in\mathcal{M}_{\mathrm{local}}
-\end{equation}
-对应的最小静态净空为
-\begin{equation}
-d_i^{\mathrm{static}}=\min_{\mathbf{q}\in\mathcal{M}_{\mathrm{local}}}d_{\mathrm{sph}}(\mathbf{q},\mathcal{S}_i)
-\end{equation}
-
-在动态分支中，令 $(x_i,y_i)$ 为质心在地面平面的投影坐标，$r_i^{\mathrm{c}}$ 为圆柱水平包络半径，$z_i^{\mathrm{b}}$ 与 $z_i^{\mathrm{t}}$ 分别为圆柱底面与顶面高度，则吊装构件动态危险域可写为
-\begin{equation}
-\mathcal{C}_i=\left\{(x,y,z)\ \middle|\ (x-x_i)^2+(y-y_i)^2\le (r_i^{\mathrm{c}})^2,\ z_i^{\mathrm{b}}\le z\le z_i^{\mathrm{t}}\right\}
-\end{equation}
-如图\ref{fig:ch4_cylinder_envelope_placeholder}所示，实例点云在完成质心与几何参数估计后可映射为包络球与包络圆柱的双包络表达，其中包络球用于静态净空评估，包络圆柱用于动态平面禁入边界表达。
+如图\ref{fig:ch4_cylinder_envelope_placeholder}所示，处理流程分为四个步骤：首先，以实例点云子集作为输入；然后，计算点云质心 $\bar{\mathbf{p}}_i$，作为空间位置基准；接着，在三维空间中对点云进行包络区间估计，获取其在各方向上的散布范围；最后，根据包络区间分别确定包络球半径 $r_i^{\mathrm{s}}$ 与包络圆柱参数（水平半径 $r_i^{\mathrm{c}}$、底面高度 $z_i^{\mathrm{b}}$、顶面高度 $z_i^{\mathrm{t}}$），生成包络球 $\mathcal{S}_i$ 与包络圆柱 $\mathcal{C}_i$ 两种几何基元，分别服务于静态净空评估与动态禁入边界表达。下面分别给出各环节的数学定义。
 
 \begin{figure}[htbp]
 \centering
@@ -294,55 +272,51 @@ d_i^{\mathrm{static}}=\min_{\mathbf{q}\in\mathcal{M}_{\mathrm{local}}}d_{\mathrm
 \label{fig:ch4_cylinder_envelope_placeholder}
 \end{figure}
 
+首先，以实例点集质心作为目标位置估计的统一基准。设实例点集包含 $n_i$ 个三维点，则其质心为
+\begin{equation}
+\bar{\mathbf{p}}_i=\frac{1}{n_i}\sum_{k=1}^{n_i}\mathbf{p}_{i,k}
+\label{eq:ch4_centroid}
+\end{equation}
+记其分量为 $\bar{\mathbf{p}}_i=[\bar{x}_i,\bar{y}_i,\bar{z}_i]^\mathsf{T}$，后文各公式直接引用这些分量。
+
+在静态分支中，以质心为球心构建包络球。设包络球半径为 $r_i^{\mathrm{s}}$，其取值根据实例点云在三维空间中的散布范围确定，使球体刚好包裹全部有效点云。则吊装构件的三维静态危险域 $\mathcal{S}_i$ （即包络球内部及表面所占据的空间区域）可表示为
+\begin{equation}
+\mathcal{S}_i=\left\{(x,y,z)\ \middle|\ (x-\bar{x}_i)^2+(y-\bar{y}_i)^2+(z-\bar{z}_i)^2\leq (r_i^{\mathrm{s}})^2\right\}
+\label{eq:ch4_envelope_sphere}
+\end{equation}
+
+记局部静态地图点集为 $\mathcal{M}_{\mathrm{local}}$（包含环境中的固定结构物与地面点），则任意静态点 $\mathbf{q}$ 到包络球边界的距离定义为
+\begin{equation}
+d_{\mathrm{sph}}(\mathbf{q},\mathcal{S}_i)=\max\bigl(0,\,\|\mathbf{q}-\bar{\mathbf{p}}_i\|-r_i^{\mathrm{s}}\bigr),\quad \mathbf{q}\in\mathcal{M}_{\mathrm{local}}
+\label{eq:ch4_dist_sphere}
+\end{equation}
+当 $\mathbf{q}$ 位于球外时，该值为 $\mathbf{q}$ 到球心的距离减去球半径，即球表面到 $\mathbf{q}$ 的最短距离；当 $\mathbf{q}$ 已侵入球内时取值为 $0$，表示净空已耗尽。
+
+遍历 $\mathcal{M}_{\mathrm{local}}$ 中所有静态点，取上述距离的最小值，即得到当前构件相对于静态环境的最小三维净空：
+\begin{equation}
+d_i^{\mathrm{static}}=\min_{\mathbf{q}\in\mathcal{M}_{\mathrm{local}}}d_{\mathrm{sph}}(\mathbf{q},\mathcal{S}_i)
+\label{eq:ch4_static_clearance}
+\end{equation}
+
+在动态分支中，以质心在地面平面的投影 $(x_i,y_i)$ 为轴线位置，构建包络圆柱。其中，底面高度 $z_i^{\mathrm{b}}$ 与顶面高度 $z_i^{\mathrm{t}}$ 取实例点云在竖直方向的最小与最大 $z$ 坐标，圆柱水平包络半径 $r_i^{\mathrm{c}}$ 根据点云在水平面的散布范围并附加安全裕度设定。则吊装构件的动态危险域 $\mathcal{C}_i$ （即圆柱体内部的空间区域）可写为
+\begin{equation}
+\mathcal{C}_i=\left\{(x,y,z)\ \middle|\ (x-x_i)^2+(y-y_i)^2\le (r_i^{\mathrm{c}})^2,\ z_i^{\mathrm{b}}\le z\le z_i^{\mathrm{t}}\right\}
+\label{eq:ch4_envelope_cylinder}
+\end{equation}
 其中，$r_i^{\mathrm{c}}$ 反映吊装构件在水平面的安全冗余范围，$h_i=z_i^{\mathrm{t}}-z_i^{\mathrm{b}}$ 反映竖向有效作业空间。进而，定义圆柱在地面平面的投影边界为
 \begin{equation}
 \mathcal{B}_i=\left\{(x,y)\ \middle|\ (x-x_i)^2+(y-y_i)^2\le (r_i^{\mathrm{c}})^2\right\}
 \end{equation}
+
 对第 $j$ 个动态目标，设其平面位置为 $\tilde{\mathbf{p}}_{d,j}$、平面等效半径为 $r_{d,j}$，则当前平面净空可定义为
 \begin{equation}
 d_{ij}^{\mathrm{xy}}=\max\bigl(0,\,\|\tilde{\mathbf{p}}_{d,j}-[x_i,\,y_i]^\mathsf{T}\|-r_i^{\mathrm{c}}-r_{d,j}\bigr)
 \end{equation}
 该量用于刻画吊装构件下方禁入边界与动态目标之间的实时接近关系，并作为后续动态分层预警判定的基础量。
 
-为提升动态评估的鲁棒性，本文在状态估计阶段对速度采用地面投影建模。设地面投影算子为 $\Pi_g:(x,y,z)\mapsto(x,y)$，则量测位置为 $\tilde{\mathbf{p}}_{i,k}=\Pi_g(\bar{\mathbf{p}}_{i,k})$。在离散时刻 $k$，定义二维恒速状态向量
-\begin{equation}
-\mathbf{x}_{i,k}=\begin{bmatrix}\tilde{x}_{i,k}&\tilde{y}_{i,k}&\tilde{v}_{x,i,k}&\tilde{v}_{y,i,k}\end{bmatrix}^{\!\top}
-\end{equation}
-并采用
-\begin{equation}
-\mathbf{x}_{i,k+1}=\mathbf{F}(\Delta t)\mathbf{x}_{i,k}+\mathbf{w}_k,\quad
-\mathbf{y}_{i,k}=\mathbf{H}\mathbf{x}_{i,k}+\mathbf{n}_k
-\end{equation}
-其中，
-\begin{equation}
-\mathbf{F}(\Delta t)=
-\begin{bmatrix}
-1&0&\Delta t&0\\
-0&1&0&\Delta t\\
-0&0&1&0\\
-0&0&0&1
-\end{bmatrix},\quad
-\mathbf{H}=
-\begin{bmatrix}
-1&0&0&0\\
-0&1&0&0
-\end{bmatrix}
-\end{equation}
-该建模将速度估计集中于地面平面分量，既保留了对逼近运动的判别能力，又降低了三维姿态扰动对滤波稳定性的影响。
+为提升动态评估的鲁棒性，本文在状态估计阶段对速度采用地面投影建模：将质心投影至地面平面，采用二维恒速卡尔曼滤波递推估计平面速度。该建模将速度估计集中于地面平面分量，既保留了对逼近运动的判别能力，又降低了三维姿态扰动对滤波稳定性的影响。
 
-综上，本节形成了从实例点集到双距离基准的完整链路：静态分支采用包络球三维净空表达，动态分支采用包络圆柱平面投影净空与二维速度状态表达。后续可在视觉投影结果进一步稳定后，将 $r_i^{\mathrm{s}}$、$r_i^{\mathrm{c}}$ 与 $h_i$ 由实例点集自适应估计，实现双包络参数的在线更新，并保持与预警接口的一致性。
-
-\subsection{雷视融合数据接口设计与输出规范}\label{subsec_ch4_data_interface}
-
-为使视觉分割与点云投影结果服务于预警模块，需将结果组织为可供下游调用的结构化数据接口。系统可形成两类直接输出：一类是包含分割与投影效果的图像结果，用于人机可视化与离线分析；另一类是语义着色点云，用于展示被识别为吊装构件的三维点集。这两类输出为第 4.2 节方法提供了工程可验证性。
-
-进一步面向预警链路，本文将输出接口组织为三层。第一层是可视化层，包括投影叠加图像与语义着色点云，用于观察系统运行状态与定位效果。第二层是目标描述层，包括目标时间戳、类别标签、置信度、三维质心和实例点数等字段，将感知结果转化为程序可消费的对象状态。第三层是风险计算准备层，在目标描述基础上补充最小距离、空间包络、速度估计来源和数据有效性标志位，为后续预警模块提供统一输入。
-
-输出对象状态消息中包含类别、置信度、三维位姿、包络半径与点数等字段。输出结构至少包含
-\begin{equation}
-\mathbf{z}_i=\{t_i,c_i,s_i,\bar{\mathbf{p}}_i,d_i,\eta_i\}
-\end{equation}
-其中， $t_i$ 为时间戳，$c_i$ 为类别标签，$s_i$ 为置信度，$\bar{\mathbf{p}}_i$ 为三维位置估计，$d_i$ 为最小距离或边界距离，$\eta_i$ 为数据有效性标志。若后续需要承接动态风险评估，还可在接口中补充速度、预测轨迹句柄或包络信息。通过这一设计，感知模块输出成为可进入风险计算与控制决策的规范化对象状态，与后续的预警和控制接口自然衔接。
+综上，本节形成了从实例点集到双距离基准的完整链路：静态分支采用包络球三维净空表达，动态分支采用包络圆柱平面投影净空表达。二维速度状态作为动态分支的输入量，其估计方法将在第\ref{subsec_ch4_risk_upgrade}节结合风险升级机制一并给出。后续可在视觉投影结果进一步稳定后，将 $r_i^{\mathrm{s}}$、$r_i^{\mathrm{c}}$ 与 $h_i$ 由实例点集自适应估计，实现双包络参数的在线更新。在此基础上，本文将感知结果进一步组织为结构化对象状态，包括时间戳、类别、置信度、三维位置、最小距离及数据有效性标志等字段，作为第\ref{sec_ch4_warning_design}节预警模块的统一输入。
 
 \section{吊装作业风险分级预警机制设计}\label{sec_ch4_warning_design}
 
