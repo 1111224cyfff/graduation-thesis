@@ -407,22 +407,26 @@ d_{ij}^{\mathrm{xy}}=\max\bigl(0,\,\|\tilde{\mathbf{p}}_{d,j}-[x_i,\,y_i]^\maths
 
 在吊装安全预警链路中，最先需要回答的问题并非目标未来是否会发生碰撞，而是当前时刻吊装构件与周边环境还剩多少可用净空。若这一基础量无法稳定估计，后续关于相向接近、趋势升级和动作约束的讨论都会失去几何基准。因此，本文将静态风险评估建立在第 4.2 节已获得的三维对象状态之上，并直接与局部地图点云进行距离计算。该过程由预警评估模块在线实现，作为整条预警链路的第一层判据。
 
-从输入组织看，预警模块首先从对象状态接口中筛选被监控对象，并同时要求目标满足最小置信度和最小关联点数阈值，以避免远距离噪声或稀疏误检直接进入风险评估。设被监控目标的包络球中心为 $\bar{\mathbf{p}}_o$、包络球半径为 $r_o$，局部静态地图点集为 $\mathcal{M}_{\mathrm{local}}$。对任意静态点 $\mathbf{q}\in\mathcal{M}_{\mathrm{local}}$，定义其到包络球边界的三维距离为
+从输入组织看，预警模块首先从对象状态接口中筛选被监控对象，并同时要求目标满足最小置信度和最小关联点数阈值，以避免远距离噪声或稀疏误检直接进入风险评估。设被监控目标的包络球中心为 $\bar{\mathbf{p}}_o$、包络球半径为 $r_o$，对任意静态点 $\mathbf{q}\in\mathcal{M}_{\mathrm{local}}$，定义其到包络球边界的三维距离为
 \begin{equation}
 d_{\mathrm{sph}}(\mathbf{q})=\max\bigl(0,\,\|\mathbf{q}-\bar{\mathbf{p}}_o\|-r_o\bigr)
 \end{equation}
+
 则静态净空可写为
 \begin{equation}
 d_{\mathrm{static}}=\min_{\mathbf{q}\in\mathcal{M}_{\mathrm{local}}}d_{\mathrm{sph}}(\mathbf{q})
 \end{equation}
+
 由于 $d_{\mathrm{sph}}(\mathbf{q})$ 对 $\|\mathbf{q}-\bar{\mathbf{p}}_o\|$ 单调，工程实现中可等价转化为最近邻查询：先求
 \begin{equation}
 d_{\mathrm{nn}}=\min_{\mathbf{q}\in\mathcal{M}_{\mathrm{local}}}\|\bar{\mathbf{p}}_o-\mathbf{q}\|
 \end{equation}
+
 再计算
 \begin{equation}
 d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o)
 \end{equation}
+
 该定义将静态风险统一到“包络球三维边界净空”这一可解释几何量上，与 KD-tree 最近邻计算流程一致。
 
 在本文配置中，静态净空被划分为三级阈值区间：当 $d_{\mathrm{static}}\leq 1.0\,\mathrm{m}$ 时触发紧急等级，当 $1.0\,\mathrm{m}<d_{\mathrm{static}}\leq 3.0\,\mathrm{m}$ 时触发警告等级，当 $3.0\,\mathrm{m}<d_{\mathrm{static}}\leq 5.0\,\mathrm{m}$ 时触发提示等级，超过 $5.0\,\mathrm{m}$ 则视为静态净空充分。为便于统一对照，表\ref{tab:ch4_static_risk_criteria} 汇总了静态风险分级判据。
@@ -444,7 +448,7 @@ d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o)
 
 其工程意义在于将构件是否逼近静态边界这一问题落到可读、可配置的几何量上，为后续动态升级和控制映射提供稳定入口。从方法边界看，静态风险评估采用包络球三维距离结合最近邻点集近似障碍边界的表达，因此更适合作为在线预警的快速近似层，而非最终的高精度碰撞检测器。
 
-为避免静态净空、动态净空和预测净空在后续章节中被混用，图\ref{fig:ch4_clearance_definition} 对三者的几何含义作了统一示意。其中，静态净空关注目标与局部地图静态边界之间的剩余边界距离，动态净空关注目标与动态障碍物在当前时刻的边界距离，而预测净空则进一步衡量在预测时间窗内两者最接近时仍能保留的最小边界。
+本文涉及三类净空概念，其几何含义由图\ref{fig:ch4_clearance_definition}统一示意。静态净空指目标与局部地图静态边界之间的剩余边界距离，反映目标偏离参考路径的静态充裕程度；动态净空指目标与动态障碍物在当前时刻的边界距离，反映两者之间的实时空间关系；预测净空指在预测时间窗内，目标与动态障碍物最接近时仍能保留的最小边界距离，反映对未来碰撞风险的预估。
 
 \begin{figure}[htbp]
 	\centering
@@ -467,7 +471,7 @@ d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o)
 	\label{fig:ch4_clearance_definition}
 \end{figure}
 
-其中，$d_{\mathrm{static}}$ 表示目标与静态障碍物（地图静态边界）之间的最小几何距离（静态净空）；$d_{\mathrm{dynamic}}$ 表示目标与动态障碍物之间的最小几何距离（动态净空）；$P_{\mathrm{static}}$ 为静态障碍物边界上与目标最近的点；$D$ 与 $O$ 分别表示动态障碍物和目标对象的边界（外廓）；$D^{*}$ 与 $O^{*}$ 分别表示预测时刻动态障碍物与目标对象的边界（预测位姿下的外廓）；$d_{\mathrm{pred}}$ 表示在预测时间窗内两者最接近时的最小边界距离（预测净空）。
+其中，$d_{\mathrm{static}}$ 表示目标与静态障碍物之间的最小几何距离，即静态净空；$d_{\mathrm{dynamic}}$ 表示目标与动态障碍物之间的最小几何距离，即动态净空；$P_{\mathrm{static}}$ 为静态障碍物边界上与目标最近的点；$D$ 与 $O$ 分别表示动态障碍物与目标对象的外廓边界；$D^{*}$ 与 $O^{*}$ 分别表示二者在预测时刻的外廓边界；$d_{\mathrm{pred}}$ 表示在预测时间窗内二者最接近时的最小边界距离，即预测净空。
 
 \subsection{基于相对运动与碰撞时间(TTC)的动态风险升级}\label{subsec_ch4_risk_upgrade}
 
