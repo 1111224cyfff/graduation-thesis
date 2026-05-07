@@ -85,6 +85,15 @@ d_t=\sqrt{(u_{t+1}-u_t)^2+(v_{t+1}-v_t)^2},
 \bar{d}=\frac{1}{T-1}\sum_{t=1}^{T-1}d_t
 \end{equation}
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{吊装构件检测与分割评估指标示意.pdf}
+\caption{吊装构件检测与分割评估指标示意图}
+\label{fig:ch5_metric_schematic}
+\end{figure}
+
+上述时序评估指标TIoU与框中心漂移$d_t$的几何含义如图\ref{fig:ch5_metric_schematic}所示。图中上方两幅分别为第$t_0$帧与第$t_1$帧的模型输出掩码，通过比较相邻帧掩码的重叠区域与差异区域即可计算TIoU；下方左侧示意了TIoU的具体计算方式——两帧掩码的交集除以并集，反映分割边界在像素级的时序稳定性；下方右侧则展示了框中心漂移$d_t$的几何含义，即相邻帧检测框中心之间的像素距离，用以衡量目标定位的抖动程度。
+
 漏检率衡量连续视频监测中的目标丢失比例。从首次成功检出目标的帧序号 $t_0$ 开始统计，设有效监测帧数为 $T_{\mathrm{eff}}=T-t_0+1$，漏检帧数为 $N_{\mathrm{miss}}$，则
 \begin{equation}
 R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
@@ -153,28 +162,28 @@ F1 分数为精确率与召回率的调和平均：
 	\centering
 	\caption{吊装构件识别与三维定位结果}
 	\label{tab:ch5_projection_localization}
-	\vspace{0.5em}
 	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}C{2cm}c@{\hspace{1.5em}}c}
 		\hline
 		& \textbf{\raisebox{-0.5\height}{塔吊标准节}} & \textbf{\raisebox{-0.5\height}{围栏}} \\[0.5em]
-		\hline\noalign{\vskip 1.5em}
+		\hline\noalign{\vskip 0.5em}
 		原图 &
-		\raisebox{-0.5\height}{\includegraphics[width=4.5cm]{塔吊标准节-原图.jpg}} &
-		\raisebox{-0.5\height}{\includegraphics[width=4.5cm]{围栏-原图.jpg}} \\[5em]
+		\raisebox{-0.5\height}{\includegraphics[width=5cm]{塔吊标准节-原图.jpg}} &
+		\raisebox{-0.5\height}{\includegraphics[width=5cm]{围栏-原图.jpg}} \\[5em]
 		实例分割 &
-		\raisebox{-0.5\height}{\includegraphics[width=4.5cm]{塔吊标准节-实例分割.jpg}} &
-		\raisebox{-0.5\height}{\includegraphics[width=4.5cm]{围栏-实例分割.jpg}} \\[5em]
+		\raisebox{-0.5\height}{\includegraphics[width=5cm]{塔吊标准节-实例分割.jpg}} &
+		\raisebox{-0.5\height}{\includegraphics[width=5cm]{围栏-实例分割.jpg}} \\[5em]
 		\makecell{点云投影\\至图像} &
-		\raisebox{-0.5\height}{\includegraphics[width=4.5cm]{塔吊标准节-点云投影至图像.jpg}} &
-		\raisebox{-0.5\height}{\includegraphics[width=4.5cm]{围栏-点云投影至图像.jpg}} \\[5em]
+		\raisebox{-0.5\height}{\includegraphics[width=5cm]{塔吊标准节-点云投影至图像.jpg}} &
+		\raisebox{-0.5\height}{\includegraphics[width=5cm]{围栏-点云投影至图像.jpg}} \\[5em]
 		\makecell{落入掩码\\点云筛选} &
-		\raisebox{-0.5\height}{\includegraphics[width=4.5cm]{塔吊标准节-筛选落入掩码点云.jpg}} &
-		\raisebox{-0.5\height}{\includegraphics[width=4.5cm]{围栏-筛选落入掩码点云.jpg}} \\[5em]
+		\raisebox{-0.5\height}{\includegraphics[width=5cm]{塔吊标准节-筛选落入掩码点云.jpg}} &
+		\raisebox{-0.5\height}{\includegraphics[width=5cm]{围栏-筛选落入掩码点云.jpg}} \\[5em]
 		点云投影 &
-		\raisebox{-0.5\height}{\includegraphics[width=4.5cm]{塔吊标准节-点云投影.png}} &
-		\raisebox{-0.5\height}{\includegraphics[width=4.5cm]{围栏-点云投影.png}} \\
-		\noalign{\vskip 1.5em}\hline
+		\raisebox{-0.5\height}{\includegraphics[width=5cm]{塔吊标准节-点云投影.png}} &
+		\raisebox{-0.5\height}{\includegraphics[width=5cm]{围栏-点云投影.png}} \\
+		\noalign{\vskip 0.5em}\hline
 	\end{tabular*}
+\parbox{\textwidth}{\vspace{0.5em}\small\raggedright 注：点云投影结果图中，白色点表示所有投影至该帧图像像素的点云，红色点表示落在分割掩码内的点云。}
 \end{table}
 
 \begin{table}[htbp]
@@ -278,12 +287,39 @@ F1分数  & 0.6014 & 0.2718 & 0.7912 \\
 \end{tabular*}
 \end{table}
 
-为直观展示静态阈值判级的实际运行效果，图~\ref{fig:ch5_static_warning_effect} 截取了某一典型帧的预警可视化结果。图中根据障碍物与安全边界的距离将构件标注为不同颜色的预警等级：红色点代表紧急等级，表示构件到安全边界的距离已超过紧急阈值，需立即关注；橙色点代表报警等级，表示构件距离已超出报警阈值但尚未达到紧急程度；黄色点代表提示等级，表示构件距离超出提示阈值，属于关注性预警。通过该可视化可直观验证系统在真实施工场景中对不同距离区间的分级响应能力。
+按照距离阈值分别将识别出的预警点做了标识，用颜色区分预警的等级，形成了预警等级圈。同时，在结果中可以看到滤除了地面点云所以地面并没有出现预警点。静态预警真实场景与预警示意如图~\ref{fig:ch5_static_warning_effect}所示。
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.9\textwidth]{静态预警效果.png}
-\caption{静态障碍物距离阈值预警效果示例}
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{静态预警真实场景-1.png}
+\caption{静态预警真实场景视角1}
+\label{fig:ch5_static_real_1}
+\end{subfigure}
+\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{静态预警真实场景-2.png}
+\caption{静态预警真实场景视角2}
+\label{fig:ch5_static_real_2}
+\end{subfigure}
+
+\vspace{1em}
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{静态预警示意-1.png}
+\caption{静态预警结果（俯视视角1）}
+\label{fig:ch5_static_schematic_1}
+\end{subfigure}
+\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{静态预警示意-2.png}
+\caption{静态预警结果（俯视视角2）}
+\label{fig:ch5_static_schematic_2}
+\end{subfigure}
+\caption{静态障碍物距离阈值预警效果}
 \label{fig:ch5_static_warning_effect}
 \end{figure}
 
@@ -343,20 +379,48 @@ F1分数 & 0.4739 & 0.3744 & 0.7837 & 动态判级准确性 \\
 
 从安全关键指标来看，动态判级的误报率为8.21\%，漏报率为9.66\%，两者均处于低位且基本持平，表明系统在保守预警与准确判级之间取得了良好的平衡——既不会因频繁误报影响现场作业效率，也不会因漏报遗漏真实危险。分级有序误差MAE仅为0.3178，平均预测偏差不足三分之一等级，验证了动态趋势信息对提升判级有序一致性的显著贡献。上述良好表现主要归因于动态风险融合机制中TTC与速度方向的引入：在相向接近场景下，系统能够基于短时预测提前识别危险演化趋势，在吊装构件尚未达到最小净空距离时即触发预警，从而实现预警准确性与及时性的有效统一。以上结果表明，基于运动趋势的动态风险升级机制能够在真实工况下实现精准可靠的判级，充分证明了趋势项对风险识别的实际增益。
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.92\textwidth]{placeholder_ttc_distance}
-\caption{动态场景TTC-净空距离联合演化曲线（相向接近工况）}
-\label{fig:ch5_ttc_distance_evolution}
-\end{figure}
-
-图~\ref{fig:ch5_dynamic_warning_effect} 展示了系统在动态相向接近工况下的预警可视化效果。图中吊装构件以包络球—圆柱双包络形式呈现，其着色根据当前融合风险等级渲染，黄色对应提示、橙色对应报警、红色对应紧急；被检测到的动态目标以包围框或聚类点云形式显示，并标注轨迹 ID 与运动方向。当动态目标与吊装构件之间的平面净空或 TTC 指标进入预设阈值区间时，系统即触发相应等级的预警着色，风险区域沿接近方向逐渐加深，直观体现了动态净空衰减与 TTC 缩短对判级的联合影响。该图与图~\ref{fig:ch5_ttc_distance_evolution} 的量化曲线、图~\ref{fig:ch5_dynamic_temporal_comparison} 的时序对照互为补充，分别从可视化效果、定量演化与帧级一致性三个维度验证动态预警机制的有效性。
+图~\ref{fig:ch5_dynamic_warning_effect} 展示了系统在动态相向接近工况下的预警可视化效果。图中吊装构件以包络球—圆柱双包络形式呈现，其着色根据当前融合风险等级渲染，黄色对应提示、橙色对应报警、红色对应紧急；被检测到的动态目标以包围框或聚类点云形式显示，并标注轨迹 ID 与运动方向。当动态目标与吊装构件之间的平面净空或 TTC 指标进入预设阈值区间时，系统即触发相应等级的预警着色，风险区域沿接近方向逐渐加深，直观体现了动态净空衰减与 TTC 缩短对判级的联合影响。该图与图~\ref{fig:ch5_dynamic_temporal_comparison} 的时序对照互为补充，分别从可视化效果与帧级一致性两个维度验证动态预警机制的有效性。
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{动态预警效果.png}
+\begin{tabular}{@{}cc@{}}
+\hline
+\textbf{真实场景} & \textbf{预警示意} \\
+\hline
+\noalign{\vskip 1em}
+\includegraphics[height=4.2cm]{real_1.png} &
+\includegraphics[height=4.2cm]{warning_1.png} \\[4pt]
+\includegraphics[height=4.2cm]{real_2.png} &
+\includegraphics[height=4.2cm]{warning_2.png} \\[4pt]
+\includegraphics[height=4.2cm]{real_3.png} &
+\includegraphics[height=4.2cm]{warning_3.png} \\[4pt]
+\includegraphics[height=4.2cm]{real_4.png} &
+\includegraphics[height=4.2cm]{warning_4.png} \\
+\hline
+\end{tabular}
 \caption{动态目标趋势预测与相向运动预警效果示例}
 \label{fig:ch5_dynamic_warning_effect}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{@{}cc@{}}
+\hline
+\textbf{真实场景} & \textbf{预警示意} \\
+\hline
+\noalign{\vskip 1em}
+\includegraphics[height=4.2cm]{real_5.png} &
+\includegraphics[height=4.2cm]{warning_5.png} \\[4pt]
+\includegraphics[height=4.2cm]{real_6.png} &
+\includegraphics[height=4.2cm]{warning_6.png} \\[4pt]
+\includegraphics[height=4.2cm]{real_7.png} &
+\includegraphics[height=4.2cm]{warning_7.png} \\[4pt]
+\includegraphics[height=4.2cm]{real_8.png} &
+\includegraphics[height=4.2cm]{warning_8.png} \\
+\hline
+\end{tabular}
+\caption{动态目标趋势预测与相向运动预警效果示例（续）}
+\label{fig:ch5_dynamic_warning_effect_cont}
 \end{figure}
 
 图~\ref{fig:ch5_dynamic_temporal_comparison} 以帧级时序方式展示动态判级的真值与预测等级对照，进一步从时间维度考察判级的一致性与过渡行为。图中上子图为基于动态净空与 TTC 联合阈值计算的真值等级区间，中子图为系统输出的预测等级散点，下子图为误判指示条。与静态判级的时序对照（图~\ref{fig:ch5_static_temporal_comparison}）相比，动态判级的误判分布更为稀疏，等级过渡边界的抖动幅度更小，这与动态判级 MAE~=~0.3178 优于静态判级 MAE~=~0.5530 的量化结果一致。时序图直观表明，TTC 和预测净空的引入使动态判级在等级过渡区保持了更好的有序一致性，验证了趋势项对判级稳定性的实际增益。
@@ -419,14 +483,7 @@ T_{\mathrm{all}}=T_{\mathrm{sensor}}+T_{\mathrm{vision}}+T_{\mathrm{projection}}
 
 从表\ref{tab:ch5_latency_overall}数据可以看出，全链路时延在典型工况下可满足实时性要求。视觉推理模块中图像预处理与推理均值为19.71\,ms，标准差仅3.34\,ms，变异系数约0.17，说明YOLO26在边缘端的推理时间稳定可控，适合作为周期性感知更新的可靠基座。点云投影与图像关联模块中，点云预处理仅需0.66\,ms、坐标查询与变换仅0.06\,ms，表明格式转换与空间变换的计算效率较高；投影与像素关联作为数据关联的核心环节，均值为63.79\,ms，在典型点云规模下可稳定完成稠密投影计算。动态跟踪与风险评估模块中，动态输入处理与关联、状态估计与短时预测的计算开销可忽略不计，均值均不超过0.01\,ms，门限匹配与预测窗遍历的算法设计高效；风险融合与判级输出均值为42.75\,ms，能够在考虑迟滞状态与多级判定的前提下完成综合评估，保证了判级结果的可靠性与连续性。
 
-值得关注的是，三项主要步骤的均值之和为126.25\,ms，大于端到端总时延均值101.43\,ms，差值约24.8\,ms。这一差异说明模块间实现了有效的流水线重叠与异步并行：视觉推理的输出无需等待点云投影完全结束即可被下游消费，风险融合与判级可与下一帧的投影计算并行执行，体现了系统架构在并发设计上的合理性。图~\ref{fig:ch5_latency_barchart} 以柱状图形式直观对比了各模块的均值、95\%分位与最大时延，进一步印证了上述时延分布特征。端到端总时延均值为101.43\,ms、约9.9\,Hz，95\%分位为123.17\,ms、约8.1\,Hz，均位于工程可接受范围内。以车辆行驶速度72\,km/h（20\,m/s）估算，系统在典型工况下帧间位移约2.0\,m，在95\%分位工况下约2.5\,m，相对于近距碰撞预警的典型预警距离10至15\,m，具备充分的时效裕量，能够为下游决策模块提供及时可靠的感知信息。
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.92\textwidth]{placeholder_latency_barchart}
-\caption{各模块时延对比柱状图（均值、95\%分位与最大值）}
-\label{fig:ch5_latency_barchart}
-\end{figure}
+值得关注的是，三项主要步骤的均值之和为126.25\,ms，大于端到端总时延均值101.43\,ms，差值约24.8\,ms。这一差异说明模块间实现了有效的流水线重叠与异步并行：视觉推理的输出无需等待点云投影完全结束即可被下游消费，风险融合与判级可与下一帧的投影计算并行执行，体现了系统架构在并发设计上的合理性。端到端总时延均值为101.43\,ms、约9.9\,Hz，95\%分位为123.17\,ms、约8.1\,Hz，均位于工程可接受范围内。以车辆行驶速度72\,km/h（20\,m/s）估算，系统在典型工况下帧间位移约2.0\,m，在95\%分位工况下约2.5\,m，相对于近距碰撞预警的典型预警距离10至15\,m，具备充分的时效裕量，能够为下游决策模块提供及时可靠的感知信息。
 
 \section{本章小结}\label{sec:ch5_summary}
 

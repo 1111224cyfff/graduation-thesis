@@ -285,7 +285,7 @@ u=\frac{u'}{w'},\; v=\frac{v'}{w'}
 \label{eq:ch4_envelope_sphere}
 \end{equation}
 
-记局部静态地图点集为 $\mathcal{M}_{\mathrm{local}}$（包含环境中的固定结构物与地面点），则任意静态点 $\mathbf{q}$ 到包络球边界的距离定义为
+将 LIO-SAM 输出的局部地图经高度阈值滤波，剔除地面以下点云后，得到局部静态地图点集 $\mathcal{M}_{\mathrm{local}}$，则任意静态点 $\mathbf{q}$ 到包络球边界的距离定义为
 \begin{equation}
 d_{\mathrm{sph}}(\mathbf{q},\mathcal{S}_i)=\max\bigl(0,\,\|\mathbf{q}-\bar{\mathbf{p}}_i\|-r_i^{\mathrm{s}}\bigr),\quad \mathbf{q}\in\mathcal{M}_{\mathrm{local}}
 \label{eq:ch4_dist_sphere}
