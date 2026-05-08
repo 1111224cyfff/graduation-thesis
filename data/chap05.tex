@@ -246,6 +246,7 @@ F1 分数 & 84.69\% \\
 \mathrm{MAE}=\frac{1}{T}\sum_{t=1}^{T}|\hat{y}_t-y_t|
 \label{eq:mae}
 \end{equation}
+其中，等级按危险程度依次编码为：无危险~=~0、提示~=~1、报警~=~2、紧急~=~3，$|\hat{y}_t-y_t|$ 即预测等级与真值等级之间的差值绝对值。
 
 \begin{table}[htbp]
 \centering
@@ -255,23 +256,23 @@ F1 分数 & 84.69\% \\
 \hline
 \textbf{指标项} & \textbf{提示级(5.0m)} & \textbf{报警级(3.0m)} & \textbf{紧急级(1.0m)} \\
 \hline
-精确率（Precision）  & 0.5727 & 0.9012 & 0.9466 \\
-召回率（Recall）  & 0.3937 & 0.8111 & 0.9300 \\
-F1分数  & 0.4667 & 0.8538 & 0.9383 \\
+精确率（Precision）  & 57.27\% & 90.12\% & 94.66\% \\
+召回率（Recall）  & 39.37\% & 81.11\% & 93.00\% \\
+F1分数  & 46.67\% & 85.38\% & 93.83\% \\
 \hline
-分级准确率（Acc） & \multicolumn{3}{c}{0.9248} \\
-误报率（FPR） & \multicolumn{3}{c}{0.0276} \\
-漏报率（FNR） & \multicolumn{3}{c}{0.0476} \\
+分级准确率（Acc） & \multicolumn{3}{c}{92.48\%} \\
+误报率（FPR） & \multicolumn{3}{c}{2.76\%} \\
+漏报率（FNR） & \multicolumn{3}{c}{4.76\%} \\
 平均绝对误差（MAE） & \multicolumn{3}{c}{0.1232} \\
 \hline
 \end{tabular*}
 \end{table}
 
-各预警等级的判级结果统计如表~\ref{tab:ch5_d4a_static_warning}所示。从表中可以看出，静态阈值判级的整体分级准确率达0.9248，超过92\%的帧实现了精确分级，说明基于距离阈值的三级静态判级框架在真实工况下表现有效。紧急级的精确率达0.9466、召回率达0.9300、F1分数达0.9383，均为三个等级中最优，在近距离高危场景中判级置信度最高。报警级的精确率达0.9012、召回率达0.8111且F1分数达0.8538，同样处于较高水平，中间阈值判级在多数情况下能够稳定反映真实的净空状态。提示级F1为0.4667，在四个等级中相对最低，召回率仅0.3937，说明系统对提示等级的识别存在遗漏。
+各预警等级的判级结果统计如表~\ref{tab:ch5_d4a_static_warning}所示。从表中可以看出，静态阈值判级的整体分级准确率达92.48\%，说明基于距离阈值的三级静态判级框架在真实工况下表现有效。紧急级的精确率达94.66\%、召回率达93.00\%、F1分数达93.83\%，均为三个等级中最优，在近距离高危场景中判级置信度最高。报警级的精确率达90.12\%、召回率达81.11\%且F1分数达85.38\%，同样处于较高水平，中间阈值判级在多数情况下能够稳定反映真实的净空状态。提示级F1为46.67\%，在四个等级中相对最低，召回率仅39.37\%，说明系统对提示等级的识别存在遗漏。
 
-从安全预警的实际需求出发，漏报率需优先关注。系统总漏报率仅0.0476，误报率为0.0276，两者均处于低位。进一步查看混淆矩阵（表~\ref{tab:ch5_d4b_confusion_matrix}），误报主要来自：当真值为无危险时，有44帧被误判为提示级（占无危险真值样本的2.03\%），另有26帧被误判为紧急级（占1.20\%），均属小概率事件，对现场作业影响有限。漏报方面，提示级向无危险的降级共计91帧，占提示级真值样本的56.88\%，是漏报的主要来源。提示级作为三级判据中阈值最小、优先级最低的等级，其物理边界在连续净空变化中最为模糊，部分处于临界状态的净空值被系统判定为无危险属正常波动。紧急级向更低估级合计44帧，占紧急级真值样本的7.00\%，在真实施工工况的遮挡与点云缺失条件下处于合理可控范围。
+从安全预警的实际需求出发，漏报率需优先关注。系统总漏报率仅4.76\%，误报率为2.76\%，两者均处于低位。进一步查看混淆矩阵（表~\ref{tab:ch5_d4b_confusion_matrix}），误报主要来自：当真值为无危险时，有44帧被误判为提示级（占无危险真值样本的2.03\%），另有26帧被误判为紧急级（占1.20\%），均属小概率事件，对现场作业影响有限。漏报方面，提示级向无危险的降级共计91帧，占提示级真值样本的56.88\%，是漏报的主要来源。提示级作为三级判据中阈值最小、优先级最低的等级，其物理边界在连续净空变化中最为模糊，部分处于临界状态的净空值被系统判定为无危险属正常波动。紧急级向更低估级合计44帧，占紧急级真值样本的7.00\%，在真实施工工况的遮挡与点云缺失条件下处于合理可控范围。
 
-提示级的低召回率在混淆矩阵中有明确体现：其真阳性仅为63帧，假阴性合计97（91+6+0），近六成的提示级真值帧被预测为无危险。提示级（5.0~m）在三级净空判据中阈值最大、优先级最低，在连续净空变化中处于最外围的边界位置，部分处于5.0~m临界区域的净空值在测量噪声影响下被判为无危险属正常波动范围。整体分级有序误差MAE仅为0.1232，平均预测等级与真值等级之间的偏差不足0.13个等级，整体判级的有序一致性较好。
+提示级的低召回率在混淆矩阵中有明确体现：其真阳性仅为63帧，假阴性合计97（91+6+0），近六成的提示级真值帧被预测为无危险。提示级在三级净空判据中阈值最大、优先级最低，在连续净空变化中处于最外围的边界位置，部分处于5.0~m临界区域的净空值在测量噪声影响下被判为无危险属正常波动范围。整体分级有序误差MAE仅为0.1232，平均预测等级与真值等级之间的偏差不足0.13个等级，整体判级的有序一致性较好。
 
 \begin{table}[H]
 \centering
@@ -289,7 +290,7 @@ F1分数  & 0.4667 & 0.8538 & 0.9383 \\
 \end{tabular*}
 \end{table}
 
-为直观展示判级结果在真实场景中的对应关系，将各预警等级的空间分布以可视化方式呈现。按照距离阈值分别将识别出的预警点做了标识，用颜色区分预警的等级，形成了预警等级圈。同时，在结果中可以看到，由于流程中滤除了地面点云，所以地面并没有出现预警点。静态预警真实场景与预警效果示意如图~\ref{fig:ch5_static_warning_effect}所示。
+为直观展示判级结果在真实场景中的对应关系，将各预警等级的空间分布以可视化方式呈现。按照距离阈值分别将识别出的预警点做了标识，用颜色区分预警的等级，形成了预警等级圈。静态预警真实场景与预警效果示意如图~\ref{fig:ch5_static_warning_effect}所示。在结果中可以看到，由于流程中滤除了地面点云，所以地面并没有出现预警点。
 
 \begin{figure}[htbp]
 \centering
@@ -336,15 +337,9 @@ F1分数  & 0.4667 & 0.8538 & 0.9383 \\
 
 \subsection{动态目标趋势预测与相向运动预警验证}\label{subsec_ch5_dynamic_warning}
 
-动态预警实验用于验证趋势预测与风险升级机制能否提供有效提前量。当前配置采用动态净空阈值5.0~m、3.0~m、1.0~m，对应TTC阈值6.0~s、3.0~s、1.5~s；相向运动通过速度夹角余弦阈值$-0.2$触发升级，预测时域为2.0~s。该参数组反映了当前实现对“短时危险演化”的保守响应策略。
+动态预警实验用于验证趋势预测与风险升级机制能否提供有效提前量。当前配置采用动态净空阈值5.0~m、3.0~m、1.0~m，对应TTC阈值6.0~s、3.0~s、1.5~s；相向运动通过速度夹角余弦阈值$-0.2$触发升级，预测时域为2.0~s。分级准确率、误报率与漏报率的定义与式\eqref{eq:acc}—\eqref{eq:mdr}一致。
 
-本节重点考察动态判级准确性。若相向接近场景能在误报可控的前提下实现更早触发，则可证明趋势项对风险识别具有实际增益。
-
-为量化动态预警有效性，本节从判级准确性维度建立评价指标。分级准确率、误报率与漏报率的口径与静态判级一致：真值等级 $y_t$ 由动态净空与TTC联合阈值确定，系统输出等级为 $\hat{y}_t$，采用式\eqref{eq:acc}—\eqref{eq:mdr}分别计算 $\mathrm{Acc}$、$\mathrm{FPR}$、$\mathrm{FNR}$，其中 $T$ 为视频总帧数。
-
-动态趋势判级的整体分级准确率达86.65\%，在动态目标接近场景中实现了高精度的风险等级判定。紧急级的精确率（0.9069）保持最高水平，F1分数达0.8228，在近距离高危场景中动态判级具备高置信度，系统判为紧急的帧中有超过90\%确实属于紧急等级。报警级的精确率（0.6200）与召回率（0.8319）均较优，F1为0.7105，中间等级在动态净空计算中具有较为明确的物理边界。提示级F1为0.3191，精确率仅0.2419，系统判为提示的帧中只有不到四分之一属于真正的提示等级，提示级的误报主要来源于报警与紧急等级向提示级的降级。
-
-动态判级的误报率为5.35\%，漏报率为8.00\%，两者均处于低位。漏报率略高于误报率，系统在不确定情况下略微倾向于保守策略（宁可误报也不遗漏危险），此偏好在安全关键应用中是可取的。分级有序误差MAE仅为0.2002，平均预测偏差不足四分之一等级，动态趋势信息对提升判级有序一致性具有显著贡献。进一步查看混淆矩阵（表~\ref{tab:ch5_d5b_confusion_matrix}），漏报的主要来源为紧急级被降级为报警级（136帧），占紧急级真值样本的18.47\%，属于相邻等级间的单级偏差，不反映系统对该等级危险的完全遗漏。上述表现主要归因于动态风险融合机制中TTC与速度方向的引入。在相向接近场景下，系统能够基于短时预测提前识别危险演化趋势，在吊装构件尚未达到最小净空距离时即触发预警，实现了预警准确性与及时性的有效统一。基于运动趋势的动态风险升级机制能够在真实工况下实现精准可靠的判级，证明了趋势项对风险识别的实际增益。
+判级结果如表~\ref{tab:ch5_d5_dynamic_warning}所示。整体分级准确率达86.65\%，误报率5.35\%，漏报率8.00\%，三者均处于可控范围。紧急级F1为82.28\%，在近距离高危场景中保持了较高的判级置信度；提示级F1为31.91\%，主要受低精确率（24.19\%）拖累，表明该等级存在部分误报。
 
 \begin{table}[htbp]
 \centering
@@ -354,19 +349,19 @@ F1分数  & 0.4667 & 0.8538 & 0.9383 \\
 \hline
 \textbf{指标项} & \textbf{提示级(5.0m)} & \textbf{报警级(3.0m)} & \textbf{紧急级(1.0m)} \\
 \hline
-精确率（Precision） & 0.2419 & 0.6200 & 0.9069 \\
-召回率（Recall） & 0.4688 & 0.8319 & 0.7531 \\
-F1分数 & 0.3191 & 0.7105 & 0.8228 \\
+精确率（Precision） & 24.19\% & 62.00\% & 90.69\% \\
+召回率（Recall） & 46.88\% & 83.19\% & 75.31\% \\
+F1分数 & 31.91\% & 71.05\% & 82.28\% \\
 \hline
-分级准确率（Acc） & \multicolumn{3}{c}{0.8665} \\
-误报率（FPR） & \multicolumn{3}{c}{0.0535} \\
-漏报率（FNR） & \multicolumn{3}{c}{0.0800} \\
+分级准确率（Acc） & \multicolumn{3}{c}{86.65\%} \\
+误报率（FPR） & \multicolumn{3}{c}{5.35\%} \\
+漏报率（FNR） & \multicolumn{3}{c}{8.00\%} \\
 平均绝对误差（MAE） & \multicolumn{3}{c}{0.2002} \\
 \hline
 \end{tabular*}
 \end{table}
 
-表~\ref{tab:ch5_d5b_confusion_matrix} 进一步给出了上述判级结果的混淆矩阵分布，给出了各等级误报与漏报的具体来源。
+表~\ref{tab:ch5_d5b_confusion_matrix} 进一步给出各等级误报与漏报的具体来源。漏报以紧急级向报警级的单级偏移为主，共136帧，占紧急级样本的18.47\%，未出现对高危场景的完全遗漏，且漏报率略高于误报率，反映了系统在模糊工况下的保守偏好。上述表现与TTC和速度方向等动态信息的引入密切相关，在相向接近场景中，运动状态信息使判级结果更贴近真实危险程度，验证了趋势项对风险识别的实际增益。
 
 \begin{table}[htbp]
 \centering
@@ -384,23 +379,26 @@ F1分数 & 0.3191 & 0.7105 & 0.8228 \\
 \end{tabular*}
 \end{table}
 
-表~\ref{tab:ch5_dynamic_warning_effect} 展示了系统在动态相向接近工况下的预警可视化效果。图中吊装构件以包络圆柱形式呈现，风险等级文字着色根据当前融合风险等级渲染（黄色对应提示、橙色对应报警、红色对应紧急），被检测到的动态目标以红色包围框形式显示并标注轨迹 ID 与运动方向。当动态目标与吊装构件之间的平面净空或 TTC 指标进入预设阈值区间时，系统即触发相应等级的预警着色，风险区域沿接近方向逐渐加深。该图与图~\ref{fig:ch5_dynamic_temporal_comparison} 的时序对照互为补充，分别从可视化效果与帧级一致性方面验证动态预警机制的有效性。
+表~\ref{tab:ch5_dynamic_warning_effect} 展示了系统在动态相向接近工况下的预警可视化效果。吊装构件以包络圆柱形式呈现，风险等级文字根据当前融合风险等级着色；被检测到的动态目标以红色包围框显示并标注轨迹 ID 与运动方向。当动态目标与吊装构件之间的平面净空或 TTC 指标进入预设阈值区间时，系统即触发相应等级的预警着色，风险区域沿接近方向逐渐加深。
 
 \begin{table}[H]
 \centering
 \caption{动态目标趋势预测与相向运动预警效果示例}
 \label{tab:ch5_dynamic_warning_effect}
-\begin{tabular}{@{}cc@{}}
+\begin{tabular}{>{\centering\arraybackslash}p{2em}@{\hspace{0.1em}}cc}
 \hline
-\textbf{真实场景} & \textbf{预警示意} \\
+\textbf{时刻} & \textbf{真实场景} & \textbf{预警示意} \\
 \hline
-\noalign{\vskip 1em}
-\includegraphics[height=4.2cm]{real_1.png} &
-\includegraphics[height=4.2cm]{warning_1.png} \\[4pt]
-\includegraphics[height=4.2cm]{real_2.png} &
-\includegraphics[height=4.2cm]{warning_2.png} \\[4pt]
-\includegraphics[height=4.2cm]{real_3.png} &
-\includegraphics[height=4.2cm]{warning_3.png} \\
+\noalign{\vskip 0.5em}
+\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_0$} &
+\includegraphics[height=4.1cm]{real_1.png} &
+\includegraphics[height=4.1cm]{warning_1.png} \\[4pt]
+\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_1$} &
+\includegraphics[height=4.1cm]{real_2.png} &
+\includegraphics[height=4.1cm]{warning_2.png} \\[4pt]
+\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_2$} &
+\includegraphics[height=4.1cm]{real_3.png} &
+\includegraphics[height=4.1cm]{warning_3.png} \\
 \hline
 \end{tabular}
 \end{table}
@@ -410,26 +408,41 @@ F1分数 & 0.3191 & 0.7105 & 0.8228 \\
 \centering
 \caption{动态目标趋势预测与相向运动预警效果示例（续）}
 \label{tab:ch5_dynamic_warning_effect_cont}
-\begin{tabular}{@{}cc@{}}
+\begin{tabular}{>{\centering\arraybackslash}p{2em}@{\hspace{0.1em}}cc}
 \hline
-\textbf{真实场景} & \textbf{预警示意} \\
+\textbf{时刻} & \textbf{真实场景} & \textbf{预警示意} \\
 \hline
-\noalign{\vskip 1em}
-\includegraphics[height=4.2cm]{real_4.png} &
-\includegraphics[height=4.2cm]{warning_4.png} \\[4pt]
-\includegraphics[height=4.2cm]{real_5.png} &
-\includegraphics[height=4.2cm]{warning_5.png} \\[4pt]
-\includegraphics[height=4.2cm]{real_6.png} &
-\includegraphics[height=4.2cm]{warning_6.png} \\[4pt]
-\includegraphics[height=4.2cm]{real_7.png} &
-\includegraphics[height=4.2cm]{warning_7.png} \\[4pt]
-\includegraphics[height=4.2cm]{real_8.png} &
-\includegraphics[height=4.2cm]{warning_8.png} \\
+\noalign{\vskip 0.5em}
+\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_3$} &
+\includegraphics[height=4.1cm]{real_4.png} &
+\includegraphics[height=4.1cm]{warning_4.png} \\[4pt]
+\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_4$} &
+\includegraphics[height=4.1cm]{real_5.png} &
+\includegraphics[height=4.1cm]{warning_5.png} \\[4pt]
+\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_5$} &
+\includegraphics[height=4.1cm]{real_6.png} &
+\includegraphics[height=4.1cm]{warning_6.png} \\[4pt]
+\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_6$} &
+\includegraphics[height=4.1cm]{real_7.png} &
+\includegraphics[height=4.1cm]{warning_7.png} \\[4pt]
+\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_7$} &
+\includegraphics[height=4.1cm]{real_8.png} &
+\includegraphics[height=4.1cm]{warning_8.png} \\
 \hline
 \end{tabular}
+\parbox{\textwidth}{\vspace{0.5em}\small\raggedright 注：t$_0$–t$_7$ 共 8 个时刻，相邻时刻间隔 1~s。}
 \end{table}
 
-图~\ref{fig:ch5_dynamic_temporal_comparison} 以帧级时序展示动态判级的真值与预测等级对照。图中上子图为基于动态净空与 TTC 联合阈值计算的真值等级区间，中子图为系统输出的预测等级散点，下子图为误判指示条。与静态判级的时序对照（图~\ref{fig:ch5_static_temporal_comparison}）相比，动态判级的误判分布更为稀疏，等级过渡边界的抖动幅度更小，这与动态判级 MAE~=~0.3178 优于静态判级 MAE~=~0.5530 的量化结果一致。TTC 和预测净空的引入使动态判级在等级过渡区保持了更好的有序一致性，验证了趋势项对判级稳定性的实际增益。
+图~\ref{fig:ch5_opposing_warning_timeline} 展示了相向运动工况下的提前预警时序对比。被监测目标以约~1~m/s 的速率逼近吊物，当前距离如蓝实线所示呈单调下降趋势。本文动态融合判据中的“预测距离”分量如橙虚线所示，基于~2~s 视野的轨迹外推使其先于真实距离跨越报警与紧急阈值：相比纯距离基线，报警级提前~0.70~s、紧急级提前~1.60~s 触发预警，为操作人员争取了额外的响应时间窗口，验证了第~\ref{subsec_ch4_risk_upgrade}~节动态融合判据在相向接近工况下的提前预警能力。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.99\textwidth]{相向运动工况-提前预警时序对比.png}
+\caption{相向运动工况下提前预警时序对比}
+\label{fig:ch5_opposing_warning_timeline}
+\end{figure}
+
+图~\ref{fig:ch5_dynamic_temporal_comparison} 以帧级时序展示动态判级的真值与预测等级对照，其结构与图~\ref{fig:ch5_static_temporal_comparison}相同。预测等级在多数时段与真值吻合，误判集中在等级过渡边界附近且多为相邻等级间的单级偏移。MAE仅为0.2002，表明动态判级具有较好的有序一致性，TTC与预测净空的引入在等级过渡区保持了平稳的判级过渡。
 
 \begin{figure}[H]
 \centering
