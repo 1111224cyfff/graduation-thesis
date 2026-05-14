@@ -1,558 +1,389 @@
-\chapter{案例分析}\label{chap5_experiment_evaluation}
+\chapter{吊装作业风险分级预警与避障控制接口设计}\label{chap5_warning_avoidance}
 
-本章围绕第4章提出的从视觉识别与分割、点云投影定位到动态风险融合与预警输出的全链路方法，开展实验验证与系统评估。以上海市黄浦区某施工现场典型吊装作业为实验场景，重点考察方法在真实工况下的感知、定位、风险融合与控制建议输出能力，验证本文方法的技术可行性与工程实用性。
+在第4章完成吊装构件视觉识别、雷视跨模态投影关联与三维空间定位的基础上，本章进一步研究如何基于已获取的对象状态与几何信息，建立面向吊装作业的安全风险量化分级机制，并设计标准化的控制建议接口，实现从感知到决策的语义衔接。本章首先建立基于三维净空的静态风险三级阈值判据与基于相对运动和碰撞时间（TTC）的动态风险升级机制，通过迟滞状态机输出稳定的风险等级；随后设计风险评估层与控制映射层解耦的分层接口架构，将风险语义稳定映射为标准化动作建议，为后续设备级闭环接入提供清晰的语义边界。
 
-\section{实验场景介绍}\label{sec_ch5_platform_scene}
+\section{吊装作业风险分级预警机制设计}\label{sec_ch4_warning_design}
 
-本研究以上海建工四建集团承建的上海工业博物馆项目为依托开展现场实验。项目位于上海市黄浦区五里桥街道102-14地块（江南制造总局旧址），总建筑面积约11.13万平方米，属市级重大文化地标工程。该工程兼具城市更新与大型公共建筑施工特征，现场施工组织、物流调度及多工种交叉作业并行，对吊装安全感知与风险研判提出了较高要求。项目施工现场实景如图\ref{fig:ch5_site_photos}所示。
-
-\begin{figure}[htbp]
-\centering
-\begin{subfigure}[t]{0.48\textwidth}
-\centering
-\includegraphics[width=\textwidth]{项目照片-1.jpg}
-\caption{项目施工现场实景（一）}
-\label{fig:ch5_site_photo_1}
-\end{subfigure}
-\hfill
-\begin{subfigure}[t]{0.48\textwidth}
-\centering
-\includegraphics[width=\textwidth]{项目照片-2.jpg}
-\caption{项目施工现场实景（二）}
-\label{fig:ch5_site_photo_2}
-\end{subfigure}
-\caption{上海工业博物馆项目施工现场实景}
-\label{fig:ch5_site_photos}
-\end{figure}
-
-\subsection{实验平台硬件配置}\label{subsec_ch5_platform}
-
-实验平台硬件选型与安装布局已在第~\ref{sec:hardware_selection}~节详述，此处仅简述与本章实验直接相关的配置要点。感知平台采用吊钩端雷视融合一体化架构（图\ref{fig:ch5_platform_hardware}），由双 Livox Mid-360 激光雷达、海康威视工业相机（MV-CS016-10UC，1440$\times$1080@10~fps）、IMU 与 NVIDIA Jetson Orin NX 边缘计算单元构成，传感器具体参数参见表~\ref{tab:sensor_spec}。相机与双雷达均固定于吊钩上方保护平台，面向吊装作业区域，随吊钩同步运动，通过千兆以太网与边缘计算单元连接。
-
-软件环境基于 ROS 进行模块化组织，各功能模块以独立节点形式运行。视觉模块采用 YOLO26s-seg 模型完成吊装构件实例分割；点云模块接收融合后的双雷达点云并负责三维几何表达；LIO-SAM 模块融合 LiDAR 与 IMU 数据完成实时位姿估计与地图构建；动态检测与跟踪模块基于扫描残差识别动态目标并进行运动状态估计；风险评估模块汇聚多源信息完成净空计算与风险融合判级；控制接口模块将风险等级映射为标准化控制动作建议。
+为从系统层面说明多源感知、风险融合与控制建议之间的数据流关系，图\ref{fig:ch4_warning_pipeline_overview} 给出了多层级预警机制的总体流程。图中三路输入分别对应吊装目标对象状态、动态轨迹状态和局部地图静态环境；预警评估模块在统一坐标系下完成静态净空、动态净空和趋势升级判定，并输出结构化风险状态。该状态一方面服务于预警可视化，另一方面作为第 5.2 节控制接口原型的直接输入。
 
 \begin{figure}[htbp]
-\centering
-\begin{subfigure}[t]{0.58\textwidth}
-\centering
-\includegraphics[height=8.0cm]{吊钩传感平台-实际-俯视.png}
-\caption{俯视图}
-\label{fig:ch5_platform_hardware_top}
-\end{subfigure}
-\hfill
-\begin{subfigure}[t]{0.4\textwidth}
-\centering
-\includegraphics[height=8.0cm]{吊钩传感平台-实际-仰视.png}
-\caption{仰视图}
-\label{fig:ch5_platform_hardware_bottom}
-\end{subfigure}
-\caption{吊钩端感知平台采集硬件设备图}
-\label{fig:ch5_platform_hardware}
-\end{figure}
-
-\subsection{测试场景与数据采集}\label{subsec_ch5_scenes_bag}
-
-为覆盖吊装风险的主要形成机制，数据采集过程涵盖多段现场吊装作业，包括静态障碍物接近、动态目标穿越、吊物摆动及相向接近等多种实际工况。上述场景分别侧重于静态净空判级、动态趋势预测、投影稳定性与提前量评估等关键问题，与第4章的技术环节形成对应关系。
-
-本实验所采用的吊装吊车作业场景如图\ref{fig:ch5_crane_scene}所示。
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.9\textwidth]{吊车.jpg}
-\caption{实验测试场景}
-\label{fig:ch5_crane_scene}
-\end{figure}
-
-\section{吊装构件识别与定位性能评估}\label{sec_ch5_recognition_localization}
-
-\subsection{吊装构件检测与分割评估}\label{subsec_ch5_yolo26_eval}
-
-本节从识别有效性、时序稳定性与分割质量三个维度评估YOLO26模型。鉴于施工现场视频序列逐帧标注真值的成本极高，本节不依赖传统逐帧真值精度指标，转而引入基于模型输出自身一致性的时序稳定性指标，以验证分割结果在连续视频帧中的持续可用性。
-
-具体而言，设视频序列第 $t$ 帧模型输出的吊装构件实例掩码为 $\hat{\mathbf{M}}_t$，边界框中心像素坐标为 $(u_t,v_t)$，视频总帧数为 $T$。帧间实例关联采用置信度优先策略，每帧选取置信度最高的吊装构件实例作为该帧代表目标；若存在多个同类实例，则选取与前一帧边界框IoU最大者进行关联。
-
-掩码时序IoU衡量相邻帧分割边界的像素级重叠程度，反映掩码在时域上的稳定性：
-\begin{equation}
-\mathrm{TIoU}_t=\frac{|\hat{\mathbf{M}}_t\cap\hat{\mathbf{M}}_{t+1}|}{|\hat{\mathbf{M}}_t\cup\hat{\mathbf{M}}_{t+1}|},
-\qquad
-\overline{\mathrm{TIoU}}=\frac{1}{T-1}\sum_{t=1}^{T-1}\mathrm{TIoU}_t
-\end{equation}
-
-框中心漂移衡量相邻帧检测框中心点的像素距离，反映目标定位稳定性：
-\begin{equation}
-d_t=\sqrt{(u_{t+1}-u_t)^2+(v_{t+1}-v_t)^2},
-\qquad
-\bar{d}=\frac{1}{T-1}\sum_{t=1}^{T-1}d_t
-\end{equation}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.85\textwidth]{吊装构件检测与分割评估指标示意.pdf}
-\caption{吊装构件检测与分割评估指标示意图}
-\label{fig:ch5_metric_schematic}
-\end{figure}
-
-上述时序评估指标TIoU与框中心漂移$d_t$的几何含义如图\ref{fig:ch5_metric_schematic}所示。图中上方两幅分别为第$t_0$帧与第$t_1$帧的模型输出掩码，通过比较相邻帧掩码的重叠区域与差异区域即可计算TIoU；下方左侧示意了TIoU的具体计算方式——两帧掩码的交集除以并集，反映分割边界在像素级的时序稳定性；下方右侧则展示了框中心漂移$d_t$的几何含义，即相邻帧检测框中心之间的像素距离，用以衡量目标定位的抖动程度。
-
-漏检率衡量连续视频监测中的目标丢失比例。从首次成功检出目标的帧序号 $t_0$ 开始统计，设有效监测帧数为 $T_{\mathrm{eff}}=T-t_0+1$，漏检帧数为 $N_{\mathrm{miss}}$，则
-\begin{equation}
-R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
-\end{equation}
-
-同时记录最大连续漏检帧数 $L_{\max}$，以反映检测链路的持续性中断风险。上述三项指标的统计结果如表~\ref{tab:ch5_d1_detection_effectiveness}所示。
-
-\begin{table}[htbp]
-\centering
-\caption{吊装构件识别有效性与时序稳定性统计表}
-\label{tab:ch5_d1_detection_effectiveness}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{2.4cm}p{2.6cm}p{2.0cm}p{2.8cm}p{1.8cm}}
-\hline
-\textbf{样本帧数} & \textbf{掩码时序IoU} & \textbf{框中心漂移(px)} & \textbf{漏检帧占比} & \textbf{连续漏检最大帧数} \\
-\hline
-2826 & 0.888 & 13.02 & 1.06\% & 2 \\
-\hline
-\end{tabular*}
-\end{table}
-
-综上所述，在统一的目标筛选阈值约束下，YOLO26模型在识别有效性与时序稳定性方面均表现优异：掩码时序IoU均值达0.888，漏检率仅1.06\%，充分证明了该模型在吊装构件检测与分割任务中的高可靠性，能够为后续三维定位与风险评估提供稳固的前端感知支撑。
-
-\subsection{点云投影关联与三维定位一致性验证}\label{subsec_ch5_projection_localization_eval}
-
-三维定位评估的关键，是检验“二维分割结果约束下的点云回查”策略是否足够准确。该过程包含坐标变换、投影关联、实例点集构建与质心提取四个环节。若投影关联环节存在系统性偏差或漏配，后续实例点集构建将引入虚假点或丢失真实点，直接影响质心定位精度与净空计算可靠性。
-
-本节采用手工标定的点云真值与算法投影所得点云进行定量对比。以像素级掩码为关联单位，将算法投影得到的点云集合与手工标定的真值点云集合逐帧匹配，统计真阳性（TP）、假阳性（FP）与假阴性（FN），并据此计算精确率（Precision）、召回率（Recall）、F1分数与交并比（IoU）。各符号含义如表~\ref{tab:ch5_confusion_terms}所示，各指标定义如下：
-
-\begin{table}[htbp]
-\centering
-\caption{投影关联混淆矩阵术语说明}
-\label{tab:ch5_confusion_terms}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{3.2cm}p{4.5cm}p{4.5cm}}
-\hline
-\textbf{\diagbox{算法输出}{实际情况}} & \textbf{实际属于真值} & \textbf{实际不属于真值} \\
-\hline
-算法成功关联 & TP：正确关联 & FP：误关联 \\
-算法未关联 & FN：漏关联 & TN：正确未关联 \\
-\hline
-\end{tabular*}
-\end{table}
-
-精确率反映算法投影点云中属于真值的比例：
-\begin{equation}
-\mathrm{Precision}=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}}
-\end{equation}
-
-召回率反映真值点云中被算法成功检出的比例：
-\begin{equation}
-\mathrm{Recall}=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FN}}
-\end{equation}
-
-F1 分数为精确率与召回率的调和平均：
-\begin{equation}
-\mathrm{F1}=\frac{2\cdot\mathrm{Precision}\cdot\mathrm{Recall}}{\mathrm{Precision}+\mathrm{Recall}}
-\end{equation}
-
-交并比反映算法投影点云与真值点云的空间重叠程度：
-\begin{equation}
-\mathrm{IoU}=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}+\mathrm{FN}}
-\end{equation}
-
-上述指标均以像素级掩码关联后的点云集合为统计对象，能够在统一口径下衡量从二维分割、投影关联到点云集构建的全链路准确性。各构件实例分割与点云投影关联的可视化结果如表~\ref{tab:ch5_projection_localization}所示，直观展示了从原图到实例分割、点云投影及筛选的完整处理过程。表~\ref{tab:ch5_d3_projection_localization}中的统计结果通过对原始数据间隔5~s抽取一帧并逐帧进行手工标注真值后计算得到。
-
-\begin{table}[H]
 	\centering
-	\caption{吊装构件识别与三维定位结果}
-	\label{tab:ch5_projection_localization}
-	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}C{2cm}c@{\hspace{1.5em}}c}
-		\hline
-		& \textbf{\raisebox{-0.5\height}{塔吊标准节}} & \textbf{\raisebox{-0.5\height}{围栏}} \\[0.5em]
-		\hline\noalign{\vskip 0.5em}
-		原图 &
-		\raisebox{-0.5\height}{\includegraphics[width=5cm]{塔吊标准节-原图.jpg}} &
-		\raisebox{-0.5\height}{\includegraphics[width=5cm]{围栏-原图.jpg}} \\[5em]
-		实例分割 &
-		\raisebox{-0.5\height}{\includegraphics[width=5cm]{塔吊标准节-实例分割.jpg}} &
-		\raisebox{-0.5\height}{\includegraphics[width=5cm]{围栏-实例分割.jpg}} \\[5em]
-		\makecell{点云投影\\至图像} &
-		\raisebox{-0.5\height}{\includegraphics[width=5cm]{塔吊标准节-点云投影至图像.jpg}} &
-		\raisebox{-0.5\height}{\includegraphics[width=5cm]{围栏-点云投影至图像.jpg}} \\[5em]
-		\makecell{落入掩码\\点云筛选} &
-		\raisebox{-0.5\height}{\includegraphics[width=5cm]{塔吊标准节-筛选落入掩码点云.jpg}} &
-		\raisebox{-0.5\height}{\includegraphics[width=5cm]{围栏-筛选落入掩码点云.jpg}} \\[5em]
-		点云投影 &
-		\raisebox{-0.5\height}{\includegraphics[width=5cm]{塔吊标准节-点云投影.png}} &
-		\raisebox{-0.5\height}{\includegraphics[width=5cm]{围栏-点云投影.png}} \\
-		\noalign{\vskip 0.5em}\hline
+	\resizebox{0.92\textwidth}{!}{%
+	\begin{tikzpicture}[
+		x=1.2cm,y=1.2cm,>=Latex,font=\scriptsize,
+		io/.style={draw, rounded corners=2pt, thick, fill=gray!18, align=center, minimum width=3.0cm, minimum height=1.0cm},
+		proc/.style={draw, rounded corners=2pt, thick, fill=gray!8, align=center, minimum width=3.0cm, minimum height=1.0cm},
+		resultbox/.style={draw, rounded corners=2pt, thick, fill=gray!14, align=center, minimum width=3.2cm, minimum height=1.0cm}
+	]
+
+		% --- 左列：感知 ---
+		\node[io] (img) at (0,0) {YOLO26 分割\\图像输入};
+		\node[proc] (seg) at (0,-1.6) {实例分割结果};
+
+		\node[io] (map) at (0,-6.4) {去畸变点云\\\texttt{cloud\_deskewed}};
+		\node[proc] (staticeval) at (0,-8.0) {静态净空评估};
+		\node[proc] (staticlevel) at (0,-9.6) {静态风险等级};
+
+		% --- 中列：主处理链 ---
+		\node[io] (cloud) at (4.0,0) {Leveled\\点云输入};
+		\node[proc] (proj) at (4.0,-1.6) {3D 点投影到\\2D 图像};
+		\node[proc] (lookup) at (4.0,-3.2) {按 mask 回查\\实例点云集合};
+		\node[resultbox] (obj) at (4.0,-4.8) {吊装目标对象状态\\质心 尺寸 包络半径\\最近距离 点数};
+
+		\node[proc] (vel) at (4.0,-6.4) {目标速度估计};
+
+		\node[proc] (fusion) at (4.0,-11.2) {融合判级\\取静态与动态最大等级};
+		\node[proc] (hyst) at (4.0,-12.8) {迟滞状态机\\升级立即生效\\降级延时 1 s};
+		\node[resultbox] (state) at (4.0,-14.4) {WarningState 输出\\\texttt{/warning/state}};
+
+		\node[proc] (markers) at (1.2,-16.0) {RViz 预警可视化\\\texttt{/warning/markers}};
+		\node[proc] (controller) at (6.8,-16.0) {Warning Controller};
+		\node[resultbox] (command) at (6.8,-17.6) {ControlCommand 输出\\\texttt{/warning/control\_command}};
+
+		% --- 右列：动态 ---
+		\node[io] (dyn) at (8.0,0) {动态点检测\\与聚类};
+		\node[proc] (tracker) at (8.0,-1.6) {Dynamic Tracker};
+		\node[resultbox] (tracks) at (8.0,-3.2) {动态轨迹状态\\ID 位置 速度\\预测轨迹};
+
+		\node[proc] (dyneval) at (8.0,-6.4) {动态风险评估};
+		\node[proc] (dynlevel) at (8.0,-8.0) {动态风险等级};
+		\node[proc] (upgrade) at (8.0,-9.6) {是否相向运动升级};
+		\node[proc] (dynadj) at (8.0,-11.2) {动态等级修正};
+
+		% --- 连线 ---
+		\draw[->, thick] (img) -- (seg);
+		\draw[->, thick] (seg) -- (proj);
+		\draw[->, thick] (cloud) -- (proj);
+		\draw[->, thick] (proj) -- (lookup);
+		\draw[->, thick] (lookup) -- (obj);
+
+		\draw[->, thick] (obj) -- (vel);
+
+		\draw[->, thick] (map) -- (staticeval);
+		\draw[->, thick] (obj.west) -- ++(-0.6,0) |- (staticeval.east);
+		\draw[->, thick] (staticeval) -- (staticlevel);
+
+		\draw[->, thick] (vel) -- (dyneval);
+		\draw[->, thick] (tracks) -- (dyneval);
+		\draw[->, thick] (dyneval) -- (dynlevel);
+		\draw[->, thick] (dynlevel) -- (upgrade);
+		\draw[->, thick] (upgrade) -- (dynadj);
+
+		\draw[->, thick] (staticlevel) |- (fusion);
+		\draw[->, thick] (dynadj) -- (fusion);
+
+		\draw[->, thick] (fusion) -- (hyst);
+		\draw[->, thick] (hyst) -- (state);
+
+		\draw[->, thick] (state) -- (markers);
+		\draw[->, thick] (state) -- (controller);
+		\draw[->, thick] (controller) -- (command);
+
+		\draw[->, thick] (dyn) -- (tracker);
+		\draw[->, thick] (tracker) -- (tracks);
+
+	\end{tikzpicture}}
+	\caption{多层级预警机制总体流程图}
+	\label{fig:ch4_warning_pipeline_overview}
+\end{figure}
+
+\subsection{基于三维净空的静态风险评估}\label{subsec_ch4_static_distance_warning}
+
+在吊装安全预警链路中，最先需要回答的问题并非目标未来是否会发生碰撞，而是当前时刻吊装构件与周边环境还剩多少可用净空。若这一基础量无法稳定估计，后续关于相向接近、趋势升级和动作约束的讨论都会失去几何基准。因此，本文将静态风险评估建立在第 4.2 节已获得的三维对象状态之上，并直接与局部地图点云进行距离计算。该过程由预警评估模块在线实现，作为整条预警链路的第一层判据。
+
+从输入组织看，预警模块首先从对象状态接口中筛选被监控对象，并同时要求目标满足最小置信度和最小关联点数阈值，以避免远距离噪声或稀疏误检直接进入风险评估。设被监控目标的包络球中心为 $\bar{\mathbf{p}}_o$、包络球半径为 $r_o$，对任意静态点 $\mathbf{q}\in\mathcal{M}_{\mathrm{local}}$，定义其到包络球边界的三维距离为
+\begin{equation}
+d_{\mathrm{sph}}(\mathbf{q})=\max\bigl(0,\,\|\mathbf{q}-\bar{\mathbf{p}}_o\|-r_o\bigr)
+\end{equation}
+
+则静态净空可写为
+\begin{equation}
+d_{\mathrm{static}}=\min_{\mathbf{q}\in\mathcal{M}_{\mathrm{local}}}d_{\mathrm{sph}}(\mathbf{q})
+\end{equation}
+
+由于 $d_{\mathrm{sph}}(\mathbf{q})$ 对 $\|\mathbf{q}-\bar{\mathbf{p}}_o\|$ 单调，工程实现中可等价转化为最近邻查询：先求
+\begin{equation}
+d_{\mathrm{nn}}=\min_{\mathbf{q}\in\mathcal{M}_{\mathrm{local}}}\|\bar{\mathbf{p}}_o-\mathbf{q}\|
+\end{equation}
+
+再计算
+\begin{equation}
+d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o)
+\end{equation}
+
+该定义将静态风险统一到“包络球三维边界净空”这一可解释几何量上，与 KD-tree 最近邻计算流程一致。
+
+在本文配置中，静态净空被划分为三级阈值区间：当 $d_{\mathrm{static}}\leq 1.0\,\mathrm{m}$ 时触发紧急等级，当 $1.0\,\mathrm{m}<d_{\mathrm{static}}\leq 3.0\,\mathrm{m}$ 时触发警告等级，当 $3.0\,\mathrm{m}<d_{\mathrm{static}}\leq 5.0\,\mathrm{m}$ 时触发提示等级，超过 $5.0\,\mathrm{m}$ 则视为静态净空充分。为便于统一对照，表\ref{tab:ch4_static_risk_criteria} 汇总了静态风险分级判据。
+
+\begin{table}[htbp]
+	\centering
+	\caption{基于三维净空的静态风险分级判据}
+	\label{tab:ch4_static_risk_criteria}
+	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lc}
+	\hline
+	\textbf{风险等级} & \textbf{静态净空阈值 $d_{\mathrm{static}}$} \\
+	\hline
+	紧急（Emergency） & $\leq 1.0\,\mathrm{m}$ \\
+	警告（Warning） & $\leq 3.0\,\mathrm{m}$ \\
+	提示（Notice） & $\leq 5.0\,\mathrm{m}$ \\
+	\hline
 	\end{tabular*}
-\parbox{\textwidth}{\vspace{0.5em}\small\raggedright 注：点云投影结果图中，白色点表示所有投影至该帧图像像素的点云，红色点表示落在分割掩码内的点云。}
 \end{table}
 
-\begin{table}[htbp]
-\centering
-\caption{点云投影关联与三维定位一致性验证统计表}
-\label{tab:ch5_d3_projection_localization}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{5.5cm}p{3.5cm}}
-\hline
-\textbf{指标项} & \textbf{数值} \\
-\hline
-真阳性（TP） & 13751 \\
-假阳性（FP） & 1168 \\
-假阴性（FN） & 3805 \\
-\hline
-精确率（Precision） & 92.17\% \\
-召回率（Recall） & 78.33\% \\
-F1 分数 & 84.69\% \\
-交并比（IoU） & 73.44\% \\
-\hline
-\end{tabular*}
-\end{table}
+其工程意义在于将构件是否逼近静态边界这一问题落到可读、可配置的几何量上，为后续动态升级和控制映射提供稳定入口。从方法边界看，静态风险评估采用包络球三维距离结合最近邻点集近似障碍边界的表达，因此更适合作为在线预警的快速近似层，而非最终的高精度碰撞检测器。
 
-从表~\ref{tab:ch5_d3_projection_localization}可知，点云投影关联的精确率高达92.17\%，说明在成功投影的点云中绝大多数与手工标定真值一致，验证了二维分割约束下点云回查策略具备较高的正向关联可信度。召回率为78.33\%，超过四分之三的真值点被成功检出，在当前真实工况的遮挡与光照变化条件下表现良好。F1分数为84.69\%，IoU为73.44\%，两者均处于同类方法的较高水平，综合验证了当前投影关联链路在真实工况下的定位一致性与鲁棒性。
-
-进一步分析误差来源可知，假阳性共128点，主要源于二维实例分割掩码边界与吊装构件实际像素轮廓之间存在系统性空间偏差。值得注意的是，假阳性数量极小，仅128点，且其中相当一部分源于施工现场背景中邻近地面的局部区域或悬挂吊绳的像素被纳入构件区域，此类误差对最终净空计算的影响十分有限。假阴性共417点，则主要源于分割模型的间歇性漏检：当吊装构件因姿态变化、光照扰动或短暂遮挡导致置信度下降时，掩码出现收缩甚至消失，致使部分真实点云未能落入有效掩码范围。上述误差分布中，漏配数量高于误配，但两者均处于可接受的工程范围之内，且具有明确的改进方向：后续可通过优化分割边界的亚像素精度、引入时序掩码插值补偿策略以及结合点云几何一致性滤波进一步降低边缘误关联，有望将召回率与IoU提升至更高水平。
-
-综上所述，量化评估结果表明，当前三维定位链路在精确率、F1分数与IoU等核心指标上均达到较高水准，其输出结果可直接作为预警净空计算的可靠输入。精确率指标的突出表现说明投影关联结果中对后续计算产生误导的虚假点极少，为安全预警提供了高置信度的几何数据支撑。即便在密集遮挡与动态摆动等最具挑战性的工况下，系统仍能保持稳定的定位性能。
-
-\subsection{吊装构件三维定位精度评估}\label{subsec_ch5_localization_error}
-
-上节从点云关联角度验证了投影回查策略的正向可信度，但预警判级的有效性最终取决于从二维分割到三维实例点云质心的全链路定位误差的量值。若质心定位误差超过预警阈值量级（如紧急级阈值1.0~m），则判级结果将失去几何基准。需要说明的是，本系统采用的 Livox Mid-360 激光雷达在典型吊钩端作业距离（5–10~m）下的官方测距精度（1$\sigma$）为 $\leq 2$~cm，远低于全链路定位误差的量级，因此本节评估的质心偏差主要反映外参标定残差、时间同步偏差与分割边界不确定度等系统层面误差，而非传感器测距噪声。
-
-基于上述基准，本节进一步基于手工标定的实例点云真值，定量评估全链路下的吊装构件质心三维定位误差。评估方法如下：对每帧数据，手工标定属于吊装构件的全部点云作为真值集合 $\mathcal{P}_{\mathrm{GT}}$，算法输出经YOLO26分割掩码回查得到的实例点云作为预测集合 $\mathcal{P}_{\mathrm{algo}}$。分别计算两集合的质心：
-\begin{equation}
-\bar{\mathbf{p}}_{\mathrm{GT}} = \frac{1}{|\mathcal{P}_{\mathrm{GT}}|}\sum_{\mathbf{p}\in\mathcal{P}_{\mathrm{GT}}}\mathbf{p}
-\label{eq:ch5_centroid_gt}
-\end{equation}
-\begin{equation}
-\bar{\mathbf{p}}_{\mathrm{algo}} = \frac{1}{|\mathcal{P}_{\mathrm{algo}}|}\sum_{\mathbf{p}\in\mathcal{P}_{\mathrm{algo}}}\mathbf{p}
-\label{eq:ch5_centroid_algo}
-\end{equation}
-
-接着，定义三维定位误差为 $\|\bar{\mathbf{p}}_{\mathrm{GT}}-\bar{\mathbf{p}}_{\mathrm{algo}}\|_2$。该误差为复合指标，同步偏差、外参残差与分割边界不确定度等融合误差贡献均已包含其中，无需逐项拆解。
-
-采用与上节相同的样本进行统计，结果如表~\ref{tab:ch5_centroid_error}所示。从表中可以看出，吊装构件三维质心定位误差的均值为0.228~m，均方根误差为0.241~m，最大值为0.297~m。水平面（XY）误差均值为0.100~m，显著优于竖直方向（Z）误差均值0.159~m。这一差异与传感器的观测几何一致：双LiDAR侧向对称布置在水平面内形成较好的测量覆盖，而竖直方向主要依靠单次俯仰扫描层获取深度信息，且吊物顶部点云分布受吊绳遮挡与目标姿态影响，使得Z向质心估计的稳定性和精度略低于水平面。
-
-\begin{table}[htbp]
-\centering
-\caption{吊装构件质心三维定位误差统计表}
-\label{tab:ch5_centroid_error}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{4.5cm}p{3.0cm}p{3.0cm}p{3.0cm}}
-\hline
-\textbf{指标项} & \textbf{水平面(XY)误差} & \textbf{竖直方向(Z)误差} & \textbf{三维(3D)误差} \\
-\hline
-均值（Mean） & 0.100 & 0.159 & 0.228 \\
-标准差（Std） & 0.105 & 0.107 & 0.077 \\
-均方根误差（RMSE） & 0.145 & 0.192 & 0.241 \\
-最大值（Max） & 0.283 & 0.293 & 0.297 \\
-最小值（Min） & 0.018 & 0.009 & 0.043 \\
-\hline
-\end{tabular*}
-\parbox{\textwidth}{\vspace{0.5em}\small\raggedright 注：表中数值单位均为米（m）。水平面误差指质心在X-Y平面内的欧氏距离，竖直方向误差指Z方向绝对偏差。}
-\end{table}
-
-由表可知，三维定位误差最大值0.297~m，远小于紧急级净空阈值1.0~m；决定平面接近关系的水平面误差均值仅0.100~m。上述定位精度满足本文三级预警阈值（1.0/3.0/5.0~m）的工程需求，且LiDAR自身的测距精度（≤2~cm）尚有较大余量，定位性能可通过优化标定与分割精度进一步提升。
-
-\section{预警链路有效性实验}\label{sec_ch5_warning_validation}
-
-\subsection{静态障碍物距离阈值预警效果测试}\label{subsec_ch5_static_warning}
-
-静态预警实验用于验证距离阈值判级的可解释性与触发一致性。当前配置采用三级静态净空阈值：5.0~m对应提示级、3.0~m对应报警级、1.0~m对应紧急级。实验评价重点不在于单次触发是否出现，而在于触发时机、跨级行为和等级稳定性是否与阈值设计一致。
-
-为量化静态判级有效性，本节从分类精度与有序误差两个维度建立评价指标。设视频帧序列的真值等级为 $y_t\in\{\text{无危险},\text{提示},\text{报警},\text{紧急}\}$，系统输出等级为 $\hat{y}_t$。各指标定义如下：
-
-精确率/召回率/F1（按等级）：精确率、召回率与F1分数的定义见第~\ref{subsec_ch5_projection_localization_eval}~节。设等级 $i$ 对应的真阳性、假阳性、假阴性计数分别为 $\mathrm{TP}_i$、$\mathrm{FP}_i$、$\mathrm{FN}_i$，则各等级指标按上述公式计算。其中 $i\in\{\text{提示},\text{报警},\text{紧急}\}$ 为预警等级。
-
-分级准确率（Accuracy, Acc）：预测等级与真值等级完全一致的帧数占总帧数的比例：
-\begin{equation}
-\mathrm{Acc}=\frac{|\{t:\hat{y}_t=y_t\}|}{T}
-\label{eq:acc}
-\end{equation}
-其中，$T$ 为视频总帧数；$y_t$ 与 $\hat{y}_t$ 分别为第 $t$ 帧的真值等级与系统输出等级。
-
-误报率（False Positive Rate, FPR）：系统将实际低等级危险判定为高等级（预测等级高于真值等级）的帧数占比：
-\begin{equation}
-\mathrm{FPR}=\frac{|\{t:\hat{y}_t>y_t\}|}{T}
-\label{eq:far}
-\end{equation}
-
-漏报率（False Negative Rate, FNR）：系统将实际高等级危险判定为低等级（预测等级低于真值等级）的帧数占比：
-\begin{equation}
-\mathrm{FNR}=\frac{|\{t:\hat{y}_t<y_t\}|}{T}
-\label{eq:mdr}
-\end{equation}
-
-平均绝对误差（Mean Absolute Error, MAE）：系统输出等级与真值等级之间的平均绝对偏差，反映判级的有序一致性：
-\begin{equation}
-\mathrm{MAE}=\frac{1}{T}\sum_{t=1}^{T}|\hat{y}_t-y_t|
-\label{eq:mae}
-\end{equation}
-其中，等级按危险程度依次编码为：无危险~=~0、提示~=~1、报警~=~2、紧急~=~3，$|\hat{y}_t-y_t|$ 即预测等级与真值等级之间的差值绝对值。
-
-\begin{table}[htbp]
-\centering
-\caption{静态阈值判级有效性统计表}
-\label{tab:ch5_d4a_static_warning}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{4.1cm}p{2.3cm}p{2.3cm}p{2.3cm}}
-\hline
-\textbf{指标项} & \textbf{提示级(5.0m)} & \textbf{报警级(3.0m)} & \textbf{紧急级(1.0m)} \\
-\hline
-精确率（Precision）  & 57.27\% & 90.12\% & 94.66\% \\
-召回率（Recall）  & 39.37\% & 81.11\% & 93.00\% \\
-F1分数  & 46.67\% & 85.38\% & 93.83\% \\
-\hline
-分级准确率（Acc） & \multicolumn{3}{c}{92.48\%} \\
-误报率（FPR） & \multicolumn{3}{c}{2.76\%} \\
-漏报率（FNR） & \multicolumn{3}{c}{4.76\%} \\
-平均绝对误差（MAE） & \multicolumn{3}{c}{0.1232} \\
-\hline
-\end{tabular*}
-\end{table}
-
-各预警等级的判级结果统计如表~\ref{tab:ch5_d4a_static_warning}所示。从表中可以看出，静态阈值判级的整体分级准确率达92.48\%，说明基于距离阈值的三级静态判级框架在真实工况下表现有效。紧急级的精确率达94.66\%、召回率达93.00\%、F1分数达93.83\%，均为三个等级中最优，在近距离高危场景中判级置信度最高。报警级的精确率达90.12\%、召回率达81.11\%且F1分数达85.38\%，同样处于较高水平，中间阈值判级在多数情况下能够稳定反映真实的净空状态。提示级F1为46.67\%，在四个等级中相对最低，召回率仅39.37\%，说明系统对提示等级的识别存在遗漏。
-
-从安全预警的实际需求出发，漏报率需优先关注。系统总漏报率仅4.76\%，误报率为2.76\%，两者均处于低位。进一步查看混淆矩阵（表~\ref{tab:ch5_d4b_confusion_matrix}），误报主要来自：当真值为无危险时，有44帧被误判为提示级（占无危险真值样本的2.03\%），另有26帧被误判为紧急级（占1.20\%），均属小概率事件，对现场作业影响有限。漏报方面，提示级向无危险的降级共计91帧，占提示级真值样本的56.88\%，是漏报的主要来源。提示级作为三级判据中阈值最小、优先级最低的等级，其物理边界在连续净空变化中最为模糊，部分处于临界状态的净空值被系统判定为无危险属正常波动。紧急级向更低估级合计44帧，占紧急级真值样本的7.00\%，在真实施工工况的遮挡与点云缺失条件下处于合理可控范围。
-
-提示级的低召回率在混淆矩阵中有明确体现：其真阳性仅为63帧，假阴性合计97（91+6+0），近六成的提示级真值帧被预测为无危险。提示级在三级净空判据中阈值最大、优先级最低，在连续净空变化中处于最外围的边界位置，部分处于5.0~m临界区域的净空值在测量噪声影响下被判为无危险属正常波动范围。整体分级有序误差MAE仅为0.1232，平均预测等级与真值等级之间的偏差不足0.13个等级，整体判级的有序一致性较好。
-
-\begin{table}[H]
-\centering
-\caption{静态预警等级混淆矩阵}
-\label{tab:ch5_d4b_confusion_matrix}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}C{2.2cm}|C{2.2cm}C{2.2cm}C{2.2cm}C{2.2cm}}
-\hline
-\textbf{真值$\backslash$预测} & \textbf{无危险} & \textbf{提示} & \textbf{报警} & \textbf{紧急} \\
-\hline
-无危险 & 2094 & 44 & 1 & 26 \\
-提示   & 91  & 63 & 6 & 0 \\
-报警   & 7   & 3  & 73 & 7 \\
-紧急   & 43  & 0  & 1 & 585 \\
-\hline
-\end{tabular*}
-\end{table}
-
-为直观展示判级结果在真实场景中的对应关系，将各预警等级的空间分布以可视化方式呈现。按照距离阈值分别将识别出的预警点做了标识，用颜色区分预警的等级，形成了预警等级圈。静态预警真实场景与预警效果示意如图~\ref{fig:ch5_static_warning_effect}所示。在结果中可以看到，由于流程中滤除了地面点云，所以地面并没有出现预警点。
+本文涉及三类净空概念，其几何含义由图\ref{fig:ch4_clearance_definition}统一示意。静态净空指目标与局部地图静态边界之间的剩余边界距离，反映目标偏离参考路径的静态充裕程度；动态净空指目标与动态障碍物在当前时刻的边界距离，反映两者之间的实时空间关系；预测净空指在预测时间窗内，目标与动态障碍物最接近时仍能保留的最小边界距离，反映对未来碰撞风险的预估。
 
 \begin{figure}[htbp]
-\centering
-\begin{subfigure}[t]{0.48\textwidth}
-\centering
-\includegraphics[width=\textwidth]{静态预警真实场景-1.png}
-\caption{静态预警真实场景（视角1）}
-\label{fig:ch5_static_real_1}
-\end{subfigure}
-\hfill
-\begin{subfigure}[t]{0.48\textwidth}
-\centering
-\includegraphics[width=\textwidth]{静态预警真实场景-2.png}
-\caption{静态预警真实场景（视角2）}
-\label{fig:ch5_static_real_2}
-\end{subfigure}
-
-\vspace{1em}
-\begin{subfigure}[t]{0.48\textwidth}
-\centering
-\includegraphics[width=\textwidth]{静态预警示意-1.png}
-\caption{静态预警效果（俯视视角1）}
-\label{fig:ch5_static_schematic_1}
-\end{subfigure}
-\hfill
-\begin{subfigure}[t]{0.48\textwidth}
-\centering
-\includegraphics[width=\textwidth]{静态预警示意-2.png}
-\caption{静态预警效果（俯视视角2）}
-\label{fig:ch5_static_schematic_2}
-\end{subfigure}
-\caption{静态障碍物距离阈值预警效果}
-\label{fig:ch5_static_warning_effect}
+	\centering
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		静态净空\\[0.3em]
+		\includegraphics[page=1,width=\linewidth]{静态净空、动态净空与预测净空定义示意.pdf}
+	\end{minipage}\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		动态净空\\[0.3em]
+		\includegraphics[page=2,width=\linewidth]{静态净空、动态净空与预测净空定义示意.pdf}
+	\end{minipage}\hfill
+	\begin{minipage}[t]{0.31\textwidth}
+		\centering
+		预测净空\\[0.3em]
+		\includegraphics[page=3,width=\linewidth]{静态净空、动态净空与预测净空定义示意.pdf}
+	\end{minipage}
+	\caption{静态净空、动态净空与预测净空定义示意}
+	\label{fig:ch4_clearance_definition}
 \end{figure}
 
-图~\ref{fig:ch5_static_temporal_comparison} 进一步以帧级时序方式展示真值与预测等级的对照关系。该图由三个共享同一时间轴的子图组成。上子图为人工标注的真值等级区间，以水平色段表示各预警等级的起止时段，色段颜色与等级对应：绿色为无危险、黄色为提示、橙色为报警、红色为紧急。中子图为系统逐时间点输出的预测等级散点图，叠加的红色叉号为误判点，标记系统输出等级与同时刻真值等级不一致的帧。下子图为误判指示条，以二值阶梯信号表示预测与真值的一致性，高位表示不一致，低位表示一致。从整体时序来看，预测等级在多数时段与真值区间保持良好一致，误判主要集中于等级过渡边界处，例如无危险与提示之间、报警与紧急之间的切换点。这与有序误差指标 MAE 所反映的趋势一致：判级偏差主要表现为相邻等级之间的单级偏移而非跨级跳跃。分级误差以过渡带附近的短暂偏移为主，不改变整体判级的有序性和保守倾向。
+其中，$d_{\mathrm{static}}$ 表示目标与静态障碍物之间的最小几何距离，即静态净空；$d_{\mathrm{dynamic}}$ 表示目标与动态障碍物之间的最小几何距离，即动态净空；$P_{\mathrm{static}}$ 为静态障碍物边界上与目标最近的点；$D$ 与 $O$ 分别表示动态障碍物与目标对象的外廓边界；$D^{*}$ 与 $O^{*}$ 分别表示二者在预测时刻的外廓边界；$d_{\mathrm{pred}}$ 表示在预测时间窗内二者最接近时的最小边界距离，即预测净空。
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.98\textwidth]{静态预警时序对照图.png}
-\caption{静态阈值判级真值与预测等级的帧级时序对照}
-\label{fig:ch5_static_temporal_comparison}
-\end{figure}
+\subsection{基于相对运动与碰撞时间(TTC)的动态风险升级}\label{subsec_ch4_risk_upgrade}
 
-\subsection{动态目标趋势预测与相向运动预警验证}\label{subsec_ch5_dynamic_warning}
+本节聚焦于动态风险评估的判级环节，结合第 3 章输出的动态轨迹状态进行风险分析。核心问题是：当动态目标尚未与被监控构件贴近但已形成持续接近趋势时，系统应否提前升级预警等级。
 
-动态预警实验用于验证趋势预测与风险升级机制能否提供有效提前量。当前配置采用动态净空阈值5.0~m、3.0~m、1.0~m，对应TTC阈值6.0~s、3.0~s、1.5~s；相向运动通过速度夹角余弦阈值$-0.2$触发升级，预测时域为2.0~s。分级准确率、误报率与漏报率的定义与式\eqref{eq:acc}—\eqref{eq:mdr}一致。
+动态候选输入聚焦于对象级轨迹状态量，涵盖连续轨迹标识、位置、速度、轨迹持续时长与更新状态等字段。为抑制短时误聚类与单帧噪声干扰，预警模块默认仅以确认轨迹参与风险评估，确保风险判级建立在稳定输入之上。趋势预测输入将短时趋势预测提供的时间先验与当前几何关系联合，构建由当前净空、相对接近速度、预测净空与 TTC 协同判定的动态升级机制。
 
-判级结果如表~\ref{tab:ch5_d5_dynamic_warning}所示。整体分级准确率达86.65\%，误报率5.35\%，漏报率8.00\%，三者均处于可控范围。紧急级F1为82.28\%，在近距离高危场景中保持了较高的判级置信度；提示级F1为31.91\%，主要受低精确率（24.19\%）拖累，表明该等级存在部分误报。
+在静态净空与动态状态输入均已就绪的基础上，仅凭瞬时距离仍容易漏掉相向接近带来的提前量风险。施工场景中，人员与机械等危险源的移动主要发生在平面内，垂向运动有限，将动态预警投影至二维平面已能覆盖主要的接近碰撞风险；同时，吊装构件正下方也属于禁入区域，垂向分离并不意味着可放行。因此，动态判定直接在地面投影平面上评估接近风险。
 
-\begin{table}[htbp]
-\centering
-\caption{动态趋势与相向升级验证统计表}
-\label{tab:ch5_d5_dynamic_warning}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{4.1cm}p{2.3cm}p{2.3cm}p{2.3cm}}
-\hline
-\textbf{指标项} & \textbf{提示级(5.0m)} & \textbf{报警级(3.0m)} & \textbf{紧急级(1.0m)} \\
-\hline
-精确率（Precision） & 24.19\% & 62.00\% & 90.69\% \\
-召回率（Recall） & 46.88\% & 83.19\% & 75.31\% \\
-F1分数 & 31.91\% & 71.05\% & 82.28\% \\
-\hline
-分级准确率（Acc） & \multicolumn{3}{c}{86.65\%} \\
-误报率（FPR） & \multicolumn{3}{c}{5.35\%} \\
-漏报率（FNR） & \multicolumn{3}{c}{8.00\%} \\
-平均绝对误差（MAE） & \multicolumn{3}{c}{0.2002} \\
-\hline
-\end{tabular*}
-\end{table}
-
-表~\ref{tab:ch5_d5b_confusion_matrix} 进一步给出各等级误报与漏报的具体来源。漏报以紧急级向报警级的单级偏移为主，共136帧，占紧急级样本的18.47\%，未出现对高危场景的完全遗漏，且漏报率略高于误报率，反映了系统在模糊工况下的保守偏好。上述表现与TTC和速度方向等动态信息的引入密切相关，在相向接近场景中，运动状态信息使判级结果更贴近真实危险程度，验证了趋势项对风险识别的实际增益。
-
-\begin{table}[htbp]
-\centering
-\caption{动态预警等级混淆矩阵}
-\label{tab:ch5_d5b_confusion_matrix}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}C{2.2cm}|C{2.2cm}C{2.2cm}C{2.2cm}C{2.2cm}}
-\hline
-\textbf{真值$\backslash$预测} & \textbf{无危险} & \textbf{提示} & \textbf{报警} & \textbf{紧急} \\
-\hline
-无危险 & 1353 & 34 & 35 & 14 \\
-提示   & 0    & 15 & 11 & 6 \\
-报警   & 14   & 9  & 297 & 37 \\
-紧急   & 42   & 4  & 136 & 555 \\
-\hline
-\end{tabular*}
-\end{table}
-
-表~\ref{tab:ch5_dynamic_warning_effect} 展示了系统在动态相向接近工况下的预警可视化效果。吊装构件以包络圆柱形式呈现，风险等级文字根据当前融合风险等级着色；被检测到的动态目标以红色包围框显示并标注轨迹 ID 与运动方向。当动态目标与吊装构件之间的平面净空或 TTC 指标进入预设阈值区间时，系统即触发相应等级的预警着色，风险区域沿接近方向逐渐加深。
-
-\begin{table}[H]
-\centering
-\caption{动态目标趋势预测与相向运动预警效果示例}
-\label{tab:ch5_dynamic_warning_effect}
-\begin{tabular}{>{\centering\arraybackslash}p{2em}@{\hspace{0.1em}}cc}
-\hline
-\textbf{时刻} & \textbf{真实场景} & \textbf{预警示意} \\
-\hline
-\noalign{\vskip 0.5em}
-\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_0$} &
-\includegraphics[height=4.1cm]{real_1.png} &
-\includegraphics[height=4.1cm]{warning_1.png} \\[4pt]
-\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_1$} &
-\includegraphics[height=4.1cm]{real_2.png} &
-\includegraphics[height=4.1cm]{warning_2.png} \\[4pt]
-\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_2$} &
-\includegraphics[height=4.1cm]{real_3.png} &
-\includegraphics[height=4.1cm]{warning_3.png} \\
-\hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\ContinuedFloat
-\centering
-\caption{动态目标趋势预测与相向运动预警效果示例（续）}
-\label{tab:ch5_dynamic_warning_effect_cont}
-\begin{tabular}{>{\centering\arraybackslash}p{2em}@{\hspace{0.1em}}cc}
-\hline
-\textbf{时刻} & \textbf{真实场景} & \textbf{预警示意} \\
-\hline
-\noalign{\vskip 0.5em}
-\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_3$} &
-\includegraphics[height=4.1cm]{real_4.png} &
-\includegraphics[height=4.1cm]{warning_4.png} \\[4pt]
-\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_4$} &
-\includegraphics[height=4.1cm]{real_5.png} &
-\includegraphics[height=4.1cm]{warning_5.png} \\[4pt]
-\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_5$} &
-\includegraphics[height=4.1cm]{real_6.png} &
-\includegraphics[height=4.1cm]{warning_6.png} \\[4pt]
-\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_6$} &
-\includegraphics[height=4.1cm]{real_7.png} &
-\includegraphics[height=4.1cm]{warning_7.png} \\[4pt]
-\raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_7$} &
-\includegraphics[height=4.1cm]{real_8.png} &
-\includegraphics[height=4.1cm]{warning_8.png} \\
-\hline
-\end{tabular}
-\parbox{\textwidth}{\vspace{0.5em}\small\raggedright 注：t$_0$–t$_7$ 共 8 个时刻，相邻时刻间隔 1~s。}
-\end{table}
-
-图~\ref{fig:ch5_opposing_warning_timeline} 展示了相向运动工况下的提前预警时序对比。被监测目标以约~1~m/s 的速率逼近吊物，当前距离如蓝实线所示呈单调下降趋势。本文动态融合判据中的“预测距离”分量如橙虚线所示，基于~2~s 视野的轨迹外推使其先于真实距离跨越报警与紧急阈值：相比纯距离基线，报警级提前~0.70~s、紧急级提前~1.60~s 触发预警，为操作人员争取了额外的响应时间窗口，验证了第~\ref{subsec_ch4_risk_upgrade}~节动态融合判据在相向接近工况下的提前预警能力。
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.99\textwidth]{相向运动工况-提前预警时序对比.png}
-\caption{相向运动工况下提前预警时序对比}
-\label{fig:ch5_opposing_warning_timeline}
-\end{figure}
-
-图~\ref{fig:ch5_dynamic_temporal_comparison} 以帧级时序展示动态判级的真值与预测等级对照，其结构与图~\ref{fig:ch5_static_temporal_comparison}相同。预测等级在多数时段与真值吻合，误判集中在等级过渡边界附近且多为相邻等级间的单级偏移。MAE仅为0.2002，表明动态判级具有较好的有序一致性，TTC与预测净空的引入在等级过渡区保持了平稳的判级过渡。
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.99\textwidth]{动态预警时序对照图.png}
-\caption{动态趋势判级真值与预测等级的帧级时序对照}
-\label{fig:ch5_dynamic_temporal_comparison}
-\end{figure}
-
-\section{整体链路时延分析与实时性评估}\label{sec_ch5_latency}
-
-全链路时延决定了系统能否在危险演化完成之前完成感知、定位、判级与预警输出。本节对各模块时延进行拆分测量，采用均值、标准差、95\%分位与最大值联合描述，以避免均值掩盖长尾延迟，因为高分位延迟通常比均值更能反映预警时效边界。
-
-在整体系统中，视觉推理模块时延是全链路更新节奏的上限决定因素。图像采集后经预处理送入YOLO26模型执行吊装构件实例分割，该过程受输入分辨率、模型计算量与边缘端GPU利用率的共同影响。
-
-点云投影与图像关联模块时延由点云预处理、坐标查询与变换、投影计算与结果组织构成。该模块采用阶段拆分方法进行评估，以明确瓶颈来源并支撑后续参数优化。同步窗口与坐标查询超时是该模块的关键控制变量，其取值将直接影响等待开销与错配概率。
-
-动态跟踪与风险评估模块时延由动态输入处理与关联、状态估计与短时预测、风险融合与判级输出构成。该链路的时延抖动是否会放大端到端输出延迟，是评估的重点关注问题。
-
-端到端总时延计算公式如式\eqref{eq:total_latency}所示，该式综合考虑各部分时延影响，将局部模块性能映射为系统级时效能力。
+设吊装构件包络圆柱轴线在地面平面的投影位置与速度分别为 $\tilde{\mathbf{p}}_o=[x_o,y_o]^\mathsf{T}$ 和 $\tilde{\mathbf{v}}_o=[v_{x,o},v_{y,o}]^\mathsf{T}$，动态目标在地面平面的投影位置与速度分别为 $\tilde{\mathbf{p}}_d=[x_d,y_d]^\mathsf{T}$ 和 $\tilde{\mathbf{v}}_d=[v_{x,d},v_{y,d}]^\mathsf{T}$。其中，$\tilde{\mathbf{v}}_o$ 和 $\tilde{\mathbf{v}}_d$ 分别来自第3章二维常速度卡尔曼滤波对吊钩端自身运动与动态目标的短时跟踪结果，经平面投影后得到。定义平面相对位置与相对速度为
 \begin{equation}
-T_{\mathrm{all}}=T_{\mathrm{sensor}}+T_{\mathrm{vision}}+T_{\mathrm{projection}}+T_{\mathrm{dynamic}}+T_{\mathrm{risk}}+T_{\mathrm{publish}}
-\label{eq:total_latency}
+\tilde{\mathbf{r}}=\tilde{\mathbf{p}}_d-\tilde{\mathbf{p}}_o,
+\qquad
+\tilde{\mathbf{v}}_{\mathrm{rel}}=\tilde{\mathbf{v}}_d-\tilde{\mathbf{v}}_o
 \end{equation}
 
-各模块的实测时延统计结果如表\ref{tab:ch5_latency_overall}所示，从表中可以看出，全链路时延在典型工况下可满足实时性要求。视觉推理模块中，图像预处理与推理均值为19.71\,ms，标准差仅3.34\,ms，说明YOLO26在边缘端的推理时间稳定可控，适合作为周期性感知更新的可靠基座。点云投影与图像关联模块中，点云预处理仅需0.66\,ms，坐标查询与变换仅0.06\,ms，表明格式转换与空间变换的计算效率较高；投影与像素关联作为数据关联的核心环节，均值为63.79\,ms，在典型点云规模下可稳定完成稠密投影计算。动态跟踪与风险评估模块中，动态输入处理与关联、状态估计与短时预测的均值均不超过0.01\,ms，计算开销可忽略不计，门限匹配与预测窗遍历的算法设计高效；风险融合与判级输出均值为42.75\,ms，能够在考虑迟滞状态与多级判定的前提下完成综合评估，保证了判级结果的可靠性与连续性。
+令 $r_o$ 为吊装构件包络圆柱半径，$r_d$ 为动态目标平面等效包络半径，则当前平面净空定义为
+\begin{equation}
+d_{\mathrm{cur}}=\max\bigl(0,\,\|\tilde{\mathbf{r}}\|-r_o-r_d\bigr)
+\end{equation}
+
+进而，定义平面相对接近速度为
+\begin{equation}
+v_{\mathrm{close}}=-\tilde{\mathbf{v}}_{\mathrm{rel}}^\mathsf{T}\frac{\tilde{\mathbf{r}}}{\|\tilde{\mathbf{r}}\|}
+\end{equation}
+
+则当 $v_{\mathrm{close}}>v_{\min}$ 时，可得到时间到接触指标
+\begin{equation}
+\mathrm{TTC}=\frac{d_{\mathrm{cur}}}{v_{\mathrm{close}}}
+\end{equation}
+若当前已重叠则记为 $0$，若不存在有效接近则记为无穷大。由此，系统不仅获得平面边界净空的估计，还可获得平面接近速度的量化。
+
+为了抑制仅凭单时刻速度做出的误判，系统还进一步计算预测窗口内的最近接平面净空。在匀速运动假设下，相对距离 $\|\tilde{\mathbf{r}}+\tau\tilde{\mathbf{v}}_{\mathrm{rel}}\|$ 在 $\tau$ 处的导数为零，解得无约束最近接近时刻为 $-\tilde{\mathbf{r}}^\mathsf{T}\tilde{\mathbf{v}}_{\mathrm{rel}}/\|\tilde{\mathbf{v}}_{\mathrm{rel}}\|^2$。将其截断至预测时域 $[0,T_p]$ 内，得到有效最近接近时刻：
+\begin{equation}
+\tau^*=\operatorname{clip}\left(-\frac{\tilde{\mathbf{r}}^\mathsf{T}\tilde{\mathbf{v}}_{\mathrm{rel}}}{\|\tilde{\mathbf{v}}_{\mathrm{rel}}\|^2},\,0,\,T_p\right)
+\end{equation}
+
+相应的预测净空为
+\begin{equation}
+d_{\mathrm{pred}}=\max\bigl(0,\,\|\tilde{\mathbf{r}}+\tau^*\tilde{\mathbf{v}}_{\mathrm{rel}}\|-r_o-r_d\bigr)
+\end{equation}
+
+在本文配置中，动态分级阈值采用三级结构：当前净空、预测净空或 TTC 任一指标进入 $5.0\,\mathrm{m}/6.0\,\mathrm{s}$ 区间时触发提示；进入 $3.0\,\mathrm{m}/3.0\,\mathrm{s}$ 区间时触发警告；进入 $1.0\,\mathrm{m}/1.5\,\mathrm{s}$ 区间时触发紧急。这种取多指标中更危险者的策略能够覆盖动态接近中的不同演化模式。
+
+为便于与后续实验统计口径统一，表\ref{tab:ch4_dynamic_risk_criteria} 汇总了动态风险分级判据。系统在实现中对三列判据采用“任一触发即升级，并按最高风险输出”的规则。
 
 \begin{table}[htbp]
 \centering
-\caption{整体链路时延统计表}
-\label{tab:ch5_latency_overall}
-
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{3.4cm}p{1.6cm}p{1.6cm}p{1.6cm}p{1.6cm}}
+\caption{动态风险分级判据}
+\label{tab:ch4_dynamic_risk_criteria}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccc}
 \hline
-\textbf{模块/阶段} & \textbf{均值} & \textbf{标准差} & \textbf{95\%{}分位} & \textbf{最大值} \\
+\textbf{风险等级} & \textbf{当前净空阈值 $d_{\mathrm{cur}}$} & \textbf{预测净空阈值 $d_{\mathrm{pred}}$} & \textbf{时间到接触阈值 TTC} \\
 \hline
-\multicolumn{5}{l}{\textbf{一、视觉推理模块}} \\
-\hline
-图像预处理与推理 & 19.71 & 3.34 & 25.39 & 61.08 \\
-\hline
-\multicolumn{5}{l}{\textbf{二、点云投影与图像关联模块}} \\
-\hline
-点云预处理 & 0.66 & 0.22 & 0.94 & 2.50 \\
-坐标查询与变换 & 0.06 & 0.03 & 0.08 & 0.69 \\
-投影与像素关联 & 63.79 & 17.18 & 80.65 & 148.99 \\
-结果组织与发布 & 4.77 & 1.59 & 7.09 & 19.91 \\
-\hline
-\multicolumn{5}{l}{\textbf{三、动态跟踪与风险评估模块}} \\
-\hline
-动态输入处理与关联 & 0.01 & 0.00 & 0.01 & 0.02 \\
-状态估计与短时预测 & 0.00 & 0.00 & 0.00 & 0.02 \\
-风险融合与判级输出 & 42.75 & 27.35 & 83.87 & 110.68 \\
-\hline
-\multicolumn{5}{l}{\textbf{四、端到端总时延}} \\
-\hline
-传感器采集至输出 & 101.43 & 18.82 & 123.17 & 200.58 \\
+紧急（Emergency） & $\leq 1.0\,\mathrm{m}$ & $\leq 1.0\,\mathrm{m}$ & $\leq 1.5\,\mathrm{s}$ \\
+警告（Warning） & $\leq 3.0\,\mathrm{m}$ & $\leq 3.0\,\mathrm{m}$ & $\leq 3.0\,\mathrm{s}$ \\
+提示（Notice） & $\leq 5.0\,\mathrm{m}$ & $\leq 5.0\,\mathrm{m}$ & $\leq 6.0\,\mathrm{s}$ \\
 \hline
 \end{tabular*}
-\parbox{\textwidth}{\vspace{0.5em}\small\raggedright 注：表中数值单位均为毫秒（ms）。}
 \end{table}
 
-值得关注的是，三大模块的均值时延之和为126.25\,ms，大于端到端总时延均值101.43\,ms，差值约24.8\,ms。这一差异说明模块间实现了有效的流水线重叠与异步并行，视觉推理的输出无需等待点云投影完全结束即可被下游消费，风险融合与判级可与下一帧的投影计算并行执行，体现了系统架构在并发设计上的合理性。端到端总时延均值为101.43\,ms（约9.9\,Hz），95\%分位为123.17\,ms（约8.1\,Hz），均位于工程可接受范围内。以人员行走速度1.5\,m/s估算，系统在典型工况下帧间位移约0.15\,m，在95\%分位工况下约0.19\,m，相对于近距碰撞预警的典型预警5\,m范围，具备充分的时效裕量，能够为下游决策模块提供及时可靠的感知信息。
+在此基础上，系统还实现了面向相向运动的等级升级规则。设吊装构件与动态目标在地面平面的速度夹角满足
+\begin{equation}
+\cos\theta_{xy}=\frac{\tilde{\mathbf{v}}_o^\mathsf{T}\tilde{\mathbf{v}}_d}{\|\tilde{\mathbf{v}}_o\|\,\|\tilde{\mathbf{v}}_d\|}
+\end{equation}
+
+该余弦值的物理含义是二者运动方向的相似性：$\cos\theta_{xy}\approx 1$ 表示同向运动，$\cos\theta_{xy}\approx -1$ 表示正对相向运动，$\cos\theta_{xy}\approx 0$ 表示运动方向近似垂直。仅靠 $v_{\mathrm{close}}$ 虽能反映视线方向上的接近速率，但无法区分“对向接近”与“旁侧交叉经过”两种截然不同的危险模式——前者意味着目标正朝吊物运动区域驶来，碰撞风险持续上升；后者即使当前 $v_{\mathrm{close}}$ 较大，目标也会很快通过危险区域而非停留。为此，引入 $\cos\theta_{xy}<-0.2$ 作为相向运动判据，该阈值对应的速度夹角 $\theta_{xy}>101.5^\circ$，表明二者运动方向存在明确的对向分量，辅以 $v_{\mathrm{close}}$ 足够大即可判定为有效相向接近。阈值 $-0.2$ 的选择为接近方向留出了合理的角度容差，覆盖了实际施工中因路径偏移导致的非完全正对接近场景。当二者均存在有效平面速度，且 $v_{\mathrm{close}}$ 足够大、$\cos\theta_{xy}<-0.2$ 时，系统将当前动态等级上调一级，最高不超过紧急等级；在低速场景下，则退化为基于接近速度和预测净空的保守升级逻辑。该机制能够对相向接近场景给出提前预警。
+
+\subsection{预警状态机与消息接口设计}\label{subsec_ch4_warning_interface}
+
+静态分级与动态分级生成后，系统不直接输出任一分支结果，而是先进行等级融合，再由状态保持机制得到面向下游的稳定风险状态。设静态与动态分级分别为 $L_s$ 和 $L_d$，则即时目标等级可表示为
+\begin{equation}
+L_{\mathrm{des}}=\max(L_s,L_d)
+\end{equation}
+
+该融合规则体现了安全优先原则：当任一风险分支达到更高等级时，系统不以另一分支的较低结果抵消该判定。由此可在多源证据并存时保持风险表达的一致性与保守性。
+
+为抑制阈值邻域内的频繁切换，系统引入带迟滞的状态转移策略：等级上升即时生效，等级下降需在持续保持时间 $\Delta t_h$ 内稳定满足后才确认。该策略使预警输出在突发风险出现时保持快速响应，同时降低由瞬时测量波动引起的等级抖动，从而提升下游可视化与控制接口的时序稳定性。
+
+在接口组织上，系统形成了由观测表征层、运动状态层和风险汇聚层构成的三级结构化链路。第一层承载对象类别、空间位姿与观测质量等基础信息；第二层描述目标运动学状态及其时序连续性；第三层对多源风险进行统一汇聚，输出最终风险等级、即时目标等级、风险归因、触发解释及关键量测证据。形式化地，可将风险状态表示为
+\begin{equation}
+\mathbf{w}=\{L_{\mathrm{act}},L_{\mathrm{des}},\sigma,\phi,\mathbf{z},\eta\}
+\end{equation}
+其中， $\sigma$ 表示风险来源归因，$\phi$ 表示触发机理说明，$\mathbf{z}$ 表示距离、相对运动与时域预测等证据向量，$\eta$ 表示系统输入是否满足有效性约束。
+
+值得强调的是，风险接口不仅提供结果等级，还提供触发依据与状态质量。当上游输入不足、时空对齐失败或监测对象缺失时，系统显式输出未就绪状态及对应诊断语义，而非沉默或误触发高等级告警。该机制增强了链路可解释性与可验证性，并为下游控制模块执行结果采信与降级处理提供了明确依据。
+
+\section{避障控制接口设计}\label{sec_ch4_avoidance_design}
+
+\subsection{预警到控制的解耦接口架构}\label{subsec_ch4_closed_loop_arch}
+
+预警链路的工程价值不止于风险可视化，更在于向决策与执行侧提供统一、可机读且可追溯的控制建议。为避免控制策略变化反向牵动感知与风险判定模块，系统采用风险评估层—控制映射层的分层结构：上游负责风险识别与状态汇聚，下游负责动作语义生成与输出约束。风险识别与动作建议生成被拆分为两个可独立验证的阶段。
+
+在接口语义上，控制映射层以稳定风险状态作为输入，并输出标准化控制建议。若将控制建议向量记为
+\begin{equation}
+\mathbf{u}=\{a,\rho,h,e,\alpha,\mathbf{d}_{\mathrm{rec}},\eta\}
+\end{equation}
+其中， $a$ 为动作类型，$\rho$ 为速度约束比例，$h$ 为保持位姿标志，$e$ 为紧急停机标志，$\alpha$ 为人工确认需求，$\mathbf{d}_{\mathrm{rec}}$ 为建议退让方向，$\eta$ 为系统就绪性标志。该接口强调“如何响应风险”，而非重复解释“风险来自何处”。
+
+需要指出的是，本文实现的是控制建议接口原型，而非已闭环接入执行机构的全自动避障系统。当前接口主要完成风险语义到动作语义的规范化映射，尚未覆盖设备侧执行确认、权限联锁与故障反馈闭环。该边界设定有助于保持模块职责清晰。
+
+\subsection{分级控制动作映射与建议避让方向}\label{subsec_ch4_control_strategy}
+
+控制接口层的关键任务是将上游稳定风险等级一致地映射为可执行动作语义，而非再次进行风险判定。本文采用分级动作策略：低风险等级对应正常运行或关注提示，中风险等级对应受限运行或保持策略，高风险等级对应紧急停机策略。该映射保证了风险语义在跨模块传递过程中的一致性。
+
+若将等级到动作的映射记为策略函数
+\begin{equation}
+a=\pi(L_{\mathrm{act}},\sigma;\Theta)
+\end{equation}
+其中， $L_{\mathrm{act}}$ 为稳定风险等级，$\sigma$ 为风险来源归因，$\Theta$ 为策略参数集合。通过调整 $\Theta$ 中的速度约束、保持条件与确认规则，可在不改变接口结构的前提下实现保守程度切换。
+
+除动作类型外，系统还提供建议退让方向以支持人机协同与下游控制先验。设被监测对象速度为 $\mathbf{v}_o$，建议方向定义为
+\begin{equation}
+\mathbf{d}_{\mathrm{rec}}=
+\begin{cases}
+-\dfrac{\mathbf{v}_o}{\|\mathbf{v}_o\|}, & L_{\mathrm{act}}\geq L_{\mathrm{warn}},\ \|\mathbf{v}_o\|>v_{\min}\\
+\mathbf{0}, & \text{otherwise}
+\end{cases}
+\end{equation}
+其中， $L_{\mathrm{warn}}$ 为触发方向建议的风险等级阈值，$v_{\min}$ 为最小速度阈值。该方向信息属于保守型局部建议，不等价于全局最优轨迹规划。
+
+该策略将风险等级稳定转化为标准化动作建议，在尚未形成设备级闭环前维持安全边界。因此该层可视为连接风险评估与执行系统的接口桥接机制。
+
+\begin{figure}[htbp]
+	\centering
+	\resizebox{0.94\textwidth}{!}{%
+	\begin{tikzpicture}[
+		x=1cm,y=1cm,>=Latex,font=\scriptsize,
+		proc/.style={draw, rounded corners=2pt, thick, fill=gray!8, align=center, minimum width=3.0cm, minimum height=0.95cm},
+		judge/.style={draw, rounded corners=2pt, thick, dashed, fill=gray!14, align=center, minimum width=2.9cm, minimum height=0.95cm},
+		term/.style={draw, rounded corners=2pt, thick, fill=gray!18, align=center, minimum width=2.9cm, minimum height=0.95cm}
+	]
+		\node[proc] (recv) at (3.6,0) {接收风险状态};
+		\node[judge] (ready) at (3.6,-1.7) {系统就绪性检查};
+		\node[term] (clear0) at (-0.5,-1.7) {输出安全清除建议};
+		\node[judge] (level) at (3.6,-3.6) {稳定风险等级};
+
+		\node[term] (clear1) at (-2.2,-6.0) {正常运行\\不施加约束};
+		\node[term] (observe) at (1.0,-6.0) {关注提示\\提示人工关注};
+		\node[term] (limit) at (4.3,-6.0) {受限运行\\施加速度约束};
+		\node[term] (estop) at (7.6,-6.0) {紧急停机\\保持并触发停机};
+
+		\node[judge] (dir) at (6.0,-8.3) {是否生成退让方向};
+		\node[proc] (dir0) at (4.0,-10.4) {方向向量置零};
+		\node[proc] (dir1) at (8.0,-10.4) {按速度反向\\生成单位方向};
+		\node[term] (pub) at (3.6,-12.5) {发布控制建议};
+
+		\draw[->, thick] (recv) -- (ready);
+		\draw[->, thick] (ready) -- node[midway, fill=white, inner sep=1pt]{否} (clear0);
+		\draw[->, thick] (ready) -- node[midway, fill=white, inner sep=1pt]{是} (level);
+
+		\draw[->, thick] (level) -- node[midway, fill=white, inner sep=1pt]{无风险} (clear1);
+		\draw[->, thick] (level) -- node[midway, fill=white, inner sep=1pt]{提示} (observe);
+		\draw[->, thick] (level) -- node[midway, fill=white, inner sep=1pt]{警告} (limit);
+		\draw[->, thick] (level) -- node[midway, fill=white, inner sep=1pt]{紧急} (estop);
+
+		\draw[->, thick] (clear0) to[out=-90,in=170] (pub);
+		\draw[->, thick] (clear1) to[out=-70,in=180] (pub);
+		\draw[->, thick] (observe) to[out=-90,in=165] (pub);
+		\draw[->, thick] (limit) -- (dir);
+		\draw[->, thick] (estop) -- (dir);
+		\draw[->, thick] (dir) -- node[midway, fill=white, inner sep=1pt]{否} (dir0);
+		\draw[->, thick] (dir) -- node[midway, fill=white, inner sep=1pt]{是} (dir1);
+		\draw[->, thick] (dir0) to[out=-120,in=15] (pub);
+		\draw[->, thick] (dir1) to[out=-140,in=10] (pub);
+	\end{tikzpicture}}
+	\caption{风险状态到控制建议的映射流程图}
+	\label{fig:ch4_closed_loop_arch_placeholder}
+\end{figure}
+
+\subsection{预警到控制映射算法及适用边界}\label{subsec_ch4_avoidance_pseudocode}
+
+为明确控制建议接口的运行机理，本文将其抽象为单帧映射流程。与风险判级阶段不同，该流程不重新计算几何关系，而是在既有风险状态基础上执行就绪性判定、动作决策与输出规范化。
+
+算法~\ref{alg:ch4_warning_control_mapping}给出了该映射流程的紧凑形式，将实现逻辑归纳为就绪短路、分级动作映射、方向修正和一致性发布四个环节。
+
+\begin{algorithm}[htbp]
+\caption{风险状态到控制建议的映射流程（单帧）}
+\label{alg:ch4_warning_control_mapping}
+\KwIn{风险状态 $\mathbf{w}=\{L_{\mathrm{act}},\sigma,\phi,\mathbf{z},\eta,\mathbf{v}_o\}$；策略参数 $\Theta$}
+\KwOut{控制建议 $\mathbf{u}$}
+初始化：$a\leftarrow\texttt{clear}$，$\rho\leftarrow 1.0$，$h\leftarrow 0$，$e\leftarrow 0$，$\alpha\leftarrow 0$，$\mathbf{d}_{\mathrm{rec}}\leftarrow\mathbf{0}$\;
+
+\If{$\eta=0$}{
+	$\mathbf{u}\leftarrow\textsc{Pack}(a,\rho,h,e,\alpha,\mathbf{d}_{\mathrm{rec}},\eta)$，填充动作文本并发布，返回\;
+}
+
+\uIf{$L_{\mathrm{act}}=L_{\mathrm{notice}}$}{
+	$a\leftarrow\texttt{observe}$\;
+}
+\uElseIf{$L_{\mathrm{act}}=L_{\mathrm{warning}}$}{
+	\If{$(b_{\mathrm{hold\_static}}=1\ \land\ \sigma=\texttt{static})\ \lor\ (b_{\mathrm{hold\_combined}}=1\ \land\ \sigma=\texttt{combined})$}{
+		$a\leftarrow\texttt{hold\_position}$，$\rho\leftarrow\textsc{Clamp01}(\rho_{\mathrm{hold}})$，$h\leftarrow 1$\;
+	}
+	\Else{
+		$a\leftarrow\texttt{limit\_motion}$，$\rho\leftarrow\textsc{Clamp01}(\rho_{\mathrm{warn}})$\;
+	}
+	$\alpha\leftarrow b_{\mathrm{ack\_warning}}$\;
+}
+\uElseIf{$L_{\mathrm{act}}=L_{\mathrm{emergency}}$}{
+	$a\leftarrow\texttt{emergency\_stop}$，$\rho\leftarrow\textsc{Clamp01}(\rho_{\mathrm{emergency}})$\;
+	$h\leftarrow 1$，$e\leftarrow 1$，$\alpha\leftarrow b_{\mathrm{ack\_emergency}}$\;
+}
+\Else{
+	$a\leftarrow\texttt{clear}$\;
+}
+
+\If{$a\notin\{\texttt{clear},\texttt{observe}\}\ \land\ \|\mathbf{v}_o\|\ge v_{\min}$}{
+	$\kappa\leftarrow\begin{cases}-1,&b_{\mathrm{reverse}}=1\\1,&\text{otherwise}\end{cases}$\;
+	$\mathbf{d}_{\mathrm{rec}}\leftarrow\kappa\,\mathbf{v}_o/\|\mathbf{v}_o\|$\;
+}
+
+$\mathbf{u}\leftarrow\textsc{Pack}(a,\rho,h,e,\alpha,\mathbf{d}_{\mathrm{rec}},\eta)$\;
+执行动作文本映射、关键字段变更检测与发布\;
+\end{algorithm}
+
+其中，$\rho_{\mathrm{warn}}$、$\rho_{\mathrm{hold}}$ 与 $\rho_{\mathrm{emergency}}$ 分别对应警告、保持和紧急工况下的限速比例；$b_{\mathrm{hold\_static}}$ 与 $b_{\mathrm{hold\_combined}}$ 决定 warning 阶段是否切换为保持动作；$b_{\mathrm{ack\_warning}}$ 与 $b_{\mathrm{ack\_emergency}}$ 表示人工确认开关。参数均由配置统一管理，用于不同工况下的策略强度整定。
+
+上述流程说明，系统已形成风险评估—控制建议的完整接口链路，其优势在于结构透明、职责清晰，既便于模块级联调，也便于离线回放条件下开展判级一致性与动作一致性验证。
+
+同时，本文明确该接口的扩展边界：第一，该层输出仍属于建议级控制语义，尚不包含执行确认、命令超时、人工复位与故障反馈等设备级闭环要素；第二，退让方向属于局部保守提示，不替代全局轨迹优化；第三，速度约束、确认条件与保持策略仍需结合实验结果进行参数整定。
 
 \section{本章小结}\label{sec:ch5_summary}
 
-本章围绕第4章所提出的雷视融合感知与安全预警方法链路，在上海工业博物馆项目施工现场开展系统性实验验证与性能评估，从识别定位精度、动态预警效果与全链路实时性三个维度验证了本文方法在真实吊装工况下的可行性。具体结论如下：
+本章围绕吊装作业安全风险的分级量化与避障控制接口设计，在第4章三维对象状态估计的基础上，构建了从风险判定到控制建议的完整决策链路。具体贡献如下：
 
-（1）吊装构件视觉识别与三维定位精度方面。基于YOLO26的实例分割模型在2826帧视频序列上实现了稳定的检测与分割性能：掩码时序IoU均值达0.888，框中心漂移仅13.02~px，漏检率1.06\%；点云投影关联精确率达92.17\%，F1分数为84.69\%，验证了二维分割约束下的点云回查定位方法具有较高的一致性与可靠性。进一步地，基于手工标定真值的质心定位精度评估表明，三维质心定位误差RMSE为0.241~m，其中水平面误差RMSE为0.145~m，最大值0.297~m，各指标均显著小于紧急级净空阈值1.0~m，验证了定位精度满足分级预警的工程需求。
+（1）多层级风险分级预警机制与结构化接口设计。建立了基于三维净空的静态三级阈值判据，以及基于当前净空、预测净空与TTC协同判定的动态风险升级机制，涵盖相向运动等级升级规则与迟滞状态机以保障风险输出的时序稳定性；系统明确定义了静态净空、动态净空与预测净空三类几何量，并将风险状态组织为面向下游控制模块的结构化接口，支持风险归因追溯与系统就绪性诊断。
 
-（2）风险分级预警有效性方面。静态阈值判级整体准确率达92.48\%，紧急级F1分数达93.83\%，误报率与漏报率分别仅为2.76\%和4.76\%；在动态目标接近场景中，分级准确率达86.65\%，漏报率8.00\%。实验结果表明，基于距离阈值的静态判级与基于TTC及预测净空的动态升级机制均能在真实工况下实现合理判级，相向接近场景中可提供有效预警提前量。
+（2）预警到控制的解耦映射接口原型。设计了风险评估层—控制映射层的分层架构，将稳定风险等级一致映射为标准控制建议，并基于速度反向生成建议退让方向，为后续设备级闭环接入提供了清晰的语义边界与数据约定。
 
-（3）全链路实时性方面。端到端总时延均值为101.43~ms（约9.9~Hz），95\%分位为123.17~ms（约8.1~Hz），各模块时延均处于可控范围。模块间通过流水线重叠与异步并行机制实现了计算资源的有效利用，在以1.5~m/s速度接近的典型工况下具备充分的时效裕量。
-
-综上，本章通过多组现场实验数据验证了第4章所提方法链路在真实吊装场景中的有效性、准确性与实时性，为本文方法从原型验证走向工程化应用提供了定量评估依据。
-
-
+上述方法已在实测吊装数据与嵌入式平台上完成工程验证，形成了从风险识别到控制建议输出的完整决策链路，为第6章的系统集成实验与整体性能评估奠定了方法基础与数据接口支撑。

@@ -50,17 +50,17 @@ r_f=
 \begin{equation}
 \mathcal{M}_{f}(k)=\bigcup_{i=1}^{2}\left\{\mathbf{m}^{b}_{i,j}\mid t_{i,j}\in[t_k,t_{k+1}]\right\}
 \end{equation}
-其中，$\mathcal{P}_{f}(k)$ 和 $\mathcal{M}_{f}(k)$ 分别为第 $k$ 个融合窗口输出的点云集合与IMU样本集合，下标 $f$ 表示融合（fusion）；$i$ 为传感器序号（$i=1,2$）；$\mathbf{p}^{b}_{i,j}$ 和 $\mathbf{m}^{b}_{i,j}$ 分别为第 $i$ 路雷达第 $j$ 个点与第 $i$ 路IMU第 $j$ 个样本经外参变换到 body 坐标系后的观测向量，上标 $b$ 表示 body 系；$t_{i,j}$ 为对应观测的绝对时间戳；$t_k$、$t_{k+1}$ 分别为当前窗口的起止时刻。该机制通过有限缓存维持稳定的输出频率，避免同一观测跨窗口重复发布或错配，点云与IMU完全共享此窗口策略。
+其中，$\mathcal{P}_{f}(k)$ 和 $\mathcal{M}_{f}(k)$ 分别为第 $k$ 个融合窗口输出的点云集合与IMU样本集合，下标 $f$ 表示融合（fusion）；$i$ 为传感器序号（$i=1,2$）；$\mathbf{p}^{b}_{i,j}$ 和 $\mathbf{m}^{b}_{i,j}$ 分别为第 $i$ 路雷达第 $j$ 个点与第 $i$ 路IMU第 $j$ 个样本经外参变换到 body坐标系后的观测向量，上标 $b$ 表示 body系；$t_{i,j}$ 为对应观测的绝对时间戳；$t_k$、$t_{k+1}$ 分别为当前窗口的起止时刻。该机制通过有限缓存维持稳定的输出频率，避免同一观测跨窗口重复发布或错配，点云与IMU完全共享此窗口策略。
 
 融合线程以$10\,\mathrm{Hz}$的目标频率运行，每个窗口触发一轮同步发布。点云输出包含标准PointCloud2及保留Livox时间字段的CustomMsg两种话题格式，供下游按需选择；IMU输出采用time\_sorted模式，将窗口内多路样本统一调度并按时间戳递增发布，形成单调连续的/merged\_imu话题序列，保留原始惯性时序结构以匹配LIO-SAM的连续输入流处理机制。在线阶段优先保留定位前端所需的结构信息，不在融合节点执行强体素下采样或统计离群点剔除，任务侧滤波留待第3.3章处理。系统通过限制缓存深度与历史保留时长，使端到端融合延迟保持稳定。
 
-为直观说明上述统一窗口同步机制，图\ref{fig:ch3_dual_lidar_alignment}给出了双雷达原始数据包与系统同步窗口之间的对应关系，并同步示意了IMU数据在相同窗口下的融合组织方式。该图以基准雷达时间边界构造相邻窗口，展示另一雷达跨窗口覆盖时的数据切分与跨窗保留过程，以及窗口内多路IMU样本的统一调度。
+为直观说明上述统一窗口同步机制，图\ref{fig:ch3_dual_LiDAR_alignment}给出了双雷达原始数据包与系统同步窗口之间的对应关系，并同步示意了IMU数据在相同窗口下的融合组织方式。该图以基准雷达时间边界构造相邻窗口，展示另一雷达跨窗口覆盖时的数据切分与跨窗保留过程，以及窗口内多路IMU样本的统一调度。
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.98\textwidth]{双雷达时间同步窗口.pdf}
 	\caption{双雷达时间窗口同步与IMU融合示意图}
-	\label{fig:ch3_dual_lidar_alignment}
+	\label{fig:ch3_dual_LiDAR_alignment}
 \end{figure}
 
 其中$P_0$、$P_1$分别表示LiDAR 1在相邻时间区间$[t_0,t_1]$、$[t_1,t_2]$内输出的原始数据包；$Q_0$、$Q_1$分别表示LiDAR 2在相邻区间$[t_0^\prime,t_1^\prime]$、$[t_1^\prime,t_2^\prime]$内输出的原始数据包。$Window_0$、$Window_1$为系统设定的相邻时间同步窗口，分别对应$[t_0,t_1]$与$[t_1,t_2]$。在$W_0$内，$Q_0$按窗口边界切分为$Q_{0\_in}$与$Q_{0\_left}$：前者为落入当前窗口的有效点集并参与本轮融合，后者为超出窗口的剩余点集并延后至下一窗口处理。merged\_pointcloud为单窗口内多雷达融合结果，merged\_imu为同一窗口内IMU数据的同步输出。
@@ -136,12 +136,12 @@ IMU一次性自动调平前后的点云姿态对比如图\ref{fig:ch3_imu_leveli
 
 \subsection{LIO-SAM紧耦合位姿估计框架}\label{sec:ch3_lio_sam_principle}
 
-作为本系统位姿估计的核心引擎，LIO-SAM（Lidar Inertial Odometry via Smoothing and Mapping）\cite{Shan2020LIOSAM} 采用紧耦合的平滑与建图框架，其本质是在统一状态空间中联合建模激光几何约束与惯性动力学约束，而非后验级联两类传感器结果。该框架在本系统中的模块化组织与约束耦合关系如图\ref{fig:ch3_lio_sam_architecture}所示。
+作为本系统位姿估计的核心引擎，LIO-SAM（LiDAR Inertial Odometry via Smoothing and Mapping）\cite{Shan2020LIOSAM} 采用紧耦合的平滑与建图框架，其本质是在统一状态空间中联合建模激光几何约束与惯性动力学约束，而非后验级联两类传感器结果。该框架在本系统中的模块化组织与约束耦合关系如图\ref{fig:ch3_lio_sam_architecture}所示。
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.96\textwidth]{lio-sam系统架构.pdf}
-	\caption{LIO-SAM 紧耦合位姿估计系统架构图\cite{Shan2020LIOSAM} }
+	\caption{LIO-SAM紧耦合位姿估计系统架构图\cite{Shan2020LIOSAM} }
 	\label{fig:ch3_lio_sam_architecture}
 \end{figure}
 
@@ -151,7 +151,7 @@ IMU一次性自动调平前后的点云姿态对比如图\ref{fig:ch3_imu_leveli
 \end{equation}
 其中， $\mathbf{R}_k$、$\mathbf{p}_k$、$\mathbf{v}_k$ 分别对应姿态、位置和速度，$\mathbf{b}^g_k$、$\mathbf{b}^a_k$ 分别对应陀螺与加速度计偏置。
 
-在惯性约束层，系统对相邻关键帧间的 IMU 连续观测执行预积分，将高频原始测量压缩后以因子形式嵌入后端图优化，联合估计位姿、速度与偏置，使系统在关键帧尺度获得全局一致估计，同时在帧间尺度维持高频状态传播\cite{Shan2020LIOSAM}。其中，压缩后的增量状态约束可表示为
+在惯性约束层，系统对相邻关键帧间的 IMU连续观测执行预积分，将高频原始测量压缩后以因子形式嵌入后端图优化，联合估计位姿、速度与偏置，使系统在关键帧尺度获得全局一致估计，同时在帧间尺度维持高频状态传播\cite{Shan2020LIOSAM}。其中，压缩后的增量状态约束可表示为
 \begin{equation}
 \Delta\mathbf{z}_{k,k+1}=\left[\Delta\mathbf{R}_{k,k+1},\,\Delta\mathbf{v}_{k,k+1},\,\Delta\mathbf{p}_{k,k+1}\right]
 \end{equation}
@@ -218,7 +218,7 @@ t_{i,j}=t_i+\delta t_{i,j},\qquad \delta t_{i,j}\in[0,T_i]
 		\caption{全局-局部位姿轨迹与回环约束连接}
 		\label{fig:ch3_lio_runtime_trajectory}
 	\end{subfigure}
-	\caption{LIO-SAM 定位建图运行效果}
+	\caption{LIO-SAM定位建图运行效果}
 	\label{fig:ch3_lio_runtime_results}
 \end{figure}
 
@@ -233,7 +233,7 @@ M-detector动态检测链路由三个串接模块构成，整体架构如图\ref
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.98\textwidth]{m_detector-系统架构.pdf}
-	\caption{M-detector 动态检测链路系统架构\cite{Wu2024MDetector}}
+	\caption{M-detector动态检测链路系统架构\cite{Wu2024MDetector}}
 	\label{fig:ch3_mdetector_architecture}
 \end{figure}
 
@@ -249,20 +249,20 @@ M-detector动态检测链路由三个串接模块构成，整体架构如图\ref
 
 动态检测节点通过点云与里程计两个独立队列配合定时器回调实现近似同序调度：每次触发从队首取一帧点云和对应的位姿，执行逐点判别后发布结果。由于仅操作队列头部数据，算法延迟被控制在缓冲窗口与调度周期之和以内，无需回溯长时历史。
 
-从可计算性看，逐点判别的时间复杂度受历史深度图数量线性约束。记经近场 ROI 约束后的单帧有效点数为 $N_p$、历史深度图数量为 $K_h$，则检测主过程可近似写为
+从可计算性看，逐点判别的时间复杂度受历史深度图数量线性约束。记经近场 ROI约束后的单帧有效点数为 $N_p$、历史深度图数量为 $K_h$，则检测主过程可近似写为
 \begin{equation}
 \mathcal{O}(N_p\cdot K_h),\qquad K_h\leq \mathrm{max\_depth\_map\_num}=5
 \end{equation}
 
 因此，在固定传感器频率与窗口配置下，单帧计算量上界由 $N_p\cdot K_h$ 决定，主要消耗于“当前点与历史深度图”的逐点比较；当历史片段数受限于 $K_h\leq 5$ 时，模块总开销随输入点数近似线性增长，具备可预测且有界的实时计算开销。
 
-为降低远距离背景点与无关区域点对遮挡判别的扰动，系统在历史深度图构建前执行近场 ROI 约束。设第 $k$ 帧已配准点集为 $\mathcal{P}_{\mathrm{reg}}(k)$，则送入动态检测的点集可表示为
+为降低远距离背景点与无关区域点对遮挡判别的扰动，系统在历史深度图构建前执行近场 ROI约束。设第 $k$ 帧已配准点集为 $\mathcal{P}_{\mathrm{reg}}(k)$，则送入动态检测的点集可表示为
 \begin{equation}
 \mathcal{P}_{\mathrm{roi}}(k)=\left\{\mathbf{p}\in\mathcal{P}_{\mathrm{reg}}(k)\mid x^2+y^2\leq r_{xy}^2\right\},\qquad r_{xy}=10\,\mathrm{m}
 \end{equation}
 其中，$(x,y)$ 在重力对齐坐标系下计算。实现上，ROI判定与后续位姿对齐及坐标变换过程保持时空语义一致，避免几何筛选阶段引入附加参考系偏差。该预处理仅作用于动态检测支路，不改变定位主链路的观测输入。运行验证表明，近场ROI约束可将输入点数由$11911.8$降至$4934.8$（平均每帧），保留比例约$41.4\%$。这说明近场约束能在保证有效近场观测的前提下，显著降低后续逐点判别与聚类跟踪的计算负担。
 
-近场 ROI 约束在动态检测输入组织中的位置与作用机理如图\ref{fig:ch3_roi_crop_placeholder}所示。
+近场 ROI约束在动态检测输入组织中的位置与作用机理如图\ref{fig:ch3_roi_crop_placeholder}所示。
 
 \begin{figure}[htbp]
 	\centering
@@ -279,7 +279,7 @@ M-detector动态检测链路由三个串接模块构成，整体架构如图\ref
 		\caption{ROI裁剪后动态点判别帧}
 		\label{fig:ch3_roi_crop_after}
 	\end{subfigure}
-	\caption{近场 ROI 裁剪效果对比}
+	\caption{近场 ROI裁剪效果对比}
 	\label{fig:ch3_roi_crop_placeholder}
 \end{figure}
 
@@ -287,12 +287,12 @@ M-detector动态检测链路由三个串接模块构成，整体架构如图\ref
 
 在历史深度图基础上，对每个输入点依次执行有效性检验、自体剔除和Case1/2/3判别。逐点推理完成后，每个点被标记为STATIC、CASE1、CASE2、CASE3或INVALID，作为候选聚类的输入标签。
 
-M-detector 考虑了三类典型判别机制（图\ref{fig:ch3_mdetector_cases_placeholder}），分别对应不同动态来源：Case1描述深度边界不一致，即当前观测持续偏离历史深度包络；Case2描述遮挡体运动，即遮挡关系在时间上持续且可由连续运动解释；Case3描述被遮挡体显露，即观测由“被遮挡”向“可见”稳定转变。
+M-detector考虑了三类典型判别机制（图\ref{fig:ch3_mdetector_cases_placeholder}），分别对应不同动态来源：Case1描述深度边界不一致，即当前观测持续偏离历史深度包络；Case2描述遮挡体运动，即遮挡关系在时间上持续且可由连续运动解释；Case3描述被遮挡体显露，即观测由“被遮挡”向“可见”稳定转变。
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.9\textwidth]{m_detector-遮挡原理.pdf}
-	\caption{M-detector 三类动态判别原理示意图\cite{Wu2024MDetector}}
+	\caption{M-detector三类动态判别原理示意图\cite{Wu2024MDetector}}
 	\label{fig:ch3_mdetector_cases_placeholder}
 \end{figure}
 
