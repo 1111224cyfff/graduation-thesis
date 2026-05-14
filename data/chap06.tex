@@ -106,11 +106,11 @@ R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
 \caption{吊装构件识别有效性与时序稳定性统计表}
 \label{tab:ch5_d1_detection_effectiveness}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{2.4cm}p{2.6cm}p{2.0cm}p{2.8cm}p{1.8cm}}
-\hline
+\Xhline{1pt}
 \textbf{样本帧数} & \textbf{掩码时序IoU} & \textbf{框中心漂移(px)} & \textbf{漏检帧占比} & \textbf{连续漏检最大帧数} \\
 \hline
 2826 & 0.888 & 13.02 & 1.06\% & 2 \\
-\hline
+\Xhline{1pt}
 \end{tabular*}
 \end{table}
 
@@ -118,7 +118,7 @@ R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
 
 \subsection{点云投影关联与三维定位一致性验证}\label{subsec_ch5_projection_localization_eval}
 
-三维定位评估的关键，是检验"二维分割结果约束下的点云回查"策略是否足够准确。该过程包含坐标变换、投影关联、实例点集构建与质心提取四个环节。若投影关联环节存在系统性偏差或漏配，后续实例点集构建将引入虚假点或丢失真实点，直接影响质心定位精度与净空计算可靠性。
+三维定位评估的关键，是检验“二维分割结果约束下的点云回查”策略是否足够准确。该过程包含坐标变换、投影关联、实例点集构建与质心提取四个环节。若投影关联环节存在系统性偏差或漏配，后续实例点集构建将引入虚假点或丢失真实点，直接影响质心定位精度与净空计算可靠性。
 
 本节采用手工标定的点云真值与算法投影所得点云进行定量对比。以像素级掩码为关联单位，将算法投影得到的点云集合与手工标定的真值点云集合逐帧匹配，统计真阳性（TP）、假阳性（FP）与假阴性（FN），并据此计算精确率（Precision）、召回率（Recall）、F1分数与交并比（IoU）。各符号含义如表~\ref{tab:ch5_confusion_terms}所示，各指标定义如下：
 
@@ -127,12 +127,12 @@ R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
 \caption{投影关联混淆矩阵术语说明}
 \label{tab:ch5_confusion_terms}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{3.2cm}p{4.5cm}p{4.5cm}}
-\hline
+\Xhline{1pt}
 \textbf{\diagbox{算法输出}{实际情况}} & \textbf{实际属于真值} & \textbf{实际不属于真值} \\
 \hline
 算法成功关联 & TP：正确关联 & FP：误关联 \\
 算法未关联 & FN：漏关联 & TN：正确未关联 \\
-\hline
+\Xhline{1pt}
 \end{tabular*}
 \end{table}
 
@@ -163,7 +163,7 @@ F1 分数为精确率与召回率的调和平均：
 	\caption{吊装构件识别与三维定位结果}
 	\label{tab:ch5_projection_localization}
 	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}C{2cm}c@{\hspace{1.5em}}c}
-		\hline
+		\Xhline{1pt}
 		& \textbf{\raisebox{-0.5\height}{塔吊标准节}} & \textbf{\raisebox{-0.5\height}{围栏}} \\[0.5em]
 		\hline\noalign{\vskip 0.5em}
 		原图 &
@@ -181,7 +181,7 @@ F1 分数为精确率与召回率的调和平均：
 		点云投影 &
 		\raisebox{-0.5\height}{\includegraphics[width=5cm]{塔吊标准节-点云投影.png}} &
 		\raisebox{-0.5\height}{\includegraphics[width=5cm]{围栏-点云投影.png}} \\
-		\noalign{\vskip 0.5em}\hline
+		\noalign{\vskip 0.5em}\Xhline{1pt}
 	\end{tabular*}
 \parbox{\textwidth}{\vspace{0.5em}\small\raggedright 注：点云投影结果图中，白色点表示所有投影至该帧图像像素的点云，红色点表示落在分割掩码内的点云。}
 \end{table}
@@ -191,7 +191,7 @@ F1 分数为精确率与召回率的调和平均：
 \caption{点云投影关联与三维定位一致性验证统计表}
 \label{tab:ch5_d3_projection_localization}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{5.5cm}p{3.5cm}}
-\hline
+\Xhline{1pt}
 \textbf{指标项} & \textbf{数值} \\
 \hline
 真阳性（TP） & 13751 \\
@@ -202,7 +202,7 @@ F1 分数为精确率与召回率的调和平均：
 召回率（Recall） & 78.33\% \\
 F1 分数 & 84.69\% \\
 交并比（IoU） & 73.44\% \\
-\hline
+\Xhline{1pt}
 \end{tabular*}
 \end{table}
 
@@ -253,7 +253,7 @@ F1 分数 & 84.69\% \\
 \caption{静态阈值判级有效性统计表}
 \label{tab:ch5_d4a_static_warning}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{4.1cm}p{2.3cm}p{2.3cm}p{2.3cm}}
-\hline
+\Xhline{1pt}
 \textbf{指标项} & \textbf{提示级(5.0m)} & \textbf{报警级(3.0m)} & \textbf{紧急级(1.0m)} \\
 \hline
 精确率（Precision）  & 57.27\% & 90.12\% & 94.66\% \\
@@ -264,7 +264,7 @@ F1分数  & 46.67\% & 85.38\% & 93.83\% \\
 误报率（FPR） & \multicolumn{3}{c}{2.76\%} \\
 漏报率（FNR） & \multicolumn{3}{c}{4.76\%} \\
 平均绝对误差（MAE） & \multicolumn{3}{c}{0.1232} \\
-\hline
+\Xhline{1pt}
 \end{tabular*}
 \end{table}
 
@@ -279,14 +279,14 @@ F1分数  & 46.67\% & 85.38\% & 93.83\% \\
 \caption{静态预警等级混淆矩阵}
 \label{tab:ch5_d4b_confusion_matrix}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}C{2.2cm}|C{2.2cm}C{2.2cm}C{2.2cm}C{2.2cm}}
-\hline
+\Xhline{1pt}
 \textbf{真值$\backslash$预测} & \textbf{无危险} & \textbf{提示} & \textbf{报警} & \textbf{紧急} \\
 \hline
 无危险 & 2094 & 44 & 1 & 26 \\
 提示   & 91  & 63 & 6 & 0 \\
 报警   & 7   & 3  & 73 & 7 \\
 紧急   & 43  & 0  & 1 & 585 \\
-\hline
+\Xhline{1pt}
 \end{tabular*}
 \end{table}
 
@@ -346,7 +346,7 @@ F1分数  & 46.67\% & 85.38\% & 93.83\% \\
 \caption{动态趋势与相向升级验证统计表}
 \label{tab:ch5_d5_dynamic_warning}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{4.1cm}p{2.3cm}p{2.3cm}p{2.3cm}}
-\hline
+\Xhline{1pt}
 \textbf{指标项} & \textbf{提示级(5.0m)} & \textbf{报警级(3.0m)} & \textbf{紧急级(1.0m)} \\
 \hline
 精确率（Precision） & 24.19\% & 62.00\% & 90.69\% \\
@@ -357,7 +357,7 @@ F1分数 & 31.91\% & 71.05\% & 82.28\% \\
 误报率（FPR） & \multicolumn{3}{c}{5.35\%} \\
 漏报率（FNR） & \multicolumn{3}{c}{8.00\%} \\
 平均绝对误差（MAE） & \multicolumn{3}{c}{0.2002} \\
-\hline
+\Xhline{1pt}
 \end{tabular*}
 \end{table}
 
@@ -368,14 +368,14 @@ F1分数 & 31.91\% & 71.05\% & 82.28\% \\
 \caption{动态预警等级混淆矩阵}
 \label{tab:ch5_d5b_confusion_matrix}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}C{2.2cm}|C{2.2cm}C{2.2cm}C{2.2cm}C{2.2cm}}
-\hline
+\Xhline{1pt}
 \textbf{真值$\backslash$预测} & \textbf{无危险} & \textbf{提示} & \textbf{报警} & \textbf{紧急} \\
 \hline
 无危险 & 1353 & 34 & 35 & 14 \\
 提示   & 0    & 15 & 11 & 6 \\
 报警   & 14   & 9  & 297 & 37 \\
 紧急   & 42   & 4  & 136 & 555 \\
-\hline
+\Xhline{1pt}
 \end{tabular*}
 \end{table}
 
@@ -386,7 +386,7 @@ F1分数 & 31.91\% & 71.05\% & 82.28\% \\
 \caption{动态目标趋势预测与相向运动预警效果示例}
 \label{tab:ch5_dynamic_warning_effect}
 \begin{tabular}{>{\centering\arraybackslash}p{2em}@{\hspace{0.1em}}cc}
-\hline
+\Xhline{1pt}
 \textbf{时刻} & \textbf{真实场景} & \textbf{预警示意} \\
 \hline
 \noalign{\vskip 0.5em}
@@ -399,7 +399,7 @@ F1分数 & 31.91\% & 71.05\% & 82.28\% \\
 \raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_2$} &
 \includegraphics[height=4.1cm]{real_3.png} &
 \includegraphics[height=4.1cm]{warning_3.png} \\
-\hline
+\Xhline{1pt}
 \end{tabular}
 \end{table}
 
@@ -409,7 +409,7 @@ F1分数 & 31.91\% & 71.05\% & 82.28\% \\
 \caption{动态目标趋势预测与相向运动预警效果示例（续）}
 \label{tab:ch5_dynamic_warning_effect_cont}
 \begin{tabular}{>{\centering\arraybackslash}p{2em}@{\hspace{0.1em}}cc}
-\hline
+\Xhline{1pt}
 \textbf{时刻} & \textbf{真实场景} & \textbf{预警示意} \\
 \hline
 \noalign{\vskip 0.5em}
@@ -428,7 +428,7 @@ F1分数 & 31.91\% & 71.05\% & 82.28\% \\
 \raisebox{0.5\dimexpr4.1cm-\height\relax}{t$_7$} &
 \includegraphics[height=4.1cm]{real_8.png} &
 \includegraphics[height=4.1cm]{warning_8.png} \\
-\hline
+\Xhline{1pt}
 \end{tabular}
 \parbox{\textwidth}{\vspace{0.5em}\small\raggedright 注：t$_0$–t$_7$ 共 8 个时刻，相邻时刻间隔 1~s。}
 \end{table}
@@ -475,7 +475,7 @@ T_{\mathrm{all}}=T_{\mathrm{sensor}}+T_{\mathrm{vision}}+T_{\mathrm{projection}}
 \label{tab:ch5_latency_overall}
 
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{3.4cm}p{1.6cm}p{1.6cm}p{1.6cm}p{1.6cm}}
-\hline
+\Xhline{1pt}
 \textbf{模块/阶段} & \textbf{均值} & \textbf{标准差} & \textbf{95\%{}分位} & \textbf{最大值} \\
 \hline
 \multicolumn{5}{l}{\textbf{一、视觉推理模块}} \\
@@ -498,7 +498,7 @@ T_{\mathrm{all}}=T_{\mathrm{sensor}}+T_{\mathrm{vision}}+T_{\mathrm{projection}}
 \multicolumn{5}{l}{\textbf{四、端到端总时延}} \\
 \hline
 传感器采集至输出 & 101.43 & 18.82 & 123.17 & 200.58 \\
-\hline
+\Xhline{1pt}
 \end{tabular*}
 \parbox{\textwidth}{\vspace{0.5em}\small\raggedright 注：表中数值单位均为毫秒（ms）。}
 \end{table}
