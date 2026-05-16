@@ -60,8 +60,8 @@
 \begin{table}[htbp]
   \centering
   \caption{吊钩端感知系统关键硬件组件与作用}
-  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}p{5cm}>{\centering\arraybackslash}p{2cm}>{\centering\arraybackslash}p{6.3cm}}
-    \hline
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{5cm}>{\centering\arraybackslash}m{2cm}>{\centering\arraybackslash}m{6.3cm}}
+    \Xhline{1pt}
     \textbf{组件} & \textbf{作用} & \textbf{关键说明}\\
     \hline
     LiDAR-1（Mid-360） & 近场几何感知 & 作为主测距源，提供近场点云，用于ROI建模、距离阈值判定与目标几何状态估计\\
@@ -70,7 +70,7 @@
     镜头（MVL-HF0628M-6MPE） & 成像质量 & 满足作业距离下的分辨率需求，提升弱光/逆光条件下可用性\\
     IMU（内置） & 运动约束 & 为位姿估计提供短时高频运动信息，辅助点云去畸变与定位稳定性\\
     Jetson Orin NX & 边缘计算 & 16 GB统一内存，搭载 GPU加速感知管线，承载算法推理与计算任务\\
-    \hline
+    \Xhline{1pt}
   \end{tabular*}
   \label{tab:sensor_spec}
 \end{table}
@@ -82,7 +82,7 @@
   \caption{吊钩端感知系统关键硬件技术参数}
   \label{tab:sensor_quantitative_spec}
   \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{3.6cm}>{\centering\arraybackslash}m{5cm}>{\centering\arraybackslash}m{5cm}}
-    \hline
+    \Xhline{1pt}
     \textbf{设备} & \textbf{关键参数} & \textbf{取值} \\
     \hline
     \multirow{10}{*}{\makecell{Livox Mid-360\\（双台）}}
@@ -105,7 +105,7 @@
       & 适配靶面/像圈直径 & 1/1.8'' / $\Phi 9$~mm \\
       & 适配像素/最近物距 & 600~万像素 / 0.1~m \\
       & 视场角（D/H/V） & $73.49^\circ$ / $63.11^\circ$ / $44.59^\circ$ \\
-    \hline
+    \Xhline{1pt}
   \end{tabular*}
 \end{table}
 
@@ -220,14 +220,14 @@ T_q \approx (Q-1)\,T_p
   {\setlength{\tabcolsep}{3pt}
   \renewcommand{\arraystretch}{0.95}
   \begin{tabularx}{\textwidth}{C{2.1cm}C{4.7cm}C{2.1cm}>{\centering\arraybackslash}X}
-    \toprule
+    \Xhline{1pt}
     \textbf{数据类别} & \textbf{接口语义} & \textbf{输入频率} & \textbf{接口说明与作用} \\
     \midrule
     LiDAR观测 & \mbox{livox\_ros\_driver2/CustomMsg} & $10\,\mathrm{Hz}\times2$ & 点云接口，提供空间几何观测；用于融合、ROI建模与测距 \\
     IMU观测 & \mbox{sensor\_msgs/Imu} & $200\,\mathrm{Hz}\times2$ & 惯性接口，提供角速度与加速度；用于状态估计与点云去畸变 \\
     视觉观测 & \mbox{sensor\_msgs/CompressedImage} & $10\,\mathrm{Hz}$ & 图像接口，默认发布压缩相机帧；原始 RGB按需启用，用于目标识别与雷视关联 \\
     视觉标定 & \mbox{sensor\_msgs/CameraInfo} & $10\,\mathrm{Hz}$ & 标定接口，提供内参与畸变参数；用于投影计算与几何一致性约束 \\
-    \bottomrule
+    \Xhline{1pt}
   \end{tabularx}
   }
 \end{table}
@@ -416,7 +416,7 @@ map                                    # 全局地图系
   {\setlength{\tabcolsep}{4pt}
   \renewcommand{\arraystretch}{1.1}
   \begin{tabularx}{\textwidth}{C{3.0cm}C{7.4cm}C{3.4cm}}
-    \toprule
+    \Xhline{1pt}
     \textbf{坐标系} & \textbf{描述} & \textbf{备注} \\
     \midrule
     map & 全局地图系，表示固定的世界坐标系 & 全局定位参考 \\
@@ -427,7 +427,7 @@ map                                    # 全局地图系
     camera\_leveled & 相机投影参考帧，与 body\_leveled保持固定变换 & 雷视关联与图像投影 \\
     chassis\_link & 兼容结构支路，用于扩展机械参考系 & 本系统中未实际使用 \\
     imu\_link & IMU传感器坐标系 & 用于惯性测量对齐 \\
-    \bottomrule
+    \Xhline{1pt}
   \end{tabularx}
   }
 \end{table}

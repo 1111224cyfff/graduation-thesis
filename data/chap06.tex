@@ -105,7 +105,7 @@ R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
 \centering
 \caption{吊装构件识别有效性与时序稳定性统计表}
 \label{tab:ch5_d1_detection_effectiveness}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}p{2.4cm}>{\centering\arraybackslash}p{2.6cm}>{\centering\arraybackslash}p{2.0cm}>{\centering\arraybackslash}p{2.8cm}>{\centering\arraybackslash}p{1.8cm}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{2.4cm}>{\centering\arraybackslash}m{2.6cm}>{\centering\arraybackslash}m{2.0cm}>{\centering\arraybackslash}m{2.8cm}>{\centering\arraybackslash}m{1.8cm}}
 \Xhline{1pt}
 \textbf{样本帧数} & \textbf{掩码时序IoU} & \textbf{框中心漂移(px)} & \textbf{漏检帧占比} & \textbf{连续漏检最大帧数} \\
 \hline
@@ -126,7 +126,7 @@ R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
 \centering
 \caption{投影关联混淆矩阵术语说明}
 \label{tab:ch5_confusion_terms}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}p{3.2cm}>{\centering\arraybackslash}p{4.5cm}>{\centering\arraybackslash}p{4.5cm}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{3.2cm}>{\centering\arraybackslash}m{4.5cm}>{\centering\arraybackslash}m{4.5cm}}
 \Xhline{1pt}
 \textbf{\diagbox{算法输出}{实际情况}} & \textbf{实际属于真值} & \textbf{实际不属于真值} \\
 \hline
@@ -190,7 +190,7 @@ F1 分数为精确率与召回率的调和平均：
 \centering
 \caption{点云投影关联与三维定位一致性验证统计表}
 \label{tab:ch5_d3_projection_localization}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}p{5.5cm}>{\centering\arraybackslash}p{3.5cm}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{5.5cm}>{\centering\arraybackslash}m{3.5cm}}
 \Xhline{1pt}
 \textbf{指标项} & \textbf{数值} \\
 \hline
@@ -252,7 +252,7 @@ F1 分数 & 84.69\% \\
 \centering
 \caption{静态阈值判级有效性统计表}
 \label{tab:ch5_d4a_static_warning}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}p{4.1cm}>{\centering\arraybackslash}p{2.3cm}>{\centering\arraybackslash}p{2.3cm}>{\centering\arraybackslash}p{2.3cm}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{4.1cm}>{\centering\arraybackslash}m{2.3cm}>{\centering\arraybackslash}m{2.3cm}>{\centering\arraybackslash}m{2.3cm}}
 \Xhline{1pt}
 \textbf{指标项} & \textbf{提示级(5.0m)} & \textbf{报警级(3.0m)} & \textbf{紧急级(1.0m)} \\
 \hline
@@ -345,7 +345,7 @@ F1分数  & 46.67\% & 85.38\% & 93.83\% \\
 \centering
 \caption{动态趋势与相向升级验证统计表}
 \label{tab:ch5_d5_dynamic_warning}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}p{4.1cm}>{\centering\arraybackslash}p{2.3cm}>{\centering\arraybackslash}p{2.3cm}>{\centering\arraybackslash}p{2.3cm}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{4.1cm}>{\centering\arraybackslash}m{2.3cm}>{\centering\arraybackslash}m{2.3cm}>{\centering\arraybackslash}m{2.3cm}}
 \Xhline{1pt}
 \textbf{指标项} & \textbf{提示级(5.0m)} & \textbf{报警级(3.0m)} & \textbf{紧急级(1.0m)} \\
 \hline
@@ -385,7 +385,7 @@ F1分数 & 31.91\% & 71.05\% & 82.28\% \\
 \centering
 \caption{动态目标趋势预测与相向运动预警效果示例}
 \label{tab:ch5_dynamic_warning_effect}
-\begin{tabular}{>{\centering\arraybackslash}p{2em}@{\hspace{0.1em}}cc}
+\begin{tabular}{>{\centering\arraybackslash}m{2em}@{\hspace{0.1em}}cc}
 \Xhline{1pt}
 \textbf{时刻} & \textbf{真实场景} & \textbf{预警示意} \\
 \hline
@@ -409,7 +409,7 @@ F1分数 & 31.91\% & 71.05\% & 82.28\% \\
 \centering
 \caption{动态目标趋势预测与相向运动预警效果示例（续）}
 \label{tab:ch5_dynamic_warning_effect_cont}
-\begin{tabular}{>{\centering\arraybackslash}p{2em}@{\hspace{0.1em}}cc}
+\begin{tabular}{>{\centering\arraybackslash}m{2em}@{\hspace{0.1em}}cc}
 \Xhline{1pt}
 \textbf{时刻} & \textbf{真实场景} & \textbf{预警示意} \\
 \hline
@@ -475,7 +475,7 @@ T_{\mathrm{all}}=T_{\mathrm{sensor}}+T_{\mathrm{vision}}+T_{\mathrm{projection}}
 \caption{整体链路时延统计表}
 \label{tab:ch5_latency_overall}
 
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}p{3.4cm}>{\centering\arraybackslash}p{1.6cm}>{\centering\arraybackslash}p{1.6cm}>{\centering\arraybackslash}p{1.6cm}>{\centering\arraybackslash}p{1.6cm}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{3.4cm}>{\centering\arraybackslash}m{1.6cm}>{\centering\arraybackslash}m{1.6cm}>{\centering\arraybackslash}m{1.6cm}>{\centering\arraybackslash}m{1.6cm}}
 \Xhline{1pt}
 \textbf{模块/阶段} & \textbf{均值} & \textbf{标准差} & \textbf{95\%{}分位} & \textbf{最大值} \\
 \hline

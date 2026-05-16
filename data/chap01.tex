@@ -92,7 +92,7 @@
   \renewcommand{\arraystretch}{1.2}
   \renewcommand\tabularxcolumn[1]{m{#1}}
   \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}m{2.0cm}>{\centering\arraybackslash}m{2.2cm}>{\centering\arraybackslash}X>{\centering\arraybackslash}X >{\centering\arraybackslash}m{2.8cm}}
-    \toprule
+    \Xhline{1pt}
     \textbf{传感器} & \textbf{信息维度} & \textbf{优势} & \textbf{局限} & \textbf{典型角色} \\
     \midrule
     编码器 & 回转角/幅度/高度 & 可靠、低成本、布置成熟 & 仅感知本体状态；外界障碍不可见 & 运动学/包络/禁行区输入 \\
@@ -105,7 +105,7 @@
     毫米波雷达 & 测距 & 全天候；对运动目标敏感 & 角分辨率低；几何边界表达粗 & 冗余检测/存在性提示 \\
     超声波 & 近距测距 & 低成本；实现简单 & 量程短；易受介质/风噪干扰 & 近距防撞触发 \\
     LiDAR & 三维点云 & 稳定测距；不敏感光照；近场空间判定能力强 & 语义弱；反射/遮挡致缺失与离群点 & 几何测距与空间判定主传感器 \\
-    \bottomrule
+    \Xhline{1pt}
   \end{tabularx}
   }
 \end{table}
@@ -219,7 +219,7 @@ Yang等\cite{8FY5FXQ3}采用 Mask R-CNN对人员与障碍物进行语义分割�
   \label{tab:comparison_gap}
 
   \begin{tabular}{>{\centering\arraybackslash}m{3.6cm} *{6}{>{\centering\arraybackslash}m{1.3cm}}}
-    \toprule
+    \Xhline{1pt}
     &  % 留空，由第二行的 multirow 向上合并
     \multicolumn{3}{c}{\bfseries 大臂方案} &
     \multicolumn{3}{c}{\bfseries 吊钩端方案} \\
@@ -243,7 +243,7 @@ Yang等\cite{8FY5FXQ3}采用 Mask R-CNN对人员与障碍物进行语义分割�
     碰撞预警时效性高      & \xmark & \xmark & \pmark & \xmark & \xmark & \cmark \\
     抗遮挡能力强          & \cmark & \pmark & \pmark & \cmark & \xmark & \cmark \\
     系统功能完整度高      & \xmark & \xmark & \xmark & \xmark & \xmark & \cmark \\
-    \bottomrule
+    \Xhline{1pt}
   \end{tabular}
 
   \parbox{\textwidth}{\vspace{0.5em}\small\raggedright 注：\cmark\;具备~~\xmark\;不具备~~\pmark\;部分具备}
