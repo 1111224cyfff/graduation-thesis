@@ -12,40 +12,47 @@
 
 双激光雷达（Livox Mid-360）作为近场空间几何感知的主传感器。LiDAR具备 360° 水平覆盖能力，对光照变化不敏感，可在尘土等不利条件下保持稳定的测距输出。采用双雷达布置可通过不同俯仰角与基线配置实现盲区互补，并提升关键方向的点云密度与冗余度。
 
-工业相机（海康威视 MV-CS016-10UC，镜头 MVL-HF0628M-6MPE，1/1.8''、600万像素）用于获取吊装构件与周围环境的图像观测。视觉信息与 LiDAR的几何测距结果形成互补，支撑后续的吊装构件识别、精细化定位与环境理解，使系统既具备高精度的空间约束，也具备可解释的视觉证据。
+工业相机（海康威视 MV-CS016-10UC，镜头 MVL-HF0628M-6MPE）用于获取吊装构件与周围环境的图像观测。视觉信息与 LiDAR的几何测距结果形成互补，支撑后续的吊装构件识别、精细化定位与环境理解，使系统既具备高精度的空间约束，也具备可解释的视觉证据。
 
 系统的 IMU信息来源于 Mid-360 内置 IMU，用于运动约束与点云去畸变，从而在吊钩端摆动与回转工况下维持位姿估计与点云时序对齐的稳定性。
 
 系统的核心计算单元采用 NVIDIA Jetson Orin NX嵌入式 AI计算平台，负责所有传感器数据的采集、预处理与融合计算。该模块搭载 8 核 Arm Cortex-A78AE CPU与 1024 核 Ampere架构 GPU（含 32 个 Tensor Core），板载 16 GB 128 位 LPDDR5 内存，整机功耗在 15-25W范围内，满足吊钩端电池供电场景下的续航要求。
 
-为展示本文所采用的关键硬件设备实物，图\ref{fig:LiDAR_device_photo}--图\ref{fig:jetson_device_photo}分别给出了激光雷达、工业相机、工业镜头和边缘计算盒的实物图。
+为展示本文所采用的关键硬件设备实物，图\ref{fig:hardware_devices_photo}分别给出了激光雷达、工业相机、工业镜头和边缘计算盒的实物图。
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.5\textwidth]{激光雷达-实物.png}
-  \caption{激光雷达 Livox Mid-360}
-  \label{fig:LiDAR_device_photo}
-\end{figure}
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[height=4cm,keepaspectratio]{激光雷达-实物.png}
+    \caption{激光雷达 Livox Mid-360}
+    \label{fig:LiDAR_device_photo}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[height=4cm,keepaspectratio]{工业相机-实物.png}
+    \caption{工业相机 MV-CS016-10UC}
+    \label{fig:camera_device_photo}
+  \end{subfigure}
 
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.5\textwidth]{工业相机-实物.png}
-  \caption{工业相机 MV-CS016-10UC}
-  \label{fig:camera_device_photo}
-\end{figure}
+  \vspace{0.8em}
 
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.5\textwidth]{工业镜头-实物.png}
-  \caption{工业镜头 MVL-HF0628M-6MPE}
-  \label{fig:lens_device_photo}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.5\textwidth]{jetson边缘盒.png}
-  \caption{集成边缘计算盒}
-  \label{fig:jetson_device_photo}
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[height=4cm,keepaspectratio]{工业镜头-实物.png}
+    \caption{工业镜头 MVL-HF0628M-6MPE}
+    \label{fig:lens_device_photo}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[height=4cm,keepaspectratio]{jetson边缘盒.png}
+    \caption{集成边缘计算盒}
+    \label{fig:jetson_device_photo}
+  \end{subfigure}
+  \caption{吊钩端感知系统关键硬件设备}
+  \label{fig:hardware_devices_photo}
 \end{figure}
 
 为便于工程表达，表\ref{tab:sensor_spec}列出了本系统关键硬件组件及其在方法体系中的作用说明。
@@ -66,6 +73,40 @@
     \hline
   \end{tabular*}
   \label{tab:sensor_spec}
+\end{table}
+
+在此基础上，进一步给出关键传感器的定量技术参数，如表\ref{tab:sensor_quantitative_spec}所示。其中，激光雷达 Livox Mid-360 提供水平 $360^\circ$、竖直 $59^\circ$ 的近全向视场覆盖，可在 0.1$\sim$70~m 的近场范围内输出稳定测距结果，典型测距精度优于 $2$~cm（10~m、$1\sigma$），为吊钩下方危险区域的几何感知提供了精度与冗余度的双重保障。工业相机采用垂直向下安装，以约 $45^\circ\times 34.5^\circ$ 的视场对吊钩正下方核心作业面进行俯视观测，重点拍摄吊装构件本体及其周边动态目标（如作业人员与障碍物）；在常见 5$\sim$10~m 作业距离下，足以支撑吊装构件实例分割与雷视关联所需的特征提取精度。
+
+\begin{table}[htbp]
+  \centering
+  \caption{吊钩端感知系统关键硬件技术参数}
+  \label{tab:sensor_quantitative_spec}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{3.6cm}>{\centering\arraybackslash}m{5cm}>{\centering\arraybackslash}m{5cm}}
+    \hline
+    \textbf{设备} & \textbf{关键参数} & \textbf{取值} \\
+    \hline
+    \multirow{10}{*}{\makecell{Livox Mid-360\\（双台）}}
+      & 视场角（水平$\times$竖直） & $360^\circ\times 59^\circ$ \\
+      & \makecell{测距范围} & \makecell{40~m @ 10\% 反射率 \\ 70~m @ 80\% 反射率} \\
+      & 近处盲区 & 0.1~m \\
+      & \makecell{测距精度（$1\sigma$）} & \makecell{$\leq 2$~cm @ 10~m \\ $\leq 3$~cm @ 0.2~m} \\
+      & 角度精度（$1\sigma$） & $\leq 0.15^\circ$ \\
+      & 点云输出 & 200{,}000~pts/s \\
+      & 帧率 & 10~Hz \\
+      & 内置 IMU & ICM40609 \\
+    \hline
+    \multirow{3}{*}{\makecell{工业相机\\(MV-CS016-10UC)}}
+      & 靶面尺寸/像元尺寸 & 1/2.9'' / $3.45\times 3.45~\mu$m \\
+      & 分辨率 & $1440\times 1080$（1.6~MP） \\
+      & 系统工作帧率/硬件上限 & 10~fps / 249.1~fps \\
+    \hline
+    \multirow{4}{*}{\makecell{工业镜头\\(MVL-HF0628M-6MPE)}}
+      & 焦距/光圈范围 & 6~mm / F2.8$\sim$F16 \\
+      & 适配靶面/像圈直径 & 1/1.8'' / $\Phi 9$~mm \\
+      & 适配像素/最近物距 & 600~万像素 / 0.1~m \\
+      & 视场角（D/H/V） & $73.49^\circ$ / $63.11^\circ$ / $44.59^\circ$ \\
+    \hline
+  \end{tabular*}
 \end{table}
 
 \subsection{传感设备安装布局设计}\label{ux5b89ux88c5ux5e03ux5c40ux4f18ux5316}
