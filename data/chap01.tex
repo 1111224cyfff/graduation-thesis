@@ -2,9 +2,31 @@
 
 \section{研究背景}\label{ux7814ux7a76ux80ccux666f}
 
-建筑业作为关系国计民生的基础性产业，是国民经济的重要组成部分。据中国建筑业协会发布的《2025年建筑业发展统计分析》显示，2025全年全社会建筑业实现增加值86425.1亿元，占国内生产总值的6.2\%\cite{E78S579E}。在建筑施工作业中，塔式起重机是使用最广泛的垂直运输设备，具有起升高度大、作业范围广、工作效率高等优势\cite{G8HEXPSB,3LHPNGFB,CSVHSWVZ}，其吊装作业承担着钢筋笼、模板、物料等关键构件的吊运任务。然而，塔吊施工环境普遍存在空间狭窄、视野受限、动态干扰复杂等特点，加之运行高度大、工作半径长，一旦发生碰撞或人员误入吊装路径，后果往往极为严重。据统计，2014年至2022年间全国起重机事故数量超过220起，其中吊物伤人与物体碰撞类事故累计超过75起，占比显著且发生频率较高\cite{KWVSPS3W}。因此，实现吊装过程的实时环境感知与风险预警，是当前智慧工地安全管理的重要任务。
+建筑业作为关系国计民生的基础性产业，是国民经济的重要组成部分。据中国建筑业协会发布的《2025年建筑业发展统计分析》显示，2025全年全社会建筑业实现增加值86425.1亿元，占国内生产总值的6.2\%\cite{E78S579E}。在建筑施工作业中，塔式起重机是使用最广泛的垂直运输设备，具有起升高度大、作业范围广、工作效率高等优势\cite{G8HEXPSB,3LHPNGFB,CSVHSWVZ}，其吊装作业承担着钢筋笼、模板、物料等关键构件的吊运任务。然而，塔吊施工环境普遍存在空间狭窄、视野受限、动态干扰复杂等特点，加之运行高度大、工作半径长，一旦发生碰撞或人员误入吊装路径，后果往往极为严重。据统计，2014年至2022年间全国塔式起重机安全事故超过220起\cite{KWVSPS3W}，事故类型分布如表\ref{tab:accident_distribution}所示。其中，吊物伤人与物体碰撞（碰撞挤压）类事故累计超过75起，占比达34\%以上，是威胁吊装安全的主要事故类型。因此，实现吊装过程的实时环境感知与风险预警，是当前智慧工地安全管理的重要任务。
 
-吊钩端是吊装过程中运动最频繁、最接近人员车辆及构件的部位，其近场作业具有以下显著特征：（1）空间运动高度不确定——吊钩随吊臂回转、钢丝绳伸缩及外力扰动持续发生三维空间运动，摆幅可达数米，传统固定式传感器难以覆盖其动态范围；（2）近场作业风险集中——施工人员在吊运构件下方或附近配合作业、车辆设备在近场区域穿行，均可能导致危险目标无意靠近吊钩端，叠加吊物摆动与构件碰撞等因素，易引发重大安全事故；（3）环境遮挡复杂且光照变化剧烈——钢筋笼、模板体系等大型构件会造成视野遮挡，而工地扬尘、夜间照明等不利因素对视觉系统影响显著；（4）传统方法难以实现实时近场避障——现有塔吊安全系统多依赖塔身安装的超声、雷达或视觉设备，检测范围难以覆盖吊钩周围5米高危近场区域，使关键危险点无法及时识别。
+\begin{table}[htbp]
+\centering
+\caption{2014--2022年塔式起重机事故类型统计\cite{KWVSPS3W}}
+\label{tab:accident_distribution}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{2.5cm}>{\centering\arraybackslash}m{1.8cm}>{\centering\arraybackslash}m{2.0cm}>{\centering\arraybackslash}m{6.5cm}}
+\Xhline{1pt}
+\textbf{事故类型} & \textbf{起数} & \textbf{占比排序} & \textbf{典型致因} \\
+\hline
+\multicolumn{4}{l}{\textbf{吊装碰撞直接相关事故}} \\
+\Xhline{0.5pt}
+吊物伤人 & 54 & 第2位 & 吊装构件在吊装过程中撞击下方人员 \\
+物体碰撞 & 21 & 第4位 & 吊物与周边结构、设备发生碰撞挤压 \\
+\hline
+\multicolumn{4}{l}{\textbf{其他事故类型}} \\
+\Xhline{0.5pt}
+倒塌 & 79 & 第1位 & 超载或摆动过大导致整机失稳 \\
+高处坠落 & 52 & 第3位 & 作业人员从吊装平台或吊物上坠落 \\
+其他 & 14 & 第5-7位 & 包括大臂折断、套架滑落、触电伤害等 \\
+\Xhline{1pt}
+\end{tabular*}
+\end{table}
+
+吊钩端是吊装过程中运动最频繁、最接近人员车辆及构件的部位，其近场作业具有以下显著特征：（1）空间运动高度不确定——吊钩随吊臂回转、钢丝绳伸缩及外力扰动持续发生三维空间运动，摆幅可达数米，传统固定式传感器难以覆盖其动态范围；（2）近场作业风险集中——施工人员在吊运构件下方或附近配合作业、车辆设备在近场区域穿行，均可能导致危险目标无意靠近吊钩端，叠加吊物摆动与构件碰撞等因素，易引发重大安全事故；（3）环境遮挡复杂且光照变化剧烈——钢筋笼、模板体系等大型构件会造成视野遮挡，而工地扬尘、夜间照明等不利因素对视觉系统影响显著；（4）传统方法难以实现实时近场避障——现有塔吊安全系统多依赖塔身安装的超声、雷达或视觉设备，检测范围难以覆盖吊钩周围高危近场区域，使关键危险点无法及时识别。
 
 然而，现有塔吊安全感知研究多集中于塔身或塔臂端的宏观防碰撞与运行状态监测，例如多塔协同作业的塔臂干涉检测、塔机与周边建筑结构的距离监测等，而对实际吊装环节中风险最高的吊钩端区域直接感知关注显著不足\cite{9LK3VTEQ}。
 
@@ -69,7 +91,7 @@
   {\setlength{\tabcolsep}{3pt}
   \renewcommand{\arraystretch}{1.2}
   \renewcommand\tabularxcolumn[1]{m{#1}}
-  \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}m{2.0cm}>{\raggedright\arraybackslash}m{2.2cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}m{2.8cm}}
+  \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}m{2.0cm}>{\centering\arraybackslash}m{2.2cm}>{\centering\arraybackslash}X>{\centering\arraybackslash}X >{\centering\arraybackslash}m{2.8cm}}
     \toprule
     \textbf{传感器} & \textbf{信息维度} & \textbf{优势} & \textbf{局限} & \textbf{典型角色} \\
     \midrule
@@ -180,6 +202,53 @@ Yang等\cite{8FY5FXQ3}采用 Mask R-CNN对人员与障碍物进行语义分割�
 （2）感知硬件部署聚焦不足：现有传感器布置多集中于塔吊塔身、塔臂或施工现场固定位置，以宏观防碰撞为目标，对吊钩端这一最高风险区域的直接感知研究匮乏。虽有少数研究尝试在吊钩端部署传感设备，但存在抗干扰能力弱、感知范围有限等问题，难以满足近场全方位、高精度感知与跨模态数据融合需求。
 
 （3）预警模型适配性不足：现有碰撞检测算法多源于虚拟仿真或路径规划场景，依赖静态几何模型，难以应对施工现场动态干扰多、障碍物复杂的实际情况；预警机制多基于单一空间距离阈值，未充分结合目标运动趋势与时间裕度（如TTC等时域指标），易出现误报或预警滞后问题。同时，对危险目标（如施工人员、车辆等）的语义关联不足，难以实现精准分级预警。
+
+为直观对比现有方案与本文方法在各关键技术维度上的覆盖程度，表~\ref{tab:comparison_gap}从传感器安装位置、环境感知能力、目标识别与跟踪、碰撞预警策略及系统完整性等维度进行了系统梳理。
+
+\begin{table}[htbp]
+  \centering
+  \newcommand{\cmark}{{\color{green!50!black}$\checkmark$}}
+  \newcommand{\xmark}{{\color{red!60!black}$\times$}}
+  \newcommand{\pmark}{{\color{orange!70!black}$\triangle$}}
+
+  \small
+  \renewcommand{\arraystretch}{1.6}
+  \setlength{\tabcolsep}{6pt}
+
+  \caption{现有方法与本文方法在吊钩端感知关键技术维度的对比}
+  \label{tab:comparison_gap}
+
+  \begin{tabular}{>{\centering\arraybackslash}m{3.6cm} *{6}{>{\centering\arraybackslash}m{1.3cm}}}
+    \toprule
+    &  % 留空，由第二行的 multirow 向上合并
+    \multicolumn{3}{c}{\bfseries 大臂方案} &
+    \multicolumn{3}{c}{\bfseries 吊钩端方案} \\
+    \cmidrule(lr){2-4} \cmidrule(lr){5-7}
+    \multirow{-2}{3cm}{\centering\bfseries\raisebox{1ex}{对比维度}} &
+    \bfseries\makecell{编码器} &
+    \bfseries\makecell{超声波/ \\ UWB} &
+    \bfseries\makecell{激光\\雷达} &
+    \bfseries IMU &
+    \bfseries 视觉 &
+    \bfseries\makecell{本文\\方法} \\
+    \midrule
+    安装位置靠近危险源   & \xmark & \xmark & \xmark & \cmark & \cmark & \cmark \\
+    空间覆盖范围广        & \xmark & \xmark & \cmark & \xmark & \pmark & \cmark \\
+    单帧感知无盲区        & \xmark & \xmark & \xmark & \xmark & \xmark & \cmark \\
+    三维测距精度高        & \xmark & \pmark & \pmark & \xmark & \xmark & \cmark \\
+    环境适应性强          & \cmark & \pmark & \cmark & \cmark & \xmark & \cmark \\
+    具备语义识别能力      & \xmark & \xmark & \xmark & \xmark & \cmark & \cmark \\
+    吊物状态估计精度高    & \pmark & \xmark & \pmark & \pmark & \xmark & \cmark \\
+    动态目标跟踪能力强    & \xmark & \pmark & \pmark & \xmark & \pmark & \cmark \\
+    碰撞预警时效性高      & \xmark & \xmark & \pmark & \xmark & \xmark & \cmark \\
+    抗遮挡能力强          & \cmark & \pmark & \pmark & \cmark & \xmark & \cmark \\
+    系统功能完整度高      & \xmark & \xmark & \xmark & \xmark & \xmark & \cmark \\
+    \bottomrule
+  \end{tabular}
+
+  \parbox{\textwidth}{\vspace{0.5em}\small\raggedright 注：\cmark\;具备~~\xmark\;不具备~~\pmark\;部分具备}
+\end{table}
+
 
 \section{主要研究内容}\label{ux4e3bux8981ux7814ux7a76ux5185ux5bb9}
 
