@@ -85,14 +85,13 @@
     \Xhline{1pt}
     \textbf{设备} & \textbf{关键参数} & \textbf{取值} \\
     \hline
-    \multirow{10}{*}{\makecell{Livox Mid-360\\（双台）}}
+    \multirow{9}{*}{\makecell{Livox Mid-360\\（双台）}}
       & 视场角（水平$\times$竖直） & $360^\circ\times 59^\circ$ \\
       & \makecell{测距范围} & \makecell{40~m @ 10\% 反射率 \\ 70~m @ 80\% 反射率} \\
       & 近处盲区 & 0.1~m \\
       & \makecell{测距精度（$1\sigma$）} & \makecell{$\leq 2$~cm @ 10~m \\ $\leq 3$~cm @ 0.2~m} \\
       & 角度精度（$1\sigma$） & $\leq 0.15^\circ$ \\
       & 点云输出 & 200{,}000~pts/s \\
-      & 帧率 & 10~Hz \\
       & 内置 IMU & ICM40609 \\
     \hline
     \multirow{3}{*}{\makecell{工业相机\\(MV-CS016-10UC)}}
@@ -151,7 +150,7 @@
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{传感平台整体外观示意图.pdf}
+  \includegraphics[width=0.98\textwidth]{传感平台整体外观示意图.pdf}
   \caption{吊钩下方雷视融合感知装置安装位置与整体外观}
   \label{fig:sw_platform_overall}
 \end{figure}
@@ -165,7 +164,7 @@
   \label{fig:sw_platform_exploded}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.8\textwidth]{盒体内部布局与走线示意.pdf}
   \caption{雷视融合感知装置内部关键部件布局}
@@ -219,7 +218,8 @@ T_q \approx (Q-1)\,T_p
   \label{tab:ros_topics_min}
   {\setlength{\tabcolsep}{3pt}
   \renewcommand{\arraystretch}{0.95}
-  \begin{tabularx}{\textwidth}{C{2.1cm}C{4.7cm}C{2.1cm}>{\centering\arraybackslash}X}
+  \renewcommand\tabularxcolumn[1]{>{\centering\arraybackslash}m{#1}}
+  \begin{tabularx}{\textwidth}{C{2.1cm}C{4.7cm}C{2.1cm}X}
     \Xhline{1pt}
     \textbf{数据类别} & \textbf{接口语义} & \textbf{输入频率} & \textbf{接口说明与作用} \\
     \midrule
@@ -539,7 +539,9 @@ y_d = y\left(1+k_1 r^2+k_2 r^4+k_3 r^6\right)+p_1\left(r^2+2y^2\right)+2p_2xy
 \label{eq:reproj_error}
 e_{\mathrm{rms}}=\sqrt{\frac{1}{N}\sum_{i=1}^{M}\sum_{j=1}^{n_i}\left\lVert \mathbf{p}_{ij}-\hat{\mathbf{p}}_{ij} \right\rVert_2^2}
 \end{equation}
-其中，$M$ 为图像数量，$n_i$ 为第 $i$ 张图像可用角点数，$N=\sum_i n_i$ 为总角点数。MATLAB通常同时给出每张图像的重投影误差分布，便于发现离群样本并迭代剔除。误差统计与可视化结果在文中预留，如图\ref{fig:cam_calib_reproj}所示。
+其中，$M$ 为图像数量，$n_i$ 为第 $i$ 张图像可用角点数，$N=\sum_i n_i$ 为总角点数。
+
+MATLAB通常同时给出每张图像的重投影误差分布，便于发现离群样本并迭代剔除。误差统计与可视化结果在文中预留，如图\ref{fig:cam_calib_reproj}所示。
 
 \begin{figure}[htbp]
   \centering
