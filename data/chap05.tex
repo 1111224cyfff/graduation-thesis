@@ -29,29 +29,29 @@
 		\node[io, ch4] (img) at (0,0) {YOLO26 分割\\图像输入};
 		\node[proc, ch4] (seg) at (0,-1.6) {实例分割结果};
 
-		\node[io, ch3] (map) at (0,-6.4) {去畸变点云\\\texttt{cloud\_deskewed}};
+		\node[io, ch3] (map) at (0,-6.4) {局部地图点云\\\texttt{cloud\_registered}};
 		\node[proc] (staticeval) at (0,-8.0) {静态净空评估};
 		\node[proc] (staticlevel) at (0,-9.6) {静态风险等级};
 
 		% --- 中列：主处理链 ---
-		\node[io, ch3] (cloud) at (4.0,0) {Leveled\\点云输入};
+		\node[io, ch3] (cloud) at (4.0,0) {水平化\\点云输入};
 		\node[proc, ch4] (proj) at (4.0,-1.6) {3D 点投影到\\2D 图像};
-		\node[proc, ch4] (lookup) at (4.0,-3.2) {按 mask 回查\\实例点云集合};
+		\node[proc, ch4] (lookup) at (4.0,-3.2) {按掩码回查\\实例点云集合};
 		\node[resultbox, ch4] (obj) at (4.0,-4.8) {吊装目标对象状态\\质心 尺寸 包络半径\\最近距离 点数};
 
 		\node[proc] (vel) at (4.0,-6.4) {目标速度估计};
 
 		\node[proc] (fusion) at (4.0,-11.2) {融合判级\\取静态与动态最大等级};
 		\node[proc] (hyst) at (4.0,-12.8) {迟滞状态机\\升级立即生效\\降级延时 1 s};
-		\node[resultbox] (state) at (4.0,-14.4) {WarningState 输出\\\texttt{/warning/state}};
+		\node[resultbox] (state) at (4.0,-14.4) {预警状态输出\\\texttt{/warning/state}};
 
 		\node[proc] (markers) at (4.0,-16.0) {RViz 预警可视化\\\texttt{/warning/markers}};
-		\node[proc] (controller) at (8.0,-14.4) {Warning Controller};
-		\node[resultbox] (command) at (8.0,-16.0) {ControlCommand 输出\\\texttt{/warning/control\_command}};
+		\node[proc] (controller) at (8.0,-14.4) {预警控制器};
+		\node[resultbox] (command) at (8.0,-16.0) {控制指令输出\\\texttt{/warning/control\_command}};
 
 		% --- 右列：动态 ---
 		\node[io, ch3] (dyn) at (8.0,0) {动态点检测\\与聚类};
-		\node[proc, ch3] (tracker) at (8.0,-1.6) {Dynamic Tracker};
+		\node[proc, ch3] (tracker) at (8.0,-1.6) {动态跟踪器};
 		\node[resultbox, ch3] (tracks) at (8.0,-3.2) {动态轨迹状态\\ID 位置 速度\\预测轨迹};
 
 		\node[proc] (dyneval) at (8.0,-6.4) {动态风险评估};
