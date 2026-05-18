@@ -1,0 +1,57 @@
+\documentclass[tikz,border=4pt]{standalone}
+\usepackage[UTF8]{ctex}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, shapes.geometric}
+
+\begin{document}
+\begin{tikzpicture}[
+	x=1cm,y=1cm,>=Latex,font=\scriptsize,
+	proc/.style={draw, rounded corners=2pt, thick, fill=gray!5, align=center, minimum width=3.0cm, minimum height=0.95cm},
+	judge/.style={draw, rounded corners=2pt, thick, dashed, fill=blue!12, align=center, minimum width=2.9cm, minimum height=0.95cm},
+	term/.style={draw, thick, fill=orange!15, align=center, minimum width=2.9cm, minimum height=0.95cm}
+]
+	\node[proc] (recv) at (3.6,0) {接收风险状态};
+	\node[judge] (ready) at (3.6,-1.7) {系统就绪性检查};
+	\node[term] (clear0) at (-0.5,-1.7) {输出安全清除建议};
+	\node[judge] (level) at (3.6,-3.6) {稳定风险等级};
+
+	\node[term] (clear1) at (-2.2,-6.0) {正常运行\\不施加约束};
+	\node[term] (observe) at (1.0,-6.0) {关注提示\\提示人工关注};
+	\node[term] (limit) at (4.3,-6.0) {受限运行\\施加速度约束};
+	\node[term] (estop) at (7.6,-6.0) {紧急停机\\保持并触发停机};
+
+	\node[judge] (dir) at (6.0,-8.3) {是否生成退让方向};
+	\node[proc] (dir0) at (4.0,-10.4) {方向向量置零};
+	\node[proc] (dir1) at (8.0,-10.4) {按速度反向\\生成单位方向};
+	\node[term] (pub) at (3.6,-12.5) {发布控制建议};
+
+	\draw[->, thick] (recv) -- (ready);
+	\draw[->, thick] (ready) -- node[midway, fill=white, inner sep=1pt]{否} (clear0);
+	\draw[->, thick] (ready) -- node[midway, fill=white, inner sep=1pt]{是} (level);
+
+	\draw[->, thick] (level) -- node[midway, fill=white, inner sep=1pt]{无风险} (clear1);
+	\draw[->, thick] (level) -- node[midway, fill=white, inner sep=1pt]{提示} (observe);
+	\draw[->, thick] (level) -- node[midway, fill=white, inner sep=1pt]{警告} (limit);
+	\draw[->, thick] (level) -- node[midway, fill=white, inner sep=1pt]{紧急} (estop);
+
+	\draw[->, thick] (clear0) to[out=-90,in=170] (pub);
+	\draw[->, thick] (clear1) to[out=-70,in=180] (pub);
+	\draw[->, thick] (observe) to[out=-90,in=165] (pub);
+	\draw[->, thick] (limit) -- (dir);
+	\draw[->, thick] (estop) -- (dir);
+	\draw[->, thick] (dir) -- node[midway, fill=white, inner sep=1pt]{否} (dir0);
+	\draw[->, thick] (dir) -- node[midway, fill=white, inner sep=1pt]{是} (dir1);
+	\draw[->, thick] (dir0) to[out=-120,in=15] (pub);
+	\draw[->, thick] (dir1) to[out=-140,in=10] (pub);
+
+	% --- 图例 ---
+	\node[draw, thick, rounded corners=3pt, minimum width=3.0cm, minimum height=2.4cm] (legendbox) at (-3,-10.5) {};
+	\node[font=\scriptsize\bfseries] at (-3,-9.6) {图例};
+	\node[draw, rounded corners=2pt, thick, fill=gray!5, minimum width=0.7cm, minimum height=0.4cm] at (-3.65,-10.2) {};
+	\node[font=\scriptsize, anchor=west] at (-3.25,-10.2) {处理节点};
+	\node[draw, rounded corners=2pt, thick, dashed, fill=blue!12, minimum width=0.7cm, minimum height=0.4cm] at (-3.65,-10.8) {};
+	\node[font=\scriptsize, anchor=west] at (-3.25,-10.8) {判断节点};
+	\node[draw, thick, fill=orange!15, minimum width=0.7cm, minimum height=0.4cm] at (-3.65,-11.4) {};
+	\node[font=\scriptsize, anchor=west] at (-3.25,-11.4) {终结节点};
+\end{tikzpicture}
+\end{document}
