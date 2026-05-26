@@ -1,0 +1,241 @@
+flowchart TB
+    %% ========== 全局样式 ==========
+    classDef node fill:#ffffff,stroke:#444444,stroke-width:1px,color:#000000,font-size:9px
+    classDef title fill:none,stroke:none,font-size:12px,font-weight:bold
+
+    %% ========== 第1章 引言 ==========
+    subgraph CH1[" "]
+        direction LR
+        T1["<b>第1章  引言</b>"]
+        subgraph 1.1["1.1 研究背景"]
+            direction TB
+            1.1.1["塔吊吊钩端近场高风险<br/>感知需求分析"]:::node
+        end
+        subgraph 1.2["1.2 研究目的与意义"]
+            direction TB
+            1.2.1["1.2.1 研究目的"]:::node
+            1.2.2["1.2.2 研究意义"]:::node
+            1.2.1 --> 1.2.2
+        end
+        subgraph 1.3["1.3 国内外研究现状"]
+            direction TB
+            1.3.1["1.3.1 施工现场<br/>多源感知技术研究"]:::node
+            1.3.2["1.3.2 吊装感知传感器<br/>布设方案研究"]:::node
+            1.3.3["1.3.3 碰撞风险监测与<br/>预警模型研究"]:::node
+            1.3.4["1.3.4 文献综述小结"]:::node
+            1.3.1 --> 1.3.2 --> 1.3.3 --> 1.3.4
+        end
+        subgraph 1.4["1.4 主要研究内容"]
+            direction TB
+            1.4.1["研究内容<br/>与技术边界界定"]:::node
+        end
+        subgraph 1.5["1.5 技术路线"]
+            direction TB
+            1.5.1["全文技术路线<br/>与章节结构"]:::node
+        end
+        T1 --> 1.1
+        T1 --> 1.2
+        T1 --> 1.3
+        T1 --> 1.4
+        T1 --> 1.5
+    end
+    style CH1 fill:#e1f5fe,stroke:#01579b,stroke-width:2.5px
+    style T1 fill:#01579b,stroke:#01579b,color:#fff
+
+    %% ========== 第2章 吊钩端雷视融合感知系统设计与标定 ==========
+    subgraph CH2[" "]
+        direction LR
+        T2["<b>第2章  吊钩端雷视融合感知系统设计与标定</b>"]
+
+        subgraph 2.1["2.1 硬件系统架构与布置"]
+            direction TB
+            2.1.1["2.1.1 硬件设备选型<br/>（双LiDAR+相机+IMU）"]:::node
+            2.1.2["2.1.2 传感设备安装<br/>布局设计"]:::node
+            2.1.3["2.1.3 吊钩端雷视融合<br/>感知装置设计"]:::node
+            2.1.1 --> 2.1.2 --> 2.1.3
+        end
+
+        subgraph 2.2["2.2 通信链路与接口设计"]
+            direction TB
+            2.2.1["2.2.1 通信链路<br/>设计与实现"]:::node
+            2.2.2["2.2.2 多传感器时间同步<br/>与延迟补偿"]:::node
+            2.2.1 --> 2.2.2
+        end
+
+        subgraph 2.3["2.3 多传感器坐标体系与标定"]
+            direction TB
+            2.3.1["2.3.1 坐标系定义与<br/>变换发布约定"]:::node
+            2.3.2["2.3.2 相机内参标定"]:::node
+            2.3.3["2.3.3 双雷达外参标定"]:::node
+            2.3.4["2.3.4 雷达-相机<br/>外参标定"]:::node
+            2.3.1 --> 2.3.2 --> 2.3.3 --> 2.3.4
+        end
+
+        T2 --> 2.1
+        T2 --> 2.2
+        T2 --> 2.3
+    end
+    style CH2 fill:#fff3e0,stroke:#ef6c00,stroke-width:2.5px
+    style T2 fill:#ef6c00,stroke:#ef6c00,color:#fff
+
+    %% ========== 第3、4章 并列 ==========
+    subgraph CH34[" "]
+        direction LR
+
+        subgraph CH3[" "]
+            direction LR
+            T3["<b>第3章  基于融合点云的静态场景建图与动态目标感知</b>"]
+
+            subgraph 3.1["3.1 双雷达点云实时融合与同步方法"]
+                direction TB
+                3.1.1["3.1.1 双雷达数据接入<br/>与外参应用"]:::node
+                3.1.2["3.1.2 时间窗口同步与<br/>融合话题发布机制"]:::node
+                3.1.3["3.1.3 基于IMU的<br/>点云自动调平"]:::node
+                3.1.1 --> 3.1.2 --> 3.1.3
+            end
+
+            subgraph 3.2["3.2 吊钩端位姿估计与静态场景输出"]
+                direction TB
+                3.2.1["3.2.1 LIO-SAM紧耦合<br/>位姿估计框架"]:::node
+                3.2.2["3.2.2 双雷达融合定位与<br/>静态场景构建"]:::node
+                3.2.1 --> 3.2.2
+            end
+
+            subgraph 3.3["3.3 动态目标检测与运动状态估计"]
+                direction TB
+                3.3.1["3.3.1 动态检测输入预处理与<br/>短时历史深度图构建"]:::node
+                3.3.2["3.3.2 基于遮挡关系的<br/>动态点分类判别"]:::node
+                3.3.3["3.3.3 欧式聚类候选生成与<br/>短时目标跟踪"]:::node
+                3.3.1 --> 3.3.2 --> 3.3.3
+            end
+
+            T3 --> 3.1
+            T3 --> 3.2
+            T3 --> 3.3
+        end
+        style CH3 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2.5px
+        style T3 fill:#2e7d32,stroke:#2e7d32,color:#fff
+
+        subgraph CH4[" "]
+            direction LR
+            T4["<b>第4章  基于雷视融合的吊物状态估计与三维定位</b>"]
+
+            subgraph 4.1["4.1 基于YOLO26的吊装构件<br/>视觉识别与嵌入式部署"]
+                direction TB
+                4.1.1["4.1.1 YOLO26模型<br/>选型与原理"]:::node
+                4.1.2["4.1.2 吊装构件识别模型<br/>训练与验证"]:::node
+                4.1.3["4.1.3 分割模型量化与<br/>边缘部署"]:::node
+                4.1.1 --> 4.1.2 --> 4.1.3
+            end
+
+            subgraph 4.2["4.2 雷视跨模态融合与<br/>吊装构件三维定位"]
+                direction TB
+                4.2.1["4.2.1 基于分割掩码的<br/>点云-图像投影关联"]:::node
+                4.2.2["4.2.2 吊装构件位置估计与<br/>安全包络建模"]:::node
+                4.2.1 --> 4.2.2
+            end
+
+            T4 --> 4.1
+            T4 --> 4.2
+        end
+        style CH4 fill:#fce4ec,stroke:#c2185b,stroke-width:2.5px
+        style T4 fill:#c2185b,stroke:#c2185b,color:#fff
+    end
+
+    %% ========== 第5章 吊装作业风险分级预警与避障控制接口设计 ==========
+    subgraph CH5[" "]
+        direction LR
+        T5["<b>第5章  吊装作业风险分级预警与避障控制接口设计</b>"]
+
+        subgraph 5.1["5.1 吊装作业风险分级预警机制设计"]
+            direction TB
+            5.1.1["5.1.1 基于三维净空的<br/>静态风险评估"]:::node
+            5.1.2["5.1.2 基于相对运动与<br/>碰撞时间的动态风险评估"]:::node
+            5.1.3["5.1.3 静动融合的综合风险<br/>评估状态机设计"]:::node
+            5.1.1 --> 5.1.2 --> 5.1.3
+        end
+
+        subgraph 5.2["5.2 避障控制策略设计"]
+            direction TB
+            5.2.1["5.2.1 分层控制<br/>映射框架"]:::node
+            5.2.2["5.2.2 分级动作映射与<br/>避让方向策略"]:::node
+            5.2.3["5.2.3 预警到控制映射<br/>算法及适用边界"]:::node
+            5.2.1 --> 5.2.2 --> 5.2.3
+        end
+
+        T5 --> 5.1
+        T5 --> 5.2
+    end
+    style CH5 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2.5px
+    style T5 fill:#7b1fa2,stroke:#7b1fa2,color:#fff
+
+    %% ========== 第6章 案例分析 ==========
+    subgraph CH6[" "]
+        direction LR
+        T6["<b>第6章  案例分析</b>"]
+
+        subgraph 6.1["6.1 实验场景介绍"]
+            direction TB
+            6.1.1["6.1.1 实验平台<br/>硬件配置"]:::node
+            6.1.2["6.1.2 测试场景与<br/>数据采集"]:::node
+            6.1.1 --> 6.1.2
+        end
+
+        subgraph 6.2["6.2 吊装构件识别与<br/>定位性能评估"]
+            direction TB
+            6.2.1["6.2.1 吊装构件检测与<br/>分割评估"]:::node
+            6.2.2["6.2.2 点云投影关联与<br/>三维定位一致性验证"]:::node
+            6.2.1 --> 6.2.2
+        end
+
+        subgraph 6.3["6.3 防碰撞预警方法<br/>结果分析"]
+            direction TB
+            6.3.1["6.3.1 静态障碍物距离<br/>阈值预警效果测试"]:::node
+            6.3.2["6.3.2 动态目标趋势预测与<br/>相向运动预警验证"]:::node
+            6.3.1 --> 6.3.2
+        end
+
+        subgraph 6.4["6.4 整体方法有效性分析与实时性评估"]
+            direction TB
+            6.4.1["端到端延迟统计<br/>与模块耗时分析"]:::node
+        end
+
+        T6 --> 6.1
+        T6 --> 6.2
+        T6 --> 6.3
+        T6 --> 6.4
+    end
+    style CH6 fill:#fff8e1,stroke:#f57f17,stroke-width:2.5px
+    style T6 fill:#f57f17,stroke:#f57f17,color:#fff
+
+    %% ========== 第7章 结论与展望 ==========
+    subgraph CH7[" "]
+        direction LR
+        T7["<b>第7章  结论与展望</b>"]
+        subgraph 7.1["7.1 主要研究结论"]
+            direction TB
+            7.1.1["各章成果<br/>总结闭环"]:::node
+        end
+        subgraph 7.2["7.2 论文主要创新点"]
+            direction TB
+            7.2.1["可验证创新点<br/>与实验支撑"]:::node
+        end
+        subgraph 7.3["7.3 研究不足与未来展望"]
+            direction TB
+            7.3.1["研究边界与<br/>下一步方向"]:::node
+        end
+        T7 --> 7.1
+        T7 --> 7.2
+        T7 --> 7.3
+    end
+    style CH7 fill:#e0f2f1,stroke:#00695c,stroke-width:2.5px
+    style T7 fill:#00695c,stroke:#00695c,color:#fff
+
+    %% ========== 跨章连接 ==========
+    CH1 --> CH2
+    CH2 --> CH3
+    CH2 --> CH4
+    CH3 --> CH4
+    CH4 --> CH5
+    CH5 --> CH6
+    CH6 --> CH7

@@ -1,0 +1,110 @@
+flowchart TB
+    %% ========== 样式定义 ==========
+    classDef chapter fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+    classDef ch2 fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
+    classDef ch3 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef ch4 fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
+    classDef ch5 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef ch6 fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000
+    classDef sec fill:#ffffff,stroke:#666,stroke-width:1px,color:#000
+    classDef title fill:none,stroke:none,color:#000,font-size:14px,font-weight:bold
+
+    %% ========== 第1章 引言 ==========
+    subgraph CH1[" "]
+        direction LR
+        T1["<b>第1章  引言</b>"]
+        1.1["1.1 研究背景<br/>与问题提出"]:::sec
+        1.2["1.2 研究目的<br/>与意义"]:::sec
+        1.3["1.3 国内外<br/>研究现状"]:::sec
+        1.4["1.4 文献总结<br/>与切入点"]:::sec
+        1.5["1.5 主要研究内容<br/>与技术路线"]:::sec
+        T1 --> 1.1 --> 1.2 --> 1.3 --> 1.4 --> 1.5
+    end
+    style CH1 fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style T1 fill:#01579b,stroke:#01579b,color:#fff
+
+    %% ========== 第2章 传感器系统 ==========
+    subgraph CH2[" "]
+        direction LR
+        T2["<b>第2章  吊钩端传感器系统构建与配准</b>"]
+        2.1["2.1 系统总体架构<br/>与硬件选型布置"]:::sec
+        2.2["2.2 多传感器<br/>外参标定"]:::sec
+        2.3["2.3 通信链路与<br/>接口规范"]:::sec
+        T2 --> 2.1
+        T2 --> 2.2
+        T2 --> 2.3
+    end
+    style CH2 fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    style T2 fill:#ef6c00,stroke:#ef6c00,color:#fff
+
+    %% ========== 第3、4章 并列 ==========
+    subgraph CH34[" "]
+        direction LR
+
+        subgraph CH3[" "]
+            direction LR
+            T3["<b>第3章  基于融合点云的定位与空间危险区域检测方法</b>"]
+            3.1["3.1 双雷达点云<br/>实时融合方法"]:::sec
+            3.2["3.2 基于融合点云的<br/>SLAM定位与静态地图构建"]:::sec
+            3.3["3.3 基于M-detector的<br/>动态点检测与候选目标状态生成"]:::sec
+            T3 --> 3.1
+            T3 --> 3.2
+            T3 --> 3.3
+        end
+        style CH3 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+        style T3 fill:#2e7d32,stroke:#2e7d32,color:#fff
+
+        subgraph CH4[" "]
+            direction LR
+            T4["<b>第4章  基于雷视融合的避障预警策略</b>"]
+            4.1["4.1 视觉侧<br/>高风险目标识别"]:::sec
+            4.2["4.2 雷视<br/>融合策略"]:::sec
+            4.3["4.3 风险判定与<br/>分级预警策略"]:::sec
+            T4 --> 4.1
+            T4 --> 4.2
+            T4 --> 4.3
+        end
+        style CH4 fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+        style T4 fill:#c2185b,stroke:#c2185b,color:#fff
+    end
+
+    %% ========== 第5章 实验 ==========
+    subgraph CH5[" "]
+        direction LR
+        T5["<b>第5章  实验验证与系统评估</b>"]
+        5.1["5.1 实验平台与<br/>测试场景设置"]:::sec
+        5.2["5.2 多传感器<br/>定位性能实验"]:::sec
+        5.3["5.3 雷视协同<br/>感知效果分析"]:::sec
+        5.4["5.4 危险区域<br/>检测效果验证"]:::sec
+        5.5["5.5 系统实时性<br/>与稳定性验证"]:::sec
+        T5 --> 5.1
+        T5 --> 5.2
+        T5 --> 5.3
+        T5 --> 5.4
+        T5 --> 5.5
+    end
+    style CH5 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style T5 fill:#7b1fa2,stroke:#7b1fa2,color:#fff
+
+    %% ========== 第6章 结论 ==========
+    subgraph CH6[" "]
+        direction LR
+        T6["<b>第6章  结论与展望</b>"]
+        6.1["6.1 主要<br/>研究结论"]:::sec
+        6.2["6.2 创新点<br/>总结"]:::sec
+        6.3["6.3 不足与<br/>未来展望"]:::sec
+        T6 --> 6.1
+        T6 --> 6.2
+        T6 --> 6.3
+    end
+    style CH6 fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    style T6 fill:#00695c,stroke:#00695c,color:#fff
+
+    %% ========== 跨章连接 ==========
+    CH1 --> CH2
+    CH2 --> CH3
+    CH2 --> CH4
+    CH3 --> CH4
+    CH3 --> CH5
+    CH4 --> CH5
+    CH5 --> CH6

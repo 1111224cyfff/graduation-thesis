@@ -1,0 +1,173 @@
+flowchart TB
+    %% ========== 全局样式 ==========
+    classDef node fill:#ffffff,stroke:#555555,stroke-width:1px,color:#000000,font-size:10px
+    classDef title fill:none,stroke:none,font-size:13px,font-weight:bold
+
+    %% ========== 第1章 引言 ==========
+    subgraph CH1[" "]
+        direction LR
+        T1["<b>第1章  引言</b>"]
+        1.1["1.1 研究背景<br/>与问题提出"]:::node
+        1.2["1.2 研究目的<br/>与意义"]:::node
+        1.3["1.3 国内外<br/>研究现状"]:::node
+        1.4["1.4 文献总结<br/>与切入点"]:::node
+        1.5["1.5 主要研究内容<br/>与技术路线"]:::node
+        T1 --> 1.1 --> 1.2 --> 1.3 --> 1.4 --> 1.5
+    end
+    style CH1 fill:#e1f5fe,stroke:#01579b,stroke-width:2.5px
+    style T1 fill:#01579b,stroke:#01579b,color:#fff
+
+    %% ========== 第2章 吊钩端传感器系统构建与配准 ==========
+    subgraph CH2[" "]
+        direction LR
+        T2["<b>第2章  吊钩端传感器系统构建与配准</b>"]
+
+        subgraph 2.1["2.1 系统总体架构与硬件选型布置"]
+            direction TB
+            2.1.1["2.1.1 传感设备选型<br/>（双LiDAR+相机+IMU）"]:::node
+            2.1.2["2.1.2 安装布局优化<br/>（错位对称+俯仰角设计）"]:::node
+            2.1.3["2.1.3 一体化盒体设计<br/>（SolidWorks结构）"]:::node
+            2.1.1 --> 2.1.2 --> 2.1.3
+        end
+
+        subgraph 2.2["2.2 多传感器外参标定"]
+            direction TB
+            2.2.1["2.2.1 相机内参标定<br/>（张正友棋盘格）"]:::node
+            2.2.2["2.2.2 双雷达外参自动标定<br/>（粗配准+GICP精配准）"]:::node
+            2.2.3["2.2.3 雷达—相机外参标定<br/>（3D-2D重投影最小化）"]:::node
+            2.2.1 --> 2.2.2 --> 2.2.3
+        end
+
+        subgraph 2.3["2.3 通信链路与接口规范"]
+            direction TB
+            2.3.1["2.3.1 通信链路搭建<br/>（以太网+USB3汇聚）"]:::node
+            2.3.2["2.3.2 时间同步与延迟补偿<br/>（PTP/ROS时间戳对齐）"]:::node
+            2.3.3["2.3.3 坐标系与TF接口规范<br/>（hook/base参考系）"]:::node
+            2.3.1 --> 2.3.2 --> 2.3.3
+        end
+
+        T2 --> 2.1
+        T2 --> 2.2
+        T2 --> 2.3
+    end
+    style CH2 fill:#fff3e0,stroke:#ef6c00,stroke-width:2.5px
+    style T2 fill:#ef6c00,stroke:#ef6c00,color:#fff
+
+    %% ========== 第3、4章 并列 ==========
+    subgraph CH34[" "]
+        direction LR
+
+        subgraph CH3[" "]
+            direction LR
+            T3["<b>第3章  基于融合点云的定位与空间危险区域检测方法</b>"]
+
+            subgraph 3.1["3.1 双雷达点云实时融合方法"]
+                direction TB
+                3.1.1["3.1.1 双雷达原始数据接入<br/>与静态外参加载"]:::node
+                3.1.2["3.1.2 基于时间窗口的点云同步<br/>与坐标统一融合"]:::node
+                3.1.3["3.1.3 IMU合并、时序发布<br/>与一次性自动调平"]:::node
+                3.1.4["3.1.4 融合结果发布与<br/>LIO-SAM接口适配"]:::node
+                3.1.1 --> 3.1.2 --> 3.1.3 --> 3.1.4
+            end
+
+            subgraph 3.2["3.2 基于融合点云的SLAM定位与静态地图构建"]
+                direction TB
+                3.2.1["3.2.1 LIO-SAM输入适配<br/>与系统接口"]:::node
+                3.2.2["3.2.2 点级去畸变与<br/>range image组织"]:::node
+                3.2.3["3.2.3 特征提取与<br/>scan-to-map前端配准"]:::node
+                3.2.4["3.2.4 IMU预积分、因子图优化<br/>与位姿地图输出"]:::node
+                3.2.1 --> 3.2.2 --> 3.2.3 --> 3.2.4
+            end
+
+            subgraph 3.3["3.3 基于M-detector的动态点检测与候选目标状态生成"]
+                direction TB
+                3.3.1["3.3.1 动态检测输入组织与<br/>短时历史深度图构建"]:::node
+                3.3.2["3.3.2 基于遮挡关系的<br/>三类动态点判别"]:::node
+                3.3.3["3.3.3 欧式聚类候选生成与<br/>短时目标跟踪"]:::node
+                3.3.1 --> 3.3.2 --> 3.3.3
+            end
+
+            T3 --> 3.1
+            T3 --> 3.2
+            T3 --> 3.3
+        end
+        style CH3 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2.5px
+        style T3 fill:#2e7d32,stroke:#2e7d32,color:#fff
+
+        subgraph CH4[" "]
+            direction LR
+            T4["<b>第4章  基于雷视融合的避障预警策略</b>"]
+
+            subgraph 4.1["4.1 视觉侧高风险目标识别"]
+                direction TB
+                4.1.1["4.1.1 危险目标检测模型<br/>与部署（YOLOv8）"]:::node
+                4.1.2["4.1.2 检测结果时序<br/>稳定化处理"]:::node
+                4.1.3["4.1.3 点云动态目标融合接口<br/>与数据结构定义"]:::node
+                4.1.1 --> 4.1.2 --> 4.1.3
+            end
+
+            subgraph 4.2["4.2 雷视融合策略"]
+                direction TB
+                4.2.1["4.2.1 融合总体流程与<br/>设计原则"]:::node
+                4.2.2["4.2.2 双相一致性关联策略<br/>（双向验证）"]:::node
+                4.2.3["4.2.3 轨迹级绑定与<br/>遮挡鲁棒融合"]:::node
+                4.2.4["4.2.4 置信度融合与<br/>语义标签输出"]:::node
+                4.2.1 --> 4.2.2 --> 4.2.3 --> 4.2.4
+            end
+
+            subgraph 4.3["4.3 风险判定与分级预警策略"]
+                direction TB
+                4.3.1["4.3.1 静态障碍：<br/>距离/侵入阈值预警"]:::node
+                4.3.2["4.3.2 动态目标：<br/>相对速度/TTC风险"]:::node
+                4.3.3["4.3.3 分级预警状态机<br/>（Normal/Warning/Danger）"]:::node
+                4.3.1 --> 4.3.2 --> 4.3.3
+            end
+
+            T4 --> 4.1
+            T4 --> 4.2
+            T4 --> 4.3
+        end
+        style CH4 fill:#fce4ec,stroke:#c2185b,stroke-width:2.5px
+        style T4 fill:#c2185b,stroke:#c2185b,color:#fff
+    end
+
+    %% ========== 第5章 实验验证与系统评估 ==========
+    subgraph CH5[" "]
+        direction LR
+        T5["<b>第5章  实验验证与系统评估</b>"]
+        5.1["5.1 实验平台与<br/>测试场景设置"]:::node
+        5.2["5.2 多传感器<br/>定位性能实验"]:::node
+        5.3["5.3 雷视协同<br/>感知效果分析"]:::node
+        5.4["5.4 危险区域<br/>检测效果验证"]:::node
+        5.5["5.5 系统实时性<br/>与稳定性验证"]:::node
+        T5 --> 5.1
+        T5 --> 5.2
+        T5 --> 5.3
+        T5 --> 5.4
+        T5 --> 5.5
+    end
+    style CH5 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2.5px
+    style T5 fill:#7b1fa2,stroke:#7b1fa2,color:#fff
+
+    %% ========== 第6章 结论与展望 ==========
+    subgraph CH6[" "]
+        direction LR
+        T6["<b>第6章  结论与展望</b>"]
+        6.1["6.1 主要<br/>研究结论"]:::node
+        6.2["6.2 创新点<br/>总结"]:::node
+        6.3["6.3 不足与<br/>未来展望"]:::node
+        T6 --> 6.1
+        T6 --> 6.2
+        T6 --> 6.3
+    end
+    style CH6 fill:#e0f2f1,stroke:#00695c,stroke-width:2.5px
+    style T6 fill:#00695c,stroke:#00695c,color:#fff
+
+    %% ========== 跨章连接 ==========
+    CH1 --> CH2
+    CH2 --> CH3
+    CH2 --> CH4
+    CH3 --> CH4
+    CH3 --> CH5
+    CH4 --> CH5
+    CH5 --> CH6
