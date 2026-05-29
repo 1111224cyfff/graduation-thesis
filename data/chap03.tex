@@ -16,11 +16,11 @@
 
 双雷达实时融合基于第2章标定的外参信息实现。系统启动时，融合节点同时订阅同一局域网内两路Mid-360激光雷达及其对应IMU的在线消息流，通过设备IP区分传感器并组织话题。点云采用livox\_ros\_driver2/CustomMsg格式，每个点包含坐标、反射率、线号和帧内偏移时间；IMU数据采用标准sensor\_msgs/Imu消息格式。
 
-融合系统以第一路LiDAR与IMU的坐标系作为统一参考系body，第二路传感器通过标定得到的外参矩阵$\mathbf{R}_B^{L_1}$、$\mathbf{t}_B^{L_1}$、$\mathbf{R}_B^{I_1}$、$\mathbf{t}_B^{I_1}$等映射到该基准系。在线阶段无需执行外参优化或重复配准，从而实现离线标定与在线融合的解耦。
+融合系统以第一路LiDAR与IMU的坐标系作为统一参考系（body），第二路传感器通过标定得到的外参矩阵$\mathbf{R}_b^{L_1}$、$\mathbf{t}_b^{L_1}$、$\mathbf{R}_b^{I_1}$、$\mathbf{t}_b^{I_1}$等映射到该基准系。在线阶段无需执行外参优化或重复配准，从而实现离线标定与在线融合的解耦。
 
-在节点初始化阶段，外参矩阵被分解为旋转部分$\mathbf{R}_{B}^{L_i}$和平移部分$\mathbf{t}_{B}^{L_i}$，并存储到雷达缓冲区中；IMU外参采用相同处理方式。对于第$i$路雷达中的任意点$\mathbf{p}^{l_i}$，运行时的坐标统一变换为
+在节点初始化阶段，外参矩阵被分解为旋转部分$\mathbf{R}_{b}^{L_i}$和平移部分$\mathbf{t}_{b}^{L_i}$，并存储到雷达缓冲区中；IMU外参采用相同处理方式。对于第$i$路雷达中的任意点$\mathbf{p}^{l_i}$，运行时的坐标统一变换为
 \begin{equation}
-\mathbf{p}^{b}=\mathbf{R}_{B}^{L_i}\,\mathbf{p}^{l_i}+\mathbf{t}_{B}^{L_i}
+\mathbf{p}^{b}=\mathbf{R}_{b}^{L_i}\,\mathbf{p}^{l_i}+\mathbf{t}_{b}^{L_i}
 \end{equation}
 其中，$\mathbf{p}^{b}$为统一到body坐标系下的点坐标。该公式对应于代码中的逐点坐标变换，构成双雷达在线融合的入口操作。
 
@@ -245,13 +245,6 @@ M-detector动态检测链路由三个串接模块构成，整体架构如图\ref
 
 动态检测节点通过点云与里程计两个独立队列配合定时器回调实现近似同序调度：每次触发从队首取一帧点云和对应的位姿，执行逐点判别后发布结果。由于仅操作队列头部数据，算法延迟被控制在缓冲窗口与调度周期之和以内，无需回溯长时历史。
 
-从可计算性看，逐点判别的时间复杂度受历史深度图数量线性约束。记经近场 ROI约束后的单帧有效点数为 $N_p$、历史深度图数量为 $K_h$，则检测主过程可近似写为
-\begin{equation}
-\mathcal{O}(N_p\cdot K_h),\qquad K_h\leq \mathrm{max\_depth\_map\_num}=5
-\end{equation}
-
-因此，在固定传感器频率与窗口配置下，单帧计算量上界由 $N_p\cdot K_h$ 决定，主要消耗于“当前点与历史深度图”的逐点比较；当历史片段数受限于 $K_h\leq 5$ 时，模块总开销随输入点数近似线性增长，具备可预测且有界的实时计算开销。
-
 为降低远距离背景点与无关区域点对遮挡判别的扰动，系统在历史深度图构建前执行近场 ROI约束。设第 $k$ 帧已配准点集为 $\mathcal{P}_{\mathrm{reg}}(k)$，则送入动态检测的点集可表示为
 \begin{equation}
 \mathcal{P}_{\mathrm{roi}}(k)=\left\{\mathbf{p}\in\mathcal{P}_{\mathrm{reg}}(k)\mid x^2+y^2\leq r_{xy}^2\right\},\qquad r_{xy}=10\,\mathrm{m}
@@ -278,6 +271,13 @@ M-detector动态检测链路由三个串接模块构成，整体架构如图\ref
 	\caption{近场 ROI裁剪效果对比}
 	\label{fig:ch3_roi_crop_placeholder}
 \end{figure}
+
+从可计算性看，逐点判别的时间复杂度受历史深度图数量线性约束。记经近场 ROI约束后的单帧有效点数为 $N_p$、历史深度图数量为 $K_h$，则检测主过程可近似写为
+\begin{equation}
+\mathcal{O}(N_p\cdot K_h),\qquad K_h\leq \mathrm{max\_depth\_map\_num}=5
+\end{equation}
+
+因此，在固定传感器频率与窗口配置下，单帧计算量上界由 $N_p\cdot K_h$ 决定，主要消耗于“当前点与历史深度图”的逐点比较；当历史片段数受限于 $K_h\leq 5$ 时，模块总开销随输入点数近似线性增长，具备可预测且有界的实时计算开销。
 
 \subsection{基于遮挡关系的动态点分类判别}\label{sec:ch3_mdetector_cases}
 
@@ -352,7 +352,7 @@ M-detector完成动态点判别后，系统对动态点执行欧式聚类以形�
 0&0&0&1
 \end{bmatrix}
 \end{equation}
-其中，观测只包含二维中心位置，$z$ 向高度并未纳入状态方程，而是采用指数低通更新
+其中，观测只包含二维中心位置，$z$向高度并未纳入状态方程，而是采用指数低通更新
 \begin{equation}
 z_k=\alpha z_{k-1}+(1-\alpha)\tilde{z}_k
 \end{equation}

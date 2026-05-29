@@ -9,9 +9,9 @@
 	\label{fig:ch5_overview}
 \end{figure}
 
-\section{吊装作业风险分级预警机制设计}\label{sec_ch4_warning_design}
+\section{吊装作业风险分级预警机制设计}\label{sec_ch5_warning_design}
 
-为从系统层面说明多源感知、风险融合与控制建议之间的数据流关系，图\ref{fig:ch4_warning_pipeline_overview} 给出了多层级预警机制的总体流程。图中三路输入分别对应吊装目标对象状态、动态轨迹状态和局部地图静态环境；预警评估模块在统一坐标系下完成静态净空、动态净空和趋势升级判定，并输出结构化风险状态。该状态一方面服务于预警可视化，另一方面作为第 5.2 节控制接口原型的直接输入。
+为从系统层面说明多源感知、风险融合与控制建议之间的数据流关系，图\ref{fig:ch5_warning_pipeline_overview} 给出了多层级预警机制的总体流程。图中三路输入分别对应吊装目标对象状态、动态轨迹状态和局部地图静态环境；预警评估模块在统一坐标系下完成静态净空、动态净空和趋势升级判定，并输出结构化风险状态。该状态一方面服务于预警可视化，另一方面作为第 5.2 节控制接口原型的直接输入。
 
 \begin{figure}[htbp]
 	\centering
@@ -113,10 +113,10 @@
 
 	\end{tikzpicture}}
 	\caption{多层级预警机制总体流程图}
-	\label{fig:ch4_warning_pipeline_overview}
+	\label{fig:ch5_warning_pipeline_overview}
 \end{figure}
 
-\subsection{基于三维净空的静态风险评估}\label{subsec_ch4_static_distance_warning}
+\subsection{基于三维净空的静态风险评估}\label{subsec_ch5_static_distance_warning}
 
 在吊装安全预警链路中，最先需要回答的问题并非目标未来是否会发生碰撞，而是当前时刻吊装构件与周边环境还剩多少可用净空。若这一基础量无法稳定估计，后续关于相向接近、趋势升级和动作约束的讨论都会失去几何基准。因此，本文将静态风险评估建立在第 4.2 节已获得的三维对象状态之上，并直接与局部地图点云进行距离计算。该过程由预警评估模块在线实现，作为整条预警链路的第一层判据。
 
@@ -161,9 +161,9 @@ d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o)
 
 其工程意义在于将构件是否逼近静态边界这一问题落到可读、可配置的几何量上，为后续动态升级和控制映射提供稳定入口。上述三级阈值与Wang等~\cite{wang2025spatial}、Sun等~\cite{sun2024development}在起重机-工人空间碰撞研究中的风险区域划分及安全阈值设定一致。
 
-从工程力学角度，紧急级阈值1.0~m的设定参考了塔式起重机机械制动性能的相关标准。GB/T~5031《塔式起重机》规定额定载荷下起升机构制动下滑量不超过80~mm，以此为依据估算塔机制动器的机械滑行距离，紧急级阈值已为其提供了充足的安全裕度。同时以施工人员典型步行速度约1.5~m/s估算，该阈值可提供约0.67~s的碰撞前缓冲时间。警告级与提示级阈值（3.0~m和5.0~m）则在此基础上进一步叠加了操作员反应时间的安全冗余。从方法边界看，静态风险评估采用包络球三维距离结合最近邻点集近似障碍边界的表达，因此更适合作为在线预警的快速近似层，而非最终的高精度碰撞检测器。
+从工程力学角度，紧急级阈值1.0~m的设定参考了塔式起重机机械制动性能的相关标准。GB/T~5031《塔式起重机》规定额定载荷下起升机构制动下滑量不超过80~mm，以此为依据估算塔机制动器的机械滑行距离，紧急级阈值已为其提供了充足的安全裕度。从方法边界看，静态风险评估采用包络球三维距离结合最近邻点集近似障碍边界的表达，因此更适合作为在线预警的快速近似层，而非最终的高精度碰撞检测器。
 
-本文涉及三类净空概念，其几何含义由图\ref{fig:ch4_clearance_definition}统一示意。静态净空指目标与局部地图静态边界之间的剩余边界距离，反映目标偏离参考路径的静态充裕程度；动态净空指目标与动态障碍物在当前时刻的边界距离，反映两者之间的实时空间关系；预测净空指在预测时间窗内，目标与动态障碍物最接近时仍能保留的最小边界距离，反映对未来碰撞风险的预估。
+本文涉及三类净空概念，其几何含义由图\ref{fig:ch5_clearance_definition}统一示意。静态净空指目标与局部地图静态边界之间的剩余边界距离，反映目标偏离参考路径的静态充裕程度；动态净空指目标与动态障碍物在当前时刻的边界距离，反映两者之间的实时空间关系；预测净空指在预测时间窗内，目标与动态障碍物最接近时仍能保留的最小边界距离，反映对未来碰撞风险的预估。
 
 \begin{figure}[htbp]
 	\centering
@@ -183,12 +183,12 @@ d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o)
 		\includegraphics[page=3,width=\linewidth]{静态净空、动态净空与预测净空定义示意.pdf}
 	\end{minipage}
 	\caption{静态净空、动态净空与预测净空定义示意}
-	\label{fig:ch4_clearance_definition}
+	\label{fig:ch5_clearance_definition}
 \end{figure}
 
 其中，$d_{\mathrm{static}}$ 表示目标与静态障碍物之间的最小几何距离，即静态净空；$d_{\mathrm{dynamic}}$ 表示目标与动态障碍物之间的最小几何距离，即动态净空；$P_{\mathrm{static}}$ 为静态障碍物边界上与目标最近的点；$D$ 与 $O$ 分别表示动态障碍物与目标对象的外廓边界；$D^{*}$ 与 $O^{*}$ 分别表示二者在预测时刻的外廓边界；$d_{\mathrm{pred}}$ 表示在预测时间窗内二者最接近时的最小边界距离，即预测净空。
 
-\subsection{基于相对运动与碰撞时间的动态风险评估}\label{subsec_ch4_risk_upgrade}
+\subsection{基于相对运动与碰撞时间的动态风险评估}\label{subsec_ch5_risk_upgrade}
 
 本节聚焦于动态风险评估的判级环节，结合第 3 章输出的动态轨迹状态进行风险分析。核心问题是：当动态目标尚未与被监控构件贴近但已形成持续接近趋势时，系统应否提前升级预警等级。
 
@@ -256,9 +256,9 @@ d_{\mathrm{pred}}=\max\bigl(0,\,\|\tilde{\mathbf{r}}+\tau^*\tilde{\mathbf{v}}_{\
 
 该余弦值的物理含义是二者运动方向的相似性：$\cos\theta_{xy}\approx 1$ 表示同向运动，$\cos\theta_{xy}\approx -1$ 表示正对相向运动，$\cos\theta_{xy}\approx 0$ 表示运动方向近似垂直。仅靠 $v_{\mathrm{close}}$ 虽能反映视线方向上的接近速率，但无法区分“对向接近”与“旁侧交叉经过”两种截然不同的危险模式——前者意味着目标正朝吊物运动区域驶来，碰撞风险持续上升；后者即使当前 $v_{\mathrm{close}}$ 较大，目标也会很快通过危险区域而非停留。为此，引入 $\cos\theta_{xy}<-0.2$ 作为相向运动判据，该阈值对应的速度夹角 $\theta_{xy}>101.5^\circ$，表明二者运动方向存在明确的对向分量，辅以 $v_{\mathrm{close}}$ 足够大即可判定为有效相向接近。阈值 $-0.2$ 的选择为接近方向留出了合理的角度容差，覆盖了实际施工中因路径偏移导致的非完全正对接近场景。当二者均存在有效平面速度，且 $v_{\mathrm{close}}$ 足够大、$\cos\theta_{xy}<-0.2$ 时，系统将当前动态等级上调一级，最高不超过紧急等级；在低速场景下，则退化为基于接近速度和预测净空的保守升级逻辑。该机制能够对相向接近场景给出提前预警。
 
-\subsection{静动融合的综合风险评估状态机设计}\label{subsec_ch4_warning_interface}
+\subsection{静动融合的综合风险评估状态机设计}\label{subsec_ch5_warning_interface}
 
-第\ref{subsec_ch4_static_distance_warning}节与第\ref{subsec_ch4_risk_upgrade}节分别从静态几何净空与动态相对运动两个维度建立了风险分级判据。在此基础上，系统不直接输出任一分支的判定结果，而是先对两类分级进行融合，再由状态保持机制得到面向下游的稳定风险状态。设静态与动态分级分别为 $L_s$ 和 $L_d$，则即时目标等级可表示为
+第\ref{subsec_ch5_static_distance_warning}节与第\ref{subsec_ch5_risk_upgrade}节分别从静态几何净空与动态相对运动两个维度建立了风险分级判据。在此基础上，系统不直接输出任一分支的判定结果，而是先对两类分级进行融合，再由状态保持机制得到面向下游的稳定风险状态。设静态与动态分级分别为 $L_s$ 和 $L_d$，则即时目标等级可表示为
 \begin{equation}
 L_{\mathrm{des}}=\max(L_s,L_d)
 \end{equation}
@@ -275,7 +275,7 @@ L_{\mathrm{des}}=\max(L_s,L_d)
 
 值得强调的是，风险接口不仅提供结果等级，还提供触发依据与状态质量。当上游输入不足、时空对齐失败或监测对象缺失时，系统显式输出未就绪状态及对应诊断语义，而非沉默或误触发高等级告警。该机制增强了链路可解释性与可验证性，并为下游控制模块执行结果采信与降级处理提供了明确依据。
 
-\section{避障控制策略设计}\label{sec_ch4_avoidance_design}
+\section{避障控制策略设计}\label{sec_ch5_avoidance_design}
 
 \subsection{分层控制映射框架}\label{subsec_ch4_closed_loop_arch}
 
@@ -285,7 +285,7 @@ L_{\mathrm{des}}=\max(L_s,L_d)
 \begin{equation}
 \mathbf{u}=\{a,\rho,h,e,\alpha,\mathbf{d}_{\mathrm{rec}},\eta\}
 \end{equation}
-其中， $a$ 为动作类型，$\rho$ 为速度约束比例，$h$ 为保持位姿标志，$e$ 为紧急停机标志，$\alpha$ 为人工确认需求，$\mathbf{d}_{\mathrm{rec}}$ 为建议退让方向，$\eta$ 为系统就绪性标志。该接口强调“如何响应风险”，而非重复解释“风险来自何处”。
+其中，$a$ 为动作类型，$\rho$ 为速度约束比例，$h$ 为保持位姿标志，$e$ 为紧急停机标志，$\alpha$ 为人工确认需求，$\mathbf{d}_{\mathrm{rec}}$ 为建议退让方向，$\eta$ 为系统就绪性标志。该接口强调“如何响应风险”，而非重复解释“风险来自何处”。
 
 需要指出的是，本文实现的是控制建议接口原型，而非已闭环接入执行机构的全自动避障系统。当前接口主要完成风险语义到动作语义的规范化映射，尚未覆盖设备侧执行确认、权限联锁与故障反馈闭环。该边界设定有助于保持模块职责清晰。
 
@@ -365,18 +365,18 @@ a=\pi(L_{\mathrm{act}},\sigma;\Theta)
 		\node[font=\scriptsize, anchor=west] at (-3.25,-11.4) {终结节点};
 	\end{tikzpicture}}
 	\caption{风险状态到控制建议的映射流程图}
-	\label{fig:ch4_closed_loop_arch_placeholder}
+	\label{fig:ch5_closed_loop_arch_placeholder}
 \end{figure}
 
 \subsection{预警到控制映射算法及适用边界}\label{subsec_ch4_avoidance_pseudocode}
 
 为明确控制建议接口的运行机理，本文将其抽象为单帧映射流程。与风险判级阶段不同，该流程不重新计算几何关系，而是在既有风险状态基础上执行就绪性判定、动作决策与输出规范化。
 
-算法~\ref{alg:ch4_warning_control_mapping}给出了该映射流程的紧凑形式，将实现逻辑归纳为就绪短路、分级动作映射、方向修正和一致性发布四个环节。
+算法~\ref{alg:ch5_warning_control_mapping}给出了该映射流程的紧凑形式，将实现逻辑归纳为就绪短路、分级动作映射、方向修正和一致性发布四个环节。
 
 \begin{algorithm}[htbp]
 \caption{风险状态到控制建议的映射流程（单帧）}
-\label{alg:ch4_warning_control_mapping}
+\label{alg:ch5_warning_control_mapping}
 \KwIn{风险状态 $\mathbf{w}=\{L_{\mathrm{act}},\sigma,\phi,\mathbf{z},\eta,\mathbf{v}_o\}$；策略参数 $\Theta$}
 \KwOut{控制建议 $\mathbf{u}$}
 初始化：$a\leftarrow\texttt{clear}$，$\rho\leftarrow 1.0$，$h\leftarrow 0$，$e\leftarrow 0$，$\alpha\leftarrow 0$，$\mathbf{d}_{\mathrm{rec}}\leftarrow\mathbf{0}$\;
