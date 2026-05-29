@@ -214,6 +214,44 @@ F1 分数 & 84.69\% \\
 
 综上所述，量化评估结果表明，当前三维定位链路在精确率、F1分数与IoU等核心指标上均达到较高水准，其输出结果可直接作为预警净空计算的可靠输入。精确率指标的突出表现说明投影关联结果中对后续计算产生误导的虚假点极少，为安全预警提供了高置信度的几何数据支撑。即便在密集遮挡与动态摆动等最具挑战性的工况下，系统仍能保持稳定的定位性能。
 
+\subsection{吊装构件三维定位精度评估}\label{subsec_ch5_localization_error}
+
+上节从点云关联角度验证了投影回查策略的正向可信度，但预警判级的有效性最终取决于从二维分割到三维实例点云质心的全链路定位误差的量值。若质心定位误差超过预警阈值量级（如紧急级阈值1.0~m），则判级结果将失去几何基准。需要说明的是，本系统采用的 Livox Mid-360 激光雷达在典型吊钩端作业距离（5–10~m）下的官方测距精度（$1\sigma$）为 $\leq 2$~cm，远低于全链路定位误差的量级，因此本节评估的质心偏差主要反映外参标定残差、时间同步偏差与分割边界不确定度等系统层面误差，而非传感器测距噪声。
+
+基于上述基准，本节进一步基于手工标定的实例点云真值，定量评估全链路下的吊装构件质心三维定位误差。评估方法如下：对每帧数据，手工标定属于吊装构件的全部点云作为真值集合 $\mathcal{P}_{\mathrm{GT}}$，算法输出经YOLO26分割掩码回查得到的实例点云作为预测集合 $\mathcal{P}_{\mathrm{algo}}$。分别计算两集合的质心：
+\begin{equation}
+\bar{\mathbf{p}}_{\mathrm{GT}} = \frac{1}{|\mathcal{P}_{\mathrm{GT}}|}\sum_{\mathbf{p}\in\mathcal{P}_{\mathrm{GT}}}\mathbf{p}
+\label{eq:ch5_centroid_gt}
+\end{equation}
+\begin{equation}
+\bar{\mathbf{p}}_{\mathrm{algo}} = \frac{1}{|\mathcal{P}_{\mathrm{algo}}|}\sum_{\mathbf{p}\in\mathcal{P}_{\mathrm{algo}}}\mathbf{p}
+\label{eq:ch5_centroid_algo}
+\end{equation}
+
+接着，定义三维定位误差为 $\|\bar{\mathbf{p}}_{\mathrm{GT}}-\bar{\mathbf{p}}_{\mathrm{algo}}\|_2$。该误差为复合指标，同步偏差、外参残差与分割边界不确定度等融合误差贡献均已包含其中，无需逐项拆解。
+
+采用与上节相同的样本进行统计，结果如表~\ref{tab:ch5_centroid_error}所示。从表中可以看出，吊装构件三维质心定位误差的均值为0.228~m，均方根误差为0.241~m，最大值为0.297~m。水平面（XY）误差均值为0.100~m，显著优于竖直方向（Z）误差均值0.159~m。这一差异与传感器的观测几何一致：双LiDAR侧向对称布置在水平面内形成较好的测量覆盖，而竖直方向主要依靠单次俯仰扫描层获取深度信息，且吊物顶部点云分布受吊绳遮挡与目标姿态影响，使得Z向质心估计的稳定性和精度略低于水平面。
+
+\begin{table}[htbp]
+\centering
+\caption{吊装构件质心三维定位误差统计表}
+\label{tab:ch5_centroid_error}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{4.5cm}p{3.0cm}p{3.0cm}p{3.0cm}}
+\Xhline{1pt}
+\textbf{指标项} & \textbf{水平面(XY)误差} & \textbf{竖直方向(Z)误差} & \textbf{三维(3D)误差} \\
+\hline
+均值（Mean） & 0.100 & 0.159 & 0.228 \\
+标准差（Std） & 0.105 & 0.107 & 0.077 \\
+均方根误差（RMSE） & 0.145 & 0.192 & 0.241 \\
+最大值（Max） & 0.283 & 0.293 & 0.297 \\
+最小值（Min） & 0.018 & 0.009 & 0.043 \\
+\Xhline{1pt}
+\end{tabular*}
+\parbox{\textwidth}{\vspace{0.5em}\small\raggedright 注：表中数值单位均为米（m）。水平面误差指质心在X-Y平面内的欧氏距离，竖直方向误差指Z方向绝对偏差。}
+\end{table}
+
+由表可知，三维定位误差最大值0.297~m，其中水平面误差均值仅0.100~m，均小于紧急级净空阈值1.0~m。本系统采用的Livox Mid-360激光雷达在典型作业距离下的测距精度（$\leq 2$~cm）亦高于上述全链路定位误差。因此，上述定位精度能够满足本文预警阈值的工程需求。
+
 \section{防碰撞预警方法结果分析}\label{sec_ch5_warning_validation}
 
 \subsection{静态障碍物距离阈值预警效果测试}\label{subsec_ch5_static_warning}
