@@ -114,7 +114,7 @@ $w_d$ & 权重衰减 & 0.0005 \\
 \centering
 \caption{实验环境配置}
 \label{tab:ch4_exp_env}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}C{6cm}C{7.3cm}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}C{5cm}C{8.3cm}}
 \Xhline{1pt}
 \textbf{名称} & \textbf{设置} \\
 \hline
@@ -279,6 +279,13 @@ u=\frac{u'}{w'},\; v=\frac{v'}{w'}
 \mathcal{S}_i=\left\{(x,y,z)\ \middle|\ (x-\bar{x}_i)^2+(y-\bar{y}_i)^2+(z-\bar{z}_i)^2\leq (r_i^{\mathrm{s}})^2\right\}
 \label{eq:ch4_envelope_sphere}
 \end{equation}
+
+需要指出的是，在实际实现中，$r_i^{\mathrm{s}}$ 并非仅由单帧点云散布独立决定，而是采用了一套逐级退守与帧间平滑相结合的稳定策略。系统首先从实例投影点云的散布范围计算原始半径估计值；若该值低于阈值，则依次退守至经指数平滑的滤波半径、构件尺寸估算半径，直至固定默认半径，确保在掩码严重缺失时仍能输出合理的包络边界。在帧间稳定性方面，当原始半径相对于历史滤波值呈收缩趋势时，采用指数移动平均对半径进行平滑：
+\begin{equation}
+r_{\mathrm{filtered}} = \alpha\, r_{\mathrm{previous}} + (1-\alpha)\, r_{\mathrm{observed}},\qquad \alpha=0.6
+\label{eq:ema_radius}
+\end{equation}
+其中，$r_{\mathrm{previous}}$ 为上一时刻的滤波半径，$r_{\mathrm{observed}}$ 为当前帧的原始半径观测值。平滑系数 $\alpha=0.6$ 赋予历史值更高权重，在保留对半径变化趋势跟踪能力的同时，有效抑制单帧掩码缺失或点云稀疏导致的半径突降。当半径呈扩张趋势时，则需多帧连续一致的大幅扩张确认后才予以响应，避免噪声引起的误扩。上述策略使包络球半径在分割掩码帧间波动时保持平稳输出，是后续安全评估链路时序稳定的重要工程保障。
 
 将 LIO-SAM输出的局部地图经高度阈值滤波，剔除地面以下点云后，得到局部静态地图点集 $\mathcal{M}_{\mathrm{local}}$，则任意静态点 $\mathbf{q}$ 到包络球边界的距离定义为
 \begin{equation}
