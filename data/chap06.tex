@@ -4,7 +4,7 @@
 
 \section{实验场景介绍}\label{sec_ch6_platform_scene}
 
-本研究以上海建工四建集团承建的上海工业博物馆项目为依托开展现场实验。项目位于上海市黄浦区五里桥街道102-14地块（江南制造总局旧址），总建筑面积约11.13万平方米，属市级重大文化地标工程。该工程兼具城市更新与大型公共建筑施工特征，现场施工组织、物流调度及多工种交叉作业并行，对吊装安全感知与风险研判提出了较高要求。项目施工现场实景如图\ref{fig:ch5_site_photos}所示。
+本研究以上海建工四建集团承建的上海工业博物馆项目为依托开展现场实验。项目位于上海市黄浦区五里桥街道102-14地块（江南制造总局旧址），总建筑面积约11.13万平方米，属市级重大文化地标工程。该工程兼具城市更新与大型公共建筑施工特征，现场施工组织、物流调度及多工种交叉作业并行，对吊装安全感知与风险研判提出了较高要求。项目施工现场实景如图\ref{fig:ch6_site_photos}所示。
 
 \begin{figure}[htbp]
 \centering
@@ -12,24 +12,24 @@
 \centering
 \includegraphics[width=\textwidth]{项目照片-1.jpg}
 \caption{项目施工现场实景（一）}
-\label{fig:ch5_site_photo_1}
+\label{fig:ch6_site_photo_1}
 \end{subfigure}
 \hfill
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
 \includegraphics[width=\textwidth]{项目照片-2.jpg}
 \caption{项目施工现场实景（二）}
-\label{fig:ch5_site_photo_2}
+\label{fig:ch6_site_photo_2}
 \end{subfigure}
 \caption{上海工业博物馆项目施工现场实景}
-\label{fig:ch5_site_photos}
+\label{fig:ch6_site_photos}
 \end{figure}
 
-\subsection{实验平台硬件配置}\label{subsec_ch5_platform}
+\subsection{实验平台硬件配置}\label{subsec_ch6_platform}
 
-实验平台硬件选型与安装布局已在第~\ref{sec:hardware_selection}~节详述，此处仅简述与本章实验直接相关的配置要点。感知平台采用吊钩端雷视融合一体化架构（图\ref{fig:ch5_platform_hardware}），由双 Livox Mid-360 激光雷达、海康威视工业相机（MV-CS016-10UC，1440$\times$1080@10~fps）、IMU 与 NVIDIA Jetson Orin NX 边缘计算单元构成，传感器具体参数参见表~\ref{tab:sensor_spec}。相机与双雷达均固定于吊钩上方保护平台，面向吊装作业区域，随吊钩同步运动，通过千兆以太网与边缘计算单元连接。
+实验平台硬件选型与安装布局已在第~\ref{sec:hardware_selection}~节详述，此处仅简述与本章实验直接相关的配置要点。感知平台采用吊钩端雷视融合一体化架构（图\ref{fig:ch6_platform_hardware}），由双 Livox Mid-360 激光雷达、海康威视工业相机（MV-CS016-10UC，1440$\times$1080@10~fps）、IMU 与 NVIDIA Jetson Orin NX 边缘计算单元构成，传感器具体参数参见表~\ref{tab:sensor_spec}。相机与双雷达均固定于吊钩上方保护平台，面向吊装作业区域，随吊钩同步运动，通过千兆以太网与边缘计算单元连接。
 
-软件环境基于 ROS 进行模块化组织，各功能模块以独立节点形式运行。视觉模块采用 YOLO26s-seg 模型完成吊装构件实例分割；点云模块接收融合后的双雷达点云并负责三维几何表达；LIO-SAM 模块融合 LiDAR 与 IMU 数据完成实时位姿估计与地图构建；动态检测与跟踪模块基于扫描残差识别动态目标并进行运动状态估计；风险评估模块汇聚多源信息完成净空计算与风险融合判级；控制接口模块将风险等级映射为标准化控制动作建议。
+软件环境基于 ROS 进行模块化组织，各功能模块以独立节点形式运行。视觉模块采用 YOLO26s-seg 模型完成吊装构件实例分割；点云模块接收融合后的双雷达点云并负责三维几何表达；LIO-SAM 模块融合 LiDAR 与 IMU 数据完成实时位姿估计与地图构建；动态检测与跟踪模块基于M-detector识别动态目标并进行运动状态估计；风险评估模块汇聚多源信息完成净空计算与风险融合判级；控制接口模块将风险等级映射为标准化控制动作建议。
 
 \begin{figure}[htbp]
 \centering
@@ -37,35 +37,35 @@
 \centering
 \includegraphics[height=8.0cm]{吊钩传感平台-实际-俯视.png}
 \caption{俯视图}
-\label{fig:ch5_platform_hardware_top}
+\label{fig:ch6_platform_hardware_top}
 \end{subfigure}
 \hfill
 \begin{subfigure}[t]{0.4\textwidth}
 \centering
 \includegraphics[height=8.0cm]{吊钩传感平台-实际-仰视.png}
 \caption{仰视图}
-\label{fig:ch5_platform_hardware_bottom}
+\label{fig:ch6_platform_hardware_bottom}
 \end{subfigure}
 \caption{吊钩端感知平台采集硬件设备图}
-\label{fig:ch5_platform_hardware}
+\label{fig:ch6_platform_hardware}
 \end{figure}
 
-\subsection{测试场景与数据采集}\label{subsec_ch5_scenes_bag}
+\subsection{测试场景与数据采集}\label{subsec_ch6_scenes_bag}
 
 为覆盖吊装风险的主要形成机制，数据采集过程涵盖多段现场吊装作业，包括静态障碍物接近、动态目标穿越、吊物摆动及相向接近等多种实际工况。上述场景分别侧重于静态净空判级、动态趋势预测、投影稳定性与提前量评估等关键问题，与前文的技术环节形成对应关系。
 
 实验数据覆盖了阵风、扬尘与振动等典型现场工况。风荷载引起的吊钩摆动通过LIO-SAM的IMU预积分与去畸变机制补偿，实测点云配准未出现明显退化；扬尘对视觉性能的影响在漏检率指标中量化反映。
 
-本实验所采用的吊装吊车作业场景如图\ref{fig:ch5_crane_scene}所示。
+本实验所采用的吊装吊车作业场景如图\ref{fig:ch6_crane_scene}所示。
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{吊车.jpg}
 \caption{实验测试场景}
-\label{fig:ch5_crane_scene}
+\label{fig:ch6_crane_scene}
 \end{figure}
 
-\section{吊装构件识别与定位性能评估}\label{sec_ch5_recognition_localization}
+\section{吊装构件识别与定位性能评估}\label{sec_ch6_recognition_localization}
 
 \subsection{吊装构件检测与分割评估}\label{subsec_ch6_yolo26_eval}
 
@@ -91,22 +91,22 @@ d_t=\sqrt{(u_{t+1}-u_t)^2+(v_{t+1}-v_t)^2},
 \centering
 \includegraphics[width=0.85\textwidth]{吊装构件检测与分割评估指标示意.pdf}
 \caption{吊装构件检测与分割评估指标示意图}
-\label{fig:ch5_metric_schematic}
+\label{fig:ch6_metric_schematic}
 \end{figure}
 
-上述时序评估指标TIoU与框中心漂移$d_t$的几何含义如图\ref{fig:ch5_metric_schematic}所示。图中上方两幅分别为第$t_0$帧与第$t_1$帧的模型输出掩码，通过比较相邻帧掩码的重叠区域与差异区域即可计算TIoU；下方左侧示意了TIoU的具体计算方式——两帧掩码的交集除以并集，反映分割边界在像素级的时序稳定性；下方右侧则展示了框中心漂移$d_t$的几何含义，即相邻帧检测框中心之间的像素距离，用以衡量目标定位的抖动程度。
+上述时序评估指标TIoU与框中心漂移$d_t$的几何含义如图\ref{fig:ch6_metric_schematic}所示。图中上方两幅分别为第$t_0$帧与第$t_1$帧的模型输出掩码，通过比较相邻帧掩码的重叠区域与差异区域即可计算TIoU；下方左侧示意了TIoU的具体计算方式——两帧掩码的交集除以并集，反映分割边界在像素级的时序稳定性；下方右侧则展示了框中心漂移$d_t$的几何含义，即相邻帧检测框中心之间的像素距离，用以衡量目标定位的抖动程度。
 
 漏检率衡量连续视频监测中的目标丢失比例。从首次成功检出目标的帧序号 $t_0$ 开始统计，设有效监测帧数为 $T_{\mathrm{eff}}=T-t_0+1$，漏检帧数为 $N_{\mathrm{miss}}$，则
 \begin{equation}
 R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
 \end{equation}
 
-同时记录最大连续漏检帧数 $L_{\max}$，以反映检测链路的持续性中断风险。上述三项指标的统计结果如表~\ref{tab:ch5_d1_detection_effectiveness}所示。
+同时记录最大连续漏检帧数 $L_{\max}$，以反映检测链路的持续性中断风险。上述三项指标的统计结果如表~\ref{tab:ch6_d1_detection_effectiveness}所示。
 
 \begin{table}[htbp]
 \centering
 \caption{吊装构件识别有效性与时序稳定性统计表}
-\label{tab:ch5_d1_detection_effectiveness}
+\label{tab:ch6_d1_detection_effectiveness}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{2.4cm}>{\centering\arraybackslash}m{2.6cm}>{\centering\arraybackslash}m{2.0cm}>{\centering\arraybackslash}m{2.8cm}>{\centering\arraybackslash}m{1.8cm}}
 \Xhline{1pt}
 \textbf{样本帧数} & \textbf{掩码时序IoU} & \textbf{框中心漂移(px)} & \textbf{漏检帧占比} & \textbf{连续漏检最大帧数} \\
@@ -122,12 +122,12 @@ R_{\mathrm{miss}}=\frac{N_{\mathrm{miss}}}{T_{\mathrm{eff}}}
 
 三维定位评估的关键，是检验“二维分割结果约束下的点云回查”策略是否足够准确。该过程包含坐标变换、投影关联、实例点集构建与质心提取四个环节。若投影关联环节存在系统性偏差或漏配，后续实例点集构建将引入虚假点或丢失真实点，直接影响质心定位精度与净空计算可靠性。
 
-本节采用手工标定的点云真值与算法投影所得点云进行定量对比。以像素级掩码为关联单位，将算法投影得到的点云集合与手工标定的真值点云集合逐帧匹配，统计真阳性（TP）、假阳性（FP）与假阴性（FN），并据此计算精确率（Precision）、召回率（Recall）、F1分数与交并比（IoU）。各符号含义如表~\ref{tab:ch5_confusion_terms}所示，各指标定义如下：
+本节采用手工标定的点云真值与算法投影所得点云进行定量对比。以像素级掩码为关联单位，将算法投影得到的点云集合与手工标定的真值点云集合逐帧匹配，统计真阳性（TP）、假阳性（FP）与假阴性（FN），并据此计算精确率（Precision）、召回率（Recall）、F1分数与交并比（IoU）。各符号含义如表~\ref{tab:ch6_confusion_terms}所示，各指标定义如下：
 
 \begin{table}[htbp]
 \centering
 \caption{投影关联混淆矩阵术语说明}
-\label{tab:ch5_confusion_terms}
+\label{tab:ch6_confusion_terms}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{3.2cm}>{\centering\arraybackslash}m{4.5cm}>{\centering\arraybackslash}m{4.5cm}}
 \Xhline{1pt}
 \textbf{\diagbox{算法输出}{实际情况}} & \textbf{实际属于真值} & \textbf{实际不属于真值} \\
@@ -158,12 +158,12 @@ F1 分数为精确率与召回率的调和平均：
 \mathrm{IoU}=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}+\mathrm{FN}}
 \end{equation}
 
-上述指标均以像素级掩码关联后的点云集合为统计对象，能够在统一口径下衡量从二维分割、投影关联到点云集构建的全链路准确性。各构件实例分割与点云投影关联的可视化结果如表~\ref{tab:ch5_projection_localization}所示，直观展示了从原图到实例分割、点云投影及筛选的完整处理过程。表~\ref{tab:ch5_d3_projection_localization}中的统计结果通过对原始数据间隔5~s抽取一帧并逐帧进行手工标注真值后计算得到。
+上述指标均以像素级掩码关联后的点云集合为统计对象，能够在统一口径下衡量从二维分割、投影关联到点云集构建的全链路准确性。各构件实例分割与点云投影关联的可视化结果如表~\ref{tab:ch6_projection_localization}所示，直观展示了从原图到实例分割、点云投影及筛选的完整处理过程。表~\ref{tab:ch6_d3_projection_localization}中的统计结果通过对原始数据间隔5~s抽取一帧并逐帧进行手工标注真值后计算得到。
 
 \begin{table}[H]
 	\centering
 	\caption{吊装构件识别与三维定位结果}
-	\label{tab:ch5_projection_localization}
+	\label{tab:ch6_projection_localization}
 	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}C{2cm}c@{\hspace{1.5em}}c}
 		\Xhline{1pt}
 		& \textbf{\raisebox{-0.5\height}{塔吊标准节}} & \textbf{\raisebox{-0.5\height}{围栏}} \\[0.5em]
@@ -191,7 +191,7 @@ F1 分数为精确率与召回率的调和平均：
 \begin{table}[htbp]
 \centering
 \caption{点云投影关联与三维定位一致性验证统计表}
-\label{tab:ch5_d3_projection_localization}
+\label{tab:ch6_d3_projection_localization}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{5.5cm}>{\centering\arraybackslash}m{3.5cm}}
 \Xhline{1pt}
 \textbf{指标项} & \textbf{数值} \\
@@ -208,7 +208,7 @@ F1 分数 & 84.69\% \\
 \end{tabular*}
 \end{table}
 
-从表~\ref{tab:ch5_d3_projection_localization}可知，点云投影关联的精确率高达92.17\%，说明在成功投影的点云中绝大多数与手工标定真值一致，验证了二维分割约束下点云回查策略具备较高的正向关联可信度。召回率为78.33\%，超过四分之三的真值点被成功检出，在当前真实工况的遮挡与光照变化条件下表现良好。F1分数为84.69\%，IoU为73.44\%，两者均处于同类方法的较高水平，综合验证了当前投影关联链路在真实工况下的定位一致性与鲁棒性。
+从表~\ref{tab:ch6_d3_projection_localization}可知，点云投影关联的精确率高达92.17\%，说明在成功投影的点云中绝大多数与手工标定真值一致，验证了二维分割约束下点云回查策略具备较高的正向关联可信度。召回率为78.33\%，超过四分之三的真值点被成功检出，在当前真实工况的遮挡与光照变化条件下表现良好。F1分数为84.69\%，IoU为73.44\%，两者均处于同类方法的较高水平，综合验证了当前投影关联链路在真实工况下的定位一致性与鲁棒性。
 
 进一步分析误差来源可知，假阳性共1168点，主要源于二维实例分割掩码边界与吊装构件实际像素轮廓之间存在系统性空间偏差，导致部分邻近构件边缘的背景像素被误纳入构件掩码范围。这些误关联点大多分布于吊装构件轮廓边界的外围，对质心定位的影响有限。假阴性共3805点，是当前投影关联精度的主要制约因素，主要源于分割模型的间歇性漏检：当吊装构件因姿态变化、光照扰动或短暂遮挡导致置信度下降时，掩码出现收缩甚至消失，致使部分真实点云未能落入有效掩码范围。上述误差分布中，漏配数量高于误配，说明投影关联的精度瓶颈主要在于分割掩码的完整召回而非背景点的混入，两者均处于可接受的工程范围之内，且具有明确的改进方向：后续可通过优化分割边界的亚像素精度、引入时序掩码插值补偿策略以及结合点云几何一致性滤波进一步降低边缘误关联，有望将召回率与IoU提升至更高水平。
 
@@ -221,21 +221,21 @@ F1 分数 & 84.69\% \\
 基于上述基准，本节进一步基于手工标定的实例点云真值，定量评估全链路下的吊装构件质心三维定位误差。评估方法如下：对每帧数据，手工标定属于吊装构件的全部点云作为真值集合 $\mathcal{P}_{\mathrm{GT}}$，算法输出经YOLO26分割掩码回查得到的实例点云作为预测集合 $\mathcal{P}_{\mathrm{algo}}$。分别计算两集合的质心：
 \begin{equation}
 \bar{\mathbf{p}}_{\mathrm{GT}} = \frac{1}{|\mathcal{P}_{\mathrm{GT}}|}\sum_{\mathbf{p}\in\mathcal{P}_{\mathrm{GT}}}\mathbf{p}
-\label{eq:ch5_centroid_gt}
+\label{eq:ch6_centroid_gt}
 \end{equation}
 \begin{equation}
 \bar{\mathbf{p}}_{\mathrm{algo}} = \frac{1}{|\mathcal{P}_{\mathrm{algo}}|}\sum_{\mathbf{p}\in\mathcal{P}_{\mathrm{algo}}}\mathbf{p}
-\label{eq:ch5_centroid_algo}
+\label{eq:ch6_centroid_algo}
 \end{equation}
 
 接着，定义三维定位误差为 $\|\bar{\mathbf{p}}_{\mathrm{GT}}-\bar{\mathbf{p}}_{\mathrm{algo}}\|_2$。该误差为复合指标，同步偏差、外参残差与分割边界不确定度等融合误差贡献均已包含其中，无需逐项拆解。
 
-采用与上节相同的样本进行统计，结果如表~\ref{tab:ch5_centroid_error}所示。从表中可以看出，吊装构件三维质心定位误差的均值为0.228~m，均方根误差为0.241~m，最大值为0.297~m。水平面（XY）误差均值为0.100~m，显著优于竖直方向（Z）误差均值0.159~m。这一差异与传感器的观测几何一致：双LiDAR侧向对称布置在水平面内形成较好的测量覆盖，而竖直方向主要依靠单次俯仰扫描层获取深度信息，且吊物顶部点云分布受吊绳遮挡与目标姿态影响，使得Z向质心估计的稳定性和精度略低于水平面。
+采用与上节相同的样本进行统计，结果如表~\ref{tab:ch6_centroid_error}所示。从表中可以看出，吊装构件三维质心定位误差的均值为0.228~m，均方根误差为0.241~m，最大值为0.297~m。水平面（XY）误差均值为0.100~m，显著优于竖直方向（Z）误差均值0.159~m。这一差异与传感器的观测几何一致：双LiDAR侧向对称布置在水平面内形成较好的测量覆盖，而竖直方向主要依靠单次俯仰扫描层获取深度信息，且吊物顶部点云分布受吊绳遮挡与目标姿态影响，使得Z向质心估计的稳定性和精度略低于水平面。
 
 \begin{table}[htbp]
 \centering
 \caption{吊装构件质心三维定位误差统计表}
-\label{tab:ch5_centroid_error}
+\label{tab:ch6_centroid_error}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{4.5cm}p{3.0cm}p{3.0cm}p{3.0cm}}
 \Xhline{1pt}
 \textbf{指标项} & \textbf{水平面(XY)误差} & \textbf{竖直方向(Z)误差} & \textbf{三维(3D)误差} \\
@@ -291,7 +291,7 @@ F1 分数 & 84.69\% \\
 \begin{table}[htbp]
 \centering
 \caption{静态阈值判级有效性统计表}
-\label{tab:ch5_d4a_static_warning}
+\label{tab:ch6_d4a_static_warning}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{4.1cm}>{\centering\arraybackslash}m{2.3cm}>{\centering\arraybackslash}m{2.3cm}>{\centering\arraybackslash}m{2.3cm}}
 \Xhline{1pt}
 \textbf{指标项} & \textbf{提示级(5.0m)} & \textbf{报警级(3.0m)} & \textbf{紧急级(1.0m)} \\
@@ -308,16 +308,16 @@ F1分数  & 46.67\% & 85.38\% & 93.83\% \\
 \end{tabular*}
 \end{table}
 
-各预警等级的判级结果统计如表~\ref{tab:ch5_d4a_static_warning}所示。从表中可以看出，静态阈值判级的整体分级准确率达92.48\%，说明基于距离阈值的三级静态判级框架在真实工况下表现有效。紧急级的精确率达94.66\%、召回率达93.00\%、F1分数达93.83\%，均为三个等级中最优，在近距离高危场景中判级置信度最高。报警级的精确率达90.12\%、召回率达81.11\%且F1分数达85.38\%，同样处于较高水平，中间阈值判级在多数情况下能够稳定反映真实的净空状态。提示级F1为46.67\%，在四个等级中相对最低，召回率仅39.37\%，说明系统对提示等级的识别存在遗漏。
+各预警等级的判级结果统计如表~\ref{tab:ch6_d4a_static_warning}所示。从表中可以看出，静态阈值判级的整体分级准确率达92.48\%，说明基于距离阈值的三级静态判级框架在真实工况下表现有效。紧急级的精确率达94.66\%、召回率达93.00\%、F1分数达93.83\%，均为三个等级中最优，在近距离高危场景中判级置信度最高。报警级的精确率达90.12\%、召回率达81.11\%且F1分数达85.38\%，同样处于较高水平，中间阈值判级在多数情况下能够稳定反映真实的净空状态。提示级F1为46.67\%，在四个等级中相对最低，召回率仅39.37\%，说明系统对提示等级的识别存在遗漏。
 
-从安全预警的实际需求出发，漏报率需优先关注。系统总漏报率仅4.76\%，误报率为2.76\%，两者均处于低位。进一步查看混淆矩阵（表~\ref{tab:ch5_d4b_confusion_matrix}），误报主要来自：当真值为无危险时，有44帧被误判为提示级（占无危险真值样本的2.03\%），另有26帧被误判为紧急级（占1.20\%），均属小概率事件，对现场作业影响有限。漏报方面，提示级向无危险的降级共计91帧，占提示级真值样本的56.88\%，是漏报的主要来源。提示级作为三级判据中阈值最小、优先级最低的等级，其物理边界在连续净空变化中最为模糊，部分处于临界状态的净空值被系统判定为无危险属正常波动。紧急级向更低估级合计44帧，占紧急级真值样本的7.00\%，在真实施工工况的遮挡与点云缺失条件下处于合理可控范围。
+从安全预警的实际需求出发，漏报率需优先关注。系统总漏报率仅4.76\%，误报率为2.76\%，两者均处于低位。进一步查看混淆矩阵（表~\ref{tab:ch6_d4b_confusion_matrix}），误报主要来自：当真值为无危险时，有44帧被误判为提示级（占无危险真值样本的2.03\%），另有26帧被误判为紧急级（占1.20\%），均属小概率事件，对现场作业影响有限。漏报方面，提示级向无危险的降级共计91帧，占提示级真值样本的56.88\%，是漏报的主要来源。提示级作为三级判据中阈值最小、优先级最低的等级，其物理边界在连续净空变化中最为模糊，部分处于临界状态的净空值被系统判定为无危险属正常波动。紧急级向更低估级合计44帧，占紧急级真值样本的7.00\%，在真实施工工况的遮挡与点云缺失条件下处于合理可控范围。
 
 提示级的低召回率在混淆矩阵中有明确体现：其真阳性仅为63帧，假阴性合计97（91+6+0），近六成的提示级真值帧被预测为无危险。提示级在三级净空判据中阈值最大、优先级最低，在连续净空变化中处于最外围的边界位置，部分处于5.0~m临界区域的净空值在测量噪声影响下被判为无危险属正常波动范围。整体分级有序误差MAE仅为0.1232，平均预测等级与真值等级之间的偏差不足0.13个等级，整体判级的有序一致性较好。
 
 \begin{table}[H]
 \centering
 \caption{静态预警等级混淆矩阵}
-\label{tab:ch5_d4b_confusion_matrix}
+\label{tab:ch6_d4b_confusion_matrix}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}C{2.2cm}|C{2.2cm}C{2.2cm}C{2.2cm}C{2.2cm}}
 \Xhline{1pt}
 \textbf{真值$\backslash$预测} & \textbf{无危险} & \textbf{提示} & \textbf{报警} & \textbf{紧急} \\
@@ -330,7 +330,7 @@ F1分数  & 46.67\% & 85.38\% & 93.83\% \\
 \end{tabular*}
 \end{table}
 
-为直观展示判级结果在真实场景中的对应关系，将各预警等级的空间分布以可视化方式呈现。按照距离阈值分别将识别出的预警点做了标识，用颜色区分预警的等级，形成了预警等级圈。静态预警真实场景与预警效果示意如图~\ref{fig:ch5_static_warning_effect}所示。在结果中可以看到，由于流程中滤除了地面点云，所以地面并没有出现预警点。
+为直观展示判级结果在真实场景中的对应关系，将各预警等级的空间分布以可视化方式呈现。按照距离阈值分别将识别出的预警点做了标识，用颜色区分预警的等级，形成了预警等级圈。静态预警真实场景与预警效果示意如图~\ref{fig:ch6_static_warning_effect}所示。在结果中可以看到，由于流程中滤除了地面点云，所以地面并没有出现预警点。
 
 \begin{figure}[htbp]
 \centering
@@ -338,14 +338,14 @@ F1分数  & 46.67\% & 85.38\% & 93.83\% \\
 \centering
 \includegraphics[width=\textwidth]{静态预警真实场景-1.png}
 \caption{静态预警真实场景（视角1）}
-\label{fig:ch5_static_real_1}
+\label{fig:ch6_static_real_1}
 \end{subfigure}
 \hfill
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
 \includegraphics[width=\textwidth]{静态预警真实场景-2.png}
 \caption{静态预警真实场景（视角2）}
-\label{fig:ch5_static_real_2}
+\label{fig:ch6_static_real_2}
 \end{subfigure}
 
 \vspace{1em}
@@ -353,38 +353,38 @@ F1分数  & 46.67\% & 85.38\% & 93.83\% \\
 \centering
 \includegraphics[width=\textwidth]{静态预警示意-1.png}
 \caption{静态预警效果（俯视视角1）}
-\label{fig:ch5_static_schematic_1}
+\label{fig:ch6_static_schematic_1}
 \end{subfigure}
 \hfill
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
 \includegraphics[width=\textwidth]{静态预警示意-2.png}
 \caption{静态预警效果（俯视视角2）}
-\label{fig:ch5_static_schematic_2}
+\label{fig:ch6_static_schematic_2}
 \end{subfigure}
 \caption{静态障碍物距离阈值预警效果}
-\label{fig:ch5_static_warning_effect}
+\label{fig:ch6_static_warning_effect}
 \end{figure}
 
-图~\ref{fig:ch5_static_temporal_comparison} 进一步以帧级时序方式展示真值与预测等级的对照关系。该图由三个共享同一时间轴的子图组成。上子图为人工标注的真值等级区间，以水平色段表示各预警等级的起止时段，色段颜色与等级对应：绿色为无危险、黄色为提示、橙色为报警、红色为紧急。中子图为系统逐时间点输出的预测等级散点图，叠加的红色叉号为误判点，标记系统输出等级与同时刻真值等级不一致的帧。下子图为误判指示条，以二值阶梯信号表示预测与真值的一致性，高位表示一致，低位表示不一致。从整体时序来看，预测等级在多数时段与真值区间保持良好一致，误判主要集中于等级过渡边界处，例如无危险与提示之间、报警与紧急之间的切换点。这与有序误差指标 MAE 所反映的趋势一致：判级偏差主要表现为相邻等级之间的单级偏移而非跨级跳跃。分级误差以过渡带附近的短暂偏移为主，不改变整体判级的有序性和保守倾向。
+图~\ref{fig:ch6_static_temporal_comparison} 进一步以帧级时序方式展示真值与预测等级的对照关系。该图由三个共享同一时间轴的子图组成。上子图为人工标注的真值等级区间，以水平色段表示各预警等级的起止时段，色段颜色与等级对应：绿色为无危险、黄色为提示、橙色为报警、红色为紧急。中子图为系统逐时间点输出的预测等级散点图，叠加的红色叉号为误判点，标记系统输出等级与同时刻真值等级不一致的帧。下子图为误判指示条，以二值阶梯信号表示预测与真值的一致性，高位表示一致，低位表示不一致。从整体时序来看，预测等级在多数时段与真值区间保持良好一致，误判主要集中于等级过渡边界处，例如无危险与提示之间、报警与紧急之间的切换点。这与有序误差指标 MAE 所反映的趋势一致：判级偏差主要表现为相邻等级之间的单级偏移而非跨级跳跃。分级误差以过渡带附近的短暂偏移为主，不改变整体判级的有序性和保守倾向。
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.98\textwidth]{静态预警时序对照图.png}
 \caption{静态阈值判级真值与预测等级的帧级时序对照}
-\label{fig:ch5_static_temporal_comparison}
+\label{fig:ch6_static_temporal_comparison}
 \end{figure}
 
 \subsection{动态目标趋势预测与相向运动预警验证}\label{subsec_ch6_dynamic_warning}
 
 动态预警实验用于验证趋势预测与风险升级机制能否提供有效提前量。当前配置采用动态净空阈值5.0~m、3.0~m、1.0~m，对应TTC阈值6.0~s、3.0~s、1.5~s；相向运动通过速度夹角余弦阈值$-0.2$触发升级，预测时域为2.0~s。分级准确率、误报率与漏报率的定义与式\eqref{eq:acc}—\eqref{eq:mdr}一致。
 
-判级结果如表~\ref{tab:ch5_d5_dynamic_warning}所示。整体分级准确率达86.65\%，误报率5.35\%，漏报率8.00\%，三者均处于可控范围。紧急级F1为82.28\%，在近距离高危场景中保持了较高的判级置信度；提示级F1为31.91\%，主要受低精确率（24.19\%）拖累，表明该等级存在部分误报。
+判级结果如表~\ref{tab:ch6_d5_dynamic_warning}所示。整体分级准确率达86.65\%，误报率5.35\%，漏报率8.00\%，三者均处于可控范围。紧急级F1为82.28\%，在近距离高危场景中保持了较高的判级置信度；提示级F1为31.91\%，主要受低精确率（24.19\%）拖累，表明该等级存在部分误报。
 
 \begin{table}[htbp]
 \centering
 \caption{动态趋势与相向升级验证统计表}
-\label{tab:ch5_d5_dynamic_warning}
+\label{tab:ch6_d5_dynamic_warning}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{4.1cm}>{\centering\arraybackslash}m{2.3cm}>{\centering\arraybackslash}m{2.3cm}>{\centering\arraybackslash}m{2.3cm}}
 \Xhline{1pt}
 \textbf{指标项} & \textbf{提示级(5.0m)} & \textbf{报警级(3.0m)} & \textbf{紧急级(1.0m)} \\
@@ -401,14 +401,14 @@ F1分数 & 31.91\% & 71.05\% & 82.28\% \\
 \end{tabular*}
 \end{table}
 
-表~\ref{tab:ch5_d5b_confusion_matrix} 进一步给出各等级误报与漏报的具体来源。漏报以紧急级向报警级的单级偏移为主，共136帧，占紧急级样本的18.47\%，未出现对高危场景的完全遗漏，且漏报率略高于误报率，反映了系统在模糊工况下的保守偏好。上述表现与TTC和速度方向等动态信息的引入密切相关，在相向接近场景中，运动状态信息使判级结果更贴近真实危险程度，验证了趋势项对风险识别的实际增益。
+表~\ref{tab:ch6_d5b_confusion_matrix} 进一步给出各等级误报与漏报的具体来源。漏报以紧急级向报警级的单级偏移为主，共136帧，占紧急级样本的18.47\%，未出现对高危场景的完全遗漏，且漏报率略高于误报率，反映了系统在模糊工况下的保守偏好。上述表现与TTC和速度方向等动态信息的引入密切相关，在相向接近场景中，运动状态信息使判级结果更贴近真实危险程度，验证了趋势项对风险识别的实际增益。
 
 从漏报的物理成因看，可将主要漏报归纳为两类失效模式。其一，分割掩码不稳定导致包络半径低估。吊装构件因姿态变化或光照扰动致使分割掩码出现部分甚至完全丢失时，实例投影点云数量显著减少，包络球半径计算值偏小。尽管指数平滑对半径收缩有所抑制，但掩码丢失后点云仍能超过有效点数阈值，使半径估计落入主分支而非退守分支，平滑后的半径仍低于实际包络尺寸，导致净空偏大和等级低估。该类漏报主要表现为紧急级向报警级的持续性单级偏移，是漏报的主要组成部分。其二，动态目标检测短暂丢失。当动态目标因点云稀疏、运动速度过低或与静态背景对比不足时，M-detector的动态点判别与聚类环节间歇性输出空候选集，致使目标在若干帧内未能进入跟踪与风险评估链路，系统短暂判为无动态风险。该类漏报表现为紧急级或报警级直接降为无危险等级的短暂跳变，持续时间通常不超过 1 s。
 
 \begin{table}[htbp]
 \centering
 \caption{动态预警等级混淆矩阵}
-\label{tab:ch5_d5b_confusion_matrix}
+\label{tab:ch6_d5b_confusion_matrix}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}C{2.2cm}|C{2.2cm}C{2.2cm}C{2.2cm}C{2.2cm}}
 \Xhline{1pt}
 \textbf{真值$\backslash$预测} & \textbf{无危险} & \textbf{提示} & \textbf{报警} & \textbf{紧急} \\
@@ -421,12 +421,12 @@ F1分数 & 31.91\% & 71.05\% & 82.28\% \\
 \end{tabular*}
 \end{table}
 
-表~\ref{tab:ch5_dynamic_warning_effect} 展示了系统在动态相向接近工况下的预警可视化效果。吊装构件以包络圆柱形式呈现，风险等级文字根据当前融合风险等级着色；被检测到的动态目标以红色包围框显示并标注轨迹 ID 与运动方向。当动态目标与吊装构件之间的平面净空或 TTC 指标进入预设阈值区间时，系统即触发相应等级的预警着色，风险区域沿接近方向逐渐加深。
+表~\ref{tab:ch6_dynamic_warning_effect} 展示了系统在动态相向接近工况下的预警可视化效果。吊装构件以包络圆柱形式呈现，风险等级文字根据当前融合风险等级着色；被检测到的动态目标以红色包围框显示并标注轨迹 ID 与运动方向。当动态目标与吊装构件之间的平面净空或 TTC 指标进入预设阈值区间时，系统即触发相应等级的预警着色，风险区域沿接近方向逐渐加深。
 
 \begin{table}[H]
 \centering
 \caption{动态目标趋势预测与相向运动预警效果示例}
-\label{tab:ch5_dynamic_warning_effect}
+\label{tab:ch6_dynamic_warning_effect}
 \begin{tabular}{>{\centering\arraybackslash}p{2em}@{\hspace{0.1em}}cc}
 \Xhline{1pt}
 \textbf{时刻} & \textbf{真实场景} & \textbf{预警示意} \\
@@ -450,7 +450,7 @@ F1分数 & 31.91\% & 71.05\% & 82.28\% \\
 \ContinuedFloat
 \centering
 \caption{动态目标趋势预测与相向运动预警效果示例（续）}
-\label{tab:ch5_dynamic_warning_effect_cont}
+\label{tab:ch6_dynamic_warning_effect_cont}
 \begin{tabular}{>{\centering\arraybackslash}p{2em}@{\hspace{0.1em}}cc}
 \Xhline{1pt}
 \textbf{时刻} & \textbf{真实场景} & \textbf{预警示意} \\
@@ -476,22 +476,22 @@ F1分数 & 31.91\% & 71.05\% & 82.28\% \\
 \parbox{\textwidth}{\vspace{0.5em}\small\raggedright 注：t$_0$–t$_7$ 共 8 个时刻，相邻时刻间隔 1~s；t$_0$ 时刻已标注图中关键元素，真实场景中的动态目标（人）与吊装构件，分别对应预警示意中的包络框与包络圆柱。}
 \end{table}
 
-图~\ref{fig:ch5_opposing_warning_timeline} 展示了相向运动工况下的提前预警时序对比。被监测目标以约~1~m/s 的速率逼近吊物，当前距离如蓝实线所示呈单调下降趋势。本文动态融合判据中的“预测距离”分量如橙虚线所示，基于~2~s 视野的轨迹外推使其先于真实距离跨越报警与紧急阈值：相比纯距离基线，报警级提前~0.70~s、紧急级提前~1.60~s 触发预警，为操作人员争取了额外的响应时间窗口，验证了第~\ref{subsec_ch5_risk_upgrade}~节动态融合判据在相向接近工况下的提前预警能力。
+图~\ref{fig:ch6_opposing_warning_timeline} 展示了相向运动工况下的提前预警时序对比。被监测目标以约~1~m/s 的速率逼近吊物，当前距离如蓝实线所示呈单调下降趋势。本文动态融合判据中的“预测距离”分量如橙虚线所示，基于~2~s 视野的轨迹外推使其先于真实距离跨越报警与紧急阈值：相比纯距离基线，报警级提前~0.70~s、紧急级提前~1.60~s 触发预警，为操作人员争取了额外的响应时间窗口，验证了第~\ref{subsec_ch5_risk_upgrade}~节动态融合判据在相向接近工况下的提前预警能力。
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.99\textwidth]{相向运动工况-提前预警时序对比.png}
 \caption{相向运动工况下提前预警时序对比}
-\label{fig:ch5_opposing_warning_timeline}
+\label{fig:ch6_opposing_warning_timeline}
 \end{figure}
 
-图~\ref{fig:ch5_dynamic_temporal_comparison} 以帧级时序展示动态判级的真值与预测等级对照，其结构与图~\ref{fig:ch5_static_temporal_comparison}相同。预测等级在多数时段与真值吻合，误判集中在等级过渡边界附近且多为相邻等级间的单级偏移。MAE仅为0.2002，表明动态判级具有较好的有序一致性，TTC与预测净空的引入在等级过渡区保持了平稳的判级过渡。
+图~\ref{fig:ch6_dynamic_temporal_comparison} 以帧级时序展示动态判级的真值与预测等级对照，其结构与图~\ref{fig:ch6_static_temporal_comparison}相同。预测等级在多数时段与真值吻合，误判集中在等级过渡边界附近且多为相邻等级间的单级偏移。MAE仅为0.2002，表明动态判级具有较好的有序一致性，TTC与预测净空的引入在等级过渡区保持了平稳的判级过渡。
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.99\textwidth]{动态预警时序对照图.png}
 \caption{动态趋势判级真值与预测等级的帧级时序对照}
-\label{fig:ch5_dynamic_temporal_comparison}
+\label{fig:ch6_dynamic_temporal_comparison}
 \end{figure}
 
 \section{整体方法有效性分析与实时性评估}\label{sec_ch6_latency}
@@ -510,12 +510,12 @@ T_{\mathrm{all}}=T_{\mathrm{sensor}}+T_{\mathrm{vision}}+T_{\mathrm{projection}}
 \label{eq:total_latency}
 \end{equation}
 
-各模块的实测时延统计结果如表\ref{tab:ch5_latency_overall}所示，从表中可以看出，全链路时延在典型工况下可满足实时性要求。视觉推理模块中，图像预处理与推理均值为19.71\,ms，标准差仅3.34\,ms，说明YOLO26在边缘端的推理时间稳定可控，适合作为周期性感知更新的可靠基座。点云投影与图像关联模块中，点云预处理仅需0.66\,ms，坐标查询与变换仅0.06\,ms，表明格式转换与空间变换的计算效率较高；投影与像素关联作为数据关联的核心环节，均值为63.79\,ms，在典型点云规模下可稳定完成稠密投影计算。动态跟踪与风险评估模块中，动态输入处理与关联、状态估计与短时预测的均值均不超过0.01\,ms，计算开销可忽略不计，门限匹配与预测窗遍历的算法设计高效；风险融合与判级输出均值为42.75\,ms，能够在考虑迟滞状态与多级判定的前提下完成综合评估，保证了判级结果的可靠性与连续性。
+各模块的实测时延统计结果如表\ref{tab:ch6_latency_overall}所示，从表中可以看出，全链路时延在典型工况下可满足实时性要求。视觉推理模块中，图像预处理与推理均值为19.71\,ms，标准差仅3.34\,ms，说明YOLO26在边缘端的推理时间稳定可控，适合作为周期性感知更新的可靠基座。点云投影与图像关联模块中，点云预处理仅需0.66\,ms，坐标查询与变换仅0.06\,ms，表明格式转换与空间变换的计算效率较高；投影与像素关联作为数据关联的核心环节，均值为63.79\,ms，在典型点云规模下可稳定完成稠密投影计算。动态跟踪与风险评估模块中，动态输入处理与关联、状态估计与短时预测的均值均不超过0.01\,ms，计算开销可忽略不计，门限匹配与预测窗遍历的算法设计高效；风险融合与判级输出均值为42.75\,ms，能够在考虑迟滞状态与多级判定的前提下完成综合评估，保证了判级结果的可靠性与连续性。
 
 \begin{table}[htbp]
 \centering
 \caption{整体链路时延统计表}
-\label{tab:ch5_latency_overall}
+\label{tab:ch6_latency_overall}
 
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{3.4cm}>{\centering\arraybackslash}m{1.6cm}>{\centering\arraybackslash}m{1.6cm}>{\centering\arraybackslash}m{1.6cm}>{\centering\arraybackslash}m{1.6cm}}
 \Xhline{1pt}
@@ -550,7 +550,7 @@ T_{\mathrm{all}}=T_{\mathrm{sensor}}+T_{\mathrm{vision}}+T_{\mathrm{projection}}
 
 值得关注的是，三大模块的均值时延之和为126.25\,ms，大于端到端总时延均值101.43\,ms，差值约24.8\,ms。这一差异说明模块间实现了有效的流水线重叠与异步并行，视觉推理的输出无需等待点云投影完全结束即可被下游消费，风险融合与判级可与下一帧的投影计算并行执行，体现了系统架构在并发设计上的合理性。端到端总时延均值为101.43\,ms（约9.9\,Hz），95\%分位为123.17\,ms（约8.1\,Hz），均位于工程可接受范围内。以人员行走速度1.5\,m/s估算，系统在典型工况下帧间位移约0.15\,m，在95\%分位工况下约0.19\,m，相对于近距碰撞预警的典型预警5\,m范围，具备充分的时效裕量，能够为下游决策模块提供及时可靠的感知信息。
 
-\section{本章小结}\label{sec:ch5_summary}
+\section{本章小结}\label{sec:ch6_summary}
 
 本章围绕前文所提出的雷视融合感知与安全预警方法链路，在上海工业博物馆项目施工现场开展系统性实验验证与性能评估，从识别定位精度、动态预警效果与全链路实时性三个维度验证了本文方法在真实吊装工况下的可行性。具体结论如下：
 

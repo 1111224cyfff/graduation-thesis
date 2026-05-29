@@ -142,12 +142,12 @@ d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o)
 
 该定义将静态风险统一到“包络球三维边界净空”这一可解释几何量上，与 KD-tree 最近邻计算流程一致。
 
-在本文配置中，静态净空被划分为三级阈值区间：当 $d_{\mathrm{static}}\leq 1.0\,\mathrm{m}$ 时触发紧急等级，当 $1.0\,\mathrm{m}<d_{\mathrm{static}}\leq 3.0\,\mathrm{m}$ 时触发警告等级，当 $3.0\,\mathrm{m}<d_{\mathrm{static}}\leq 5.0\,\mathrm{m}$ 时触发提示等级，超过 $5.0\,\mathrm{m}$ 则视为静态净空充分。为便于统一对照，表\ref{tab:ch4_static_risk_criteria} 汇总了静态风险分级判据。
+在本文配置中，静态净空被划分为三级阈值区间：当 $d_{\mathrm{static}}\leq 1.0\,\mathrm{m}$ 时触发紧急等级，当 $1.0\,\mathrm{m}<d_{\mathrm{static}}\leq 3.0\,\mathrm{m}$ 时触发警告等级，当 $3.0\,\mathrm{m}<d_{\mathrm{static}}\leq 5.0\,\mathrm{m}$ 时触发提示等级，超过 $5.0\,\mathrm{m}$ 则视为静态净空充分。为便于统一对照，表\ref{tab:ch5_static_risk_criteria} 汇总了静态风险分级判据。
 
 \begin{table}[htbp]
 	\centering
 	\caption{基于三维净空的静态风险分级判据}
-	\label{tab:ch4_static_risk_criteria}
+	\label{tab:ch5_static_risk_criteria}
 	\begin{tabular}{C{4.5cm}C{5.5cm}}
 	\Xhline{1pt}
 	\textbf{风险等级} & \textbf{静态净空阈值 $d_{\mathrm{static}}$} \\
@@ -232,12 +232,12 @@ d_{\mathrm{pred}}=\max\bigl(0,\,\|\tilde{\mathbf{r}}+\tau^*\tilde{\mathbf{v}}_{\
 
 在本文配置中，动态分级阈值采用三级结构：当前净空、预测净空或 TTC 任一指标进入 $5.0\,\mathrm{m}/6.0\,\mathrm{s}$ 区间时触发提示；进入 $3.0\,\mathrm{m}/3.0\,\mathrm{s}$ 区间时触发警告；进入 $1.0\,\mathrm{m}/1.5\,\mathrm{s}$ 区间时触发紧急。这种取多指标中更危险者的策略能够覆盖动态接近中的不同演化模式。
 
-为便于与后续实验统计口径统一，表\ref{tab:ch4_dynamic_risk_criteria} 汇总了动态风险分级判据。系统在实现中对三列判据采用“任一触发即升级，并按最高风险输出”的规则。
+为便于与后续实验统计口径统一，表\ref{tab:ch5_dynamic_risk_criteria} 汇总了动态风险分级判据。系统在实现中对三列判据采用“任一触发即升级，并按最高风险输出”的规则。
 
 \begin{table}[htbp]
 \centering
 \caption{动态风险分级判据}
-\label{tab:ch4_dynamic_risk_criteria}
+\label{tab:ch5_dynamic_risk_criteria}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}cccc}
 \Xhline{1pt}
 \textbf{风险等级} & \textbf{当前净空阈值 $d_{\mathrm{cur}}$} & \textbf{预测净空阈值 $d_{\mathrm{pred}}$} & \textbf{时间到接触阈值 TTC} \\
@@ -277,7 +277,7 @@ L_{\mathrm{des}}=\max(L_s,L_d)
 
 \section{避障控制策略设计}\label{sec_ch5_avoidance_design}
 
-\subsection{分层控制映射框架}\label{subsec_ch4_closed_loop_arch}
+\subsection{分层控制映射框架}\label{subsec_ch5_closed_loop_arch}
 
 预警链路的工程价值不止于风险可视化，更在于向决策与执行侧提供统一、可机读且可追溯的控制建议。为避免控制策略变化反向牵动感知与风险判定模块，系统采用风险评估层—控制映射层的分层结构：上游负责风险识别与状态汇聚，下游负责动作语义生成与输出约束。风险识别与动作建议生成被拆分为两个可独立验证的阶段。
 
@@ -289,7 +289,7 @@ L_{\mathrm{des}}=\max(L_s,L_d)
 
 需要指出的是，本文实现的是控制建议接口原型，而非已闭环接入执行机构的全自动避障系统。当前接口主要完成风险语义到动作语义的规范化映射，尚未覆盖设备侧执行确认、权限联锁与故障反馈闭环。该边界设定有助于保持模块职责清晰。
 
-\subsection{分级动作映射与避让方向策略}\label{subsec_ch4_control_strategy}
+\subsection{分级动作映射与避让方向策略}\label{subsec_ch5_control_strategy}
 
 控制接口层的关键任务是将上游稳定风险等级一致地映射为可执行动作语义，而非再次进行风险判定。本文采用分级动作策略：低风险等级对应正常运行或关注提示，中风险等级对应受限运行或保持策略，高风险等级对应紧急停机策略。该映射保证了风险语义在跨模块传递过程中的一致性。
 
@@ -368,7 +368,7 @@ a=\pi(L_{\mathrm{act}},\sigma;\Theta)
 	\label{fig:ch5_closed_loop_arch_placeholder}
 \end{figure}
 
-\subsection{预警到控制映射算法及适用边界}\label{subsec_ch4_avoidance_pseudocode}
+\subsection{预警到控制映射算法及适用边界}\label{subsec_ch5_avoidance_pseudocode}
 
 为明确控制建议接口的运行机理，本文将其抽象为单帧映射流程。与风险判级阶段不同，该流程不重新计算几何关系，而是在既有风险状态基础上执行就绪性判定、动作决策与输出规范化。
 
