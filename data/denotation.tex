@@ -3,31 +3,53 @@
 \item[{{$\mathbf{R}$}}] 旋转矩阵
 \item[{{$\mathbf{t}$}}] 平移向量
 \item[{{$\mathbf{T}_{a}^{b}$}}] 坐标系 $\{a\}$ 到坐标系 $\{b\}$ 的齐次刚体变换矩阵
+\item[{{$\mathbf{R}_{\mathrm{level}}$}}] 重力对齐旋转矩阵，用于点云自动调平
 \item[{{$\mathbf{p}_L,\mathbf{p}_C$}}] 点在 LiDAR坐标系与相机坐标系下的坐标表示
 \item[{{$\bar{\mathbf{p}}_i$}}] 第 $i$ 个目标实例点云的三维质心
 \item[{{$\mathbf{x}(t)$}}] 动态目标状态向量
 \item[{{$\mathbf{r}(t)$}}] 吊装构件与动态目标的相对位置向量
 \item[{{$\mathbf{v}_{\mathrm{rel}}(t)$}}] 吊装构件与动态目标的相对速度向量
+\item[{{$\mathbf{F}(\Delta t)$}}] 卡尔曼滤波器状态转移矩阵
+\item[{{$\mathbf{c}_u$}}] 第 $u$ 个候选聚类的几何中心
 
 \item % 隔开一行
 
-\item[{{$\{w\},\{h\},\{l_1\},\{l_2\},\{c\}$}}] 世界坐标系、吊钩端参考坐标系、两台激光雷达坐标系与相机坐标系
+\item[{{$\{w\}$}}] 世界坐标系
+\item[{{$\{h\}$}}] 吊钩端参考坐标系
+\item[{{$\{l_1\}$}}] 第一台激光雷达坐标系（基准雷达）
+\item[{{$\{l_2\}$}}] 第二台激光雷达坐标系
+\item[{{$\{c\}$}}] 相机坐标系
 \item[{{$\mathcal{P}_{l_i}(t)$}}] 第 $i$ 台 LiDAR在时刻 $t$ 采集的原始点云
 \item[{{$\mathcal{P}_f(t)$}}] 双 LiDAR融合点云
+\item[{{$\mathcal{P}_{\mathrm{reg}}$}}] 配准点云，剥离平台自运动后的场景表达
+\item[{{$\mathcal{M}_{\mathrm{local}}$}}] 局部静态地图点集
 \item[{{$\Omega$}}] 近场关注区域（ROI）
 \item[{{$\mathcal{B}(t)$}}] 局部滑窗背景点云集合
 \item[{{$\mathcal{C}_t$}}] 时刻 $t$ 的动态目标聚类集合
 \item[{{$\mathcal{S}_t$}}] 时刻 $t$ 的视觉分割实例集合
 \item[{{$M_i,c_i,s_i$}}] 第 $i$ 个分割实例的掩码、类别标签与置信度
-\item[{{$\mathbf{z}_i$}}] 下游融合接口中的目标描述状态
-\item[{{$\mathbf{w}$}}] 风险状态消息
-\item[{{$\mathbf{u}_{\mathrm{adv}}$}}] 控制建议消息
+\item[{{$\mathcal{S}_i$}}] 第 $i$ 个吊装构件的包络球危险域
+\item[{{$\mathcal{C}_i$}}] 第 $i$ 个吊装构件的包络圆柱危险域
+\item[{{$r_i^{\mathrm{s}}$}}] 包络球半径
+\item[{{$r_i^{\mathrm{c}}$}}] 包络圆柱水平半径
 
 \item % 隔开一行
 
-\item[{{$d_{\mathrm{static}}$}}] 吊装构件与静态障碍物之间的最小距离
-\item[{{$d_{\min}^{\mathrm{pred}}$}}] 预测时间窗内的最近接距离
+\item[{{$\mathbf{z}_i$}}] 下游融合接口中的目标描述状态
+\item[{{$\mathbf{w}$}}] 风险状态消息
+\item[{{$\mathbf{u}$}}] 控制建议消息
+\item[{{$\mathcal{L}$}}] 联合优化损失函数
+
+\item % 隔开一行
+
+\item[{{$\tilde{\mathbf{p}}_o,\tilde{\mathbf{p}}_d$}}] 吊装构件与动态目标在地面平面的投影位置
+\item[{{$\tilde{\mathbf{v}}_o,\tilde{\mathbf{v}}_d$}}] 吊装构件与动态目标在地面平面的投影速度
+\item[{{$d_{\mathrm{static}}$}}] 吊装构件与静态障碍物之间的最小三维净空
+\item[{{$d_{\mathrm{cur}}$}}] 吊装构件与动态目标之间的当前平面净空
+\item[{{$d_{\mathrm{pred}}$}}] 预测时间窗内的最接近净空
+\item[{{$v_{\mathrm{close}}$}}] 相对接近速度
 \item[{{$\gamma(t)$}}] 相对位置与相对速度的接近判据
+\item[{{$\cos\theta_{xy}$}}] 吊装构件与动态目标速度夹角余弦
 \item[{{$T_p$}}] 风险评估的预测时间窗
 \item[{{$L$}}] 预警等级
 
@@ -39,5 +61,9 @@
 \item[{{ROS}}] 机器人操作系统（Robot Operating System）
 \item[{{IMU}}] 惯性测量单元（Inertial Measurement Unit）
 \item[{{LiDAR}}] 激光雷达（Light Detection and Ranging）
+\item[{{GICP}}] 广义迭代最近点算法（Generalized Iterative Closest Point）
+\item[{{PTP}}] 精确时间协议（Precision Time Protocol）
+\item[{{EMA}}] 指数滑动平均（Exponential Moving Average）
+\item[{{OBB}}] 定向包围盒（Oriented Bounding Box）
 \item[{{LIO-SAM}}] 激光雷达与惯性紧耦合的同步定位与建图方法
 \item[{{YOLO26}}] 本文采用的吊装构件视觉分割模型
