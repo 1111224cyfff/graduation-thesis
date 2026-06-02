@@ -161,19 +161,19 @@ d_{\mathrm{static}}=\max(0,\,d_{\mathrm{nn}}-r_o)
 
 其工程意义在于将构件是否逼近静态边界这一问题落到可读、可配置的几何量上，为后续动态升级和控制映射提供稳定入口。上述三级阈值与Wang等~\cite{wang2025spatial}、Sun等~\cite{sun2024development}在起重机-工人空间碰撞研究中的风险区域划分及安全阈值设定一致。
 
-从工程力学角度，紧急级阈值1.0~m的设定参考了塔式起重机机械制动性能的相关标准。GB/T~5031《塔式起重机》规定额定载荷下起升机构制动下滑量不超过80~mm，以此为依据估算塔机制动器的机械滑行距离，紧急级阈值已为其提供了充足的安全裕度。
+从工程力学角度，紧急级阈值1.0~m的设定参考了塔式起重机机械制动性能的相关标准。GB/T~6067.1--2010《起重机械安全规程》规定，吊钩起重机在下降速度最低档运行时，起吊物从制动器断电至停止的下滑距离不应大于1~min稳定起升距离的1/65，以最低档速度10~m/min计约为154~mm，以此为依据估算塔机制动器的机械滑行距离，紧急级阈值已为其提供了充足的安全裕度。
 
-除机械制动距离外，紧急级阈值还需覆盖全链路算法时延内的目标位移。系统端到端时延实测结果（表\ref{tab:ch6_latency_overall}）显示，全链路平均时延为101.43~ms。以塔机额定起升速度0.5~m/s计，算法时延内的吊物位移为
+除机械制动距离外，紧急级阈值还需覆盖全链路算法时延内的目标位移。系统端到端时延实测结果（表\ref{tab:ch6_latency_overall}）显示，全链路平均时延为101.43~ms。以塔机额定起升速度1~m/s计，算法时延内的吊物位移为
 \begin{equation}
-D_{\mathrm{algo}} = v_{\mathrm{hoist}} \cdot T_{\mathrm{all}} = 0.5\,\mathrm{m/s} \times 0.101\,\mathrm{s} \approx 0.051\,\mathrm{m}
+D_{\mathrm{algo}} = v_{\mathrm{hoist}} \cdot T_{\mathrm{all}} = 1\,\mathrm{m/s} \times 0.101\,\mathrm{s} \approx 0.101\,\mathrm{m}
 \end{equation}
 
-综合考虑算法时延位移与机械制动下滑量（\(\leq 80\)~mm），预警系统的总安全裕度需求为
+综合考虑算法时延位移与机械制动下滑量（\(\approx 154\)~mm），预警系统的总安全裕度需求为
 \begin{equation}
-D_{\mathrm{total}} = D_{\mathrm{algo}} + D_{\mathrm{brake}} \approx 0.051\,\mathrm{m} + 0.080\,\mathrm{m} = 0.131\,\mathrm{m}
+D_{\mathrm{total}} = D_{\mathrm{algo}} + D_{\mathrm{brake}} \approx 0.101\,\mathrm{m} + 0.154\,\mathrm{m} = 0.255\,\mathrm{m}
 \end{equation}
 
-紧急级阈值1.0~m为其提供了约7.6倍的安全系数（1.0/0.131\(\approx\)7.6），表明系统在算法响应和机械制动全过程中均具有充足的工程安全裕度。从时间维度看，动态预警的提示级（5~m）与警告级（3~m）阈值还为操作员预留了充裕的反应窗口：以人员行走速度1.5~m/s估算，从首次触发提示至进入紧急边界约有2.7~s，足以支撑操作员观察与制动操作。
+紧急级阈值1.0~m为其提供了约3.9倍的安全系数（1.0/0.255\(\approx\)3.9），表明系统在算法响应和机械制动全过程中均具有充足的工程安全裕度。从时间维度看，动态预警的提示级（5~m）与警告级（3~m）阈值还为操作员预留了充裕的反应窗口：以人员行走速度1.5~m/s估算，从首次触发提示至进入紧急边界约有2.7~s，足以支撑操作员观察与制动操作。
 
 从方法边界看，静态风险评估采用包络球三维距离结合最近邻点集近似障碍边界的表达，因此更适合作为在线预警的快速近似层，而非最终的高精度碰撞检测器。
 
@@ -181,21 +181,21 @@ D_{\mathrm{total}} = D_{\mathrm{algo}} + D_{\mathrm{brake}} \approx 0.051\,\math
 
 \begin{figure}[htbp]
 	\centering
-	\begin{minipage}[t]{0.31\textwidth}
+	\begin{subfigure}[t]{0.31\textwidth}
 		\centering
-		静态净空\\[0.3em]
 		\includegraphics[page=1,width=\linewidth]{静态净空、动态净空与预测净空定义示意.pdf}
-	\end{minipage}\hfill
-	\begin{minipage}[t]{0.31\textwidth}
+		\caption{静态净空}
+	\end{subfigure}\hfill
+	\begin{subfigure}[t]{0.31\textwidth}
 		\centering
-		动态净空\\[0.3em]
 		\includegraphics[page=2,width=\linewidth]{静态净空、动态净空与预测净空定义示意.pdf}
-	\end{minipage}\hfill
-	\begin{minipage}[t]{0.31\textwidth}
+		\caption{动态净空}
+	\end{subfigure}\hfill
+	\begin{subfigure}[t]{0.31\textwidth}
 		\centering
-		预测净空\\[0.3em]
 		\includegraphics[page=3,width=\linewidth]{静态净空、动态净空与预测净空定义示意.pdf}
-	\end{minipage}
+		\caption{预测净空}
+	\end{subfigure}
 	\caption{静态净空、动态净空与预测净空定义示意}
 	\label{fig:ch5_clearance_definition}
 \end{figure}

@@ -133,38 +133,93 @@ $w_d$ & 权重衰减 & 0.0005 \\
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.96\textwidth]{loss_curves.png}
+\begin{minipage}{0.95\textwidth}
+\centering
+% 第一行：训练损失
+\begin{subfigure}[t]{0.23\textwidth}
+\centering
+\includegraphics[width=\linewidth]{train_box_loss.png}
+\caption{训练集边框损失}
+\label{fig:ch4_train_box_loss}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.23\textwidth}
+\centering
+\includegraphics[width=\linewidth]{train_seg_loss.png}
+\caption{训练集分割损失}
+\label{fig:ch4_train_seg_loss}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.23\textwidth}
+\centering
+\includegraphics[width=\linewidth]{train_cls_loss.png}
+\caption{训练集分类损失}
+\label{fig:ch4_train_cls_loss}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.23\textwidth}
+\centering
+\includegraphics[width=\linewidth]{train_dfl_loss.png}
+\caption{训练集L1损失}
+\label{fig:ch4_train_dfl_loss}
+\end{subfigure}
+
+\vspace{0.4em}
+
+% 第二行：验证损失
+\begin{subfigure}[t]{0.23\textwidth}
+\centering
+\includegraphics[width=\linewidth]{val_box_loss.png}
+\caption{验证集边框损失}
+\label{fig:ch4_val_box_loss}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.23\textwidth}
+\centering
+\includegraphics[width=\linewidth]{val_seg_loss.png}
+\caption{验证集分割损失}
+\label{fig:ch4_val_seg_loss}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.23\textwidth}
+\centering
+\includegraphics[width=\linewidth]{val_cls_loss.png}
+\caption{验证集分类损失}
+\label{fig:ch4_val_cls_loss}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.23\textwidth}
+\centering
+\includegraphics[width=\linewidth]{val_dfl_loss.png}
+\caption{验证集L1损失}
+\label{fig:ch4_val_dfl_loss}
+\end{subfigure}
 \caption{训练与验证损失曲线}
 \label{fig:ch4_train_val_loss_curves}
+\end{minipage}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\begin{subfigure}[t]{0.45\textwidth}
+\begin{subfigure}[t]{0.32\textwidth}
 \centering
-\includegraphics[width=\linewidth]{MaskP_curve.png}
-\caption{Mask Precision曲线}
+\includegraphics[width=\linewidth]{MaskP_curve_中文.png}
+\caption{掩码精确率曲线}
 \label{fig:ch4_mask_p_curve}
-\end{subfigure}\hfill
-\begin{subfigure}[t]{0.45\textwidth}
+\end{subfigure}\hspace{4em}
+\begin{subfigure}[t]{0.32\textwidth}
 \centering
-\includegraphics[width=\linewidth]{MaskR_curve.png}
-\caption{Mask Recall曲线}
+\includegraphics[width=\linewidth]{MaskR_curve_中文.png}
+\caption{掩码召回率曲线}
 \label{fig:ch4_mask_r_curve}
 \end{subfigure}
 
 \vspace{0.6em}
 
-\begin{subfigure}[t]{0.45\textwidth}
+\begin{subfigure}[t]{0.32\textwidth}
 \centering
-\includegraphics[width=\linewidth]{MaskF1_curve.png}
-\caption{Mask F1 曲线}
+\includegraphics[width=\linewidth]{MaskF1_curve_中文.png}
+\caption{掩码F1曲线}
 \label{fig:ch4_mask_f1_curve}
-\end{subfigure}\hfill
-\begin{subfigure}[t]{0.45\textwidth}
+\end{subfigure}\hspace{4em}
+\begin{subfigure}[t]{0.32\textwidth}
 \centering
-\includegraphics[width=\linewidth]{MaskPR_curve.png}
-\caption{Mask Precision-Recall曲线}
+\includegraphics[width=\linewidth]{MaskPR_curve_中文.png}
+\caption{掩码精确率-召回率曲线}
 \label{fig:ch4_mask_pr_curve}
 \end{subfigure}
 \caption{Mask分支性能曲线汇总}
@@ -238,7 +293,7 @@ u=\frac{u'}{w'},\; v=\frac{v'}{w'}
 
 \subsection{吊装构件位置估计与安全包络建模}\label{subsec_ch4_3d_localization}
 
-提取出目标实例的点云子集 $\mathcal{P}_i$ 后，仅靠质心这样的“中心点表达”无法获知构件在空间中的实际占据范围，需要一种能直接与障碍物进行距离计算的几何基准。但静态风险与动态风险对此基准的维度要求不同，静态风险面对的是环境中的固定结构物，构件可能从任意三维方向与之接近，因此需要一个各向同性的包络体来统一衡量三维净空，采用包络球最为自然，单个半径参数即可覆盖所有方向的最近距离；动态风险面对的是地面移动的人员或机械，接近行为主要发生在水平面内，且吊物下方区域应视为禁入带，与垂直方向无关，因此需要在水平面上给出明确的边界投影。据此，本文构建静态包络球与动态包络圆柱投影两种几何基元，其形态如图\ref{fig:ch4_dual_envelope_placeholder}所示。
+提取出目标实例的点云子集 $\mathcal{P}_i$ 后，仅靠质心这样的”中心点表达”无法获知构件在空间中的实际占据范围，需要一种能直接与障碍物进行距离计算的几何基准。但静态风险与动态风险对此基准的维度要求不同，静态风险面对的是环境中的固定结构物，构件可能从任意三维方向与之接近，因此需要一个各向同性的包络体来统一衡量三维净空，采用包络球最为自然，单个半径参数即可覆盖所有方向的最近距离；动态风险面对的是地面移动的人员或机械，接近行为主要发生在水平面内，且吊物下方区域应视为禁入带，与垂直方向无关，因此需要在水平面上给出明确的边界投影。据此，本文构建静态包络球与动态包络圆柱投影两种几何基元，其形态如图\ref{fig:ch4_dual_envelope_placeholder}所示。
 
 \begin{figure}[htbp]
 \centering

@@ -697,7 +697,7 @@
 % 主要符号对照表  
 % 基于清华模板, 利用 \pkg{enumitem} 改造环境定义
 \NewDocumentEnvironment{denotation}{O{3.5cm}}{%
-  \tongji@chapter*{\tongji@denotationname}[\psfamily\xparameter@heading@cother{\tongji@denotationname}]
+  \tongji@chapter*[]{\tongji@denotationname}[\psfamily\xparameter@heading@cother{\tongji@denotationname}]
   \vskip-30bp\xiaosi[1.6]\begin{tongji@denotation}[labelwidth=#1]
 }{%
   \end{tongji@denotation}

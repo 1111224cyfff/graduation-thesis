@@ -44,12 +44,10 @@ r_f=
 其中，$C_1$ 表示第一路雷达的通道数。本文双Mid-360配置下 $C_1=4$，合并后ring范围扩展为0至7。相应地，算法期望的扫描线总数N\_SCAN设置为8，确保ring编号范围与扫描线总数一致。融合点云在数据结构层面被统一为等效的8线LiDAR，为第3.2节LIO-SAM输入适配提供了必要前提。
 
 在线时间窗口管理采用面向数据流的统一抽取机制。系统将各路点云与IMU观测分别写入独立缓冲区，融合窗口$[t_k,t_{k+1}]$由基准雷达当前帧的时间边界定义；仅当其余传感器在时间覆盖上满足该窗口要求时，才触发当前轮次融合。对于任意传感器$i$的点$\mathbf{p}_{i,j}$或IMU样本$\mathbf{m}_{i,j}$，若其绝对时间戳满足$t_{i,j}\in[t_k,t_{k+1}]$，则纳入当前输出；超出上界则留待下一窗口处理。第$k$个融合窗口输出的点云集合与IMU样本集合可统一表示为
-\begin{equation}
-\mathcal{P}_{f}(k)=\bigcup_{i=1}^{2}\left\{\mathbf{p}^{b}_{i,j}\mid t_{i,j}\in[t_k,t_{k+1}]\right\}
-\end{equation}
-\begin{equation}
-\mathcal{M}_{f}(k)=\bigcup_{i=1}^{2}\left\{\mathbf{m}^{b}_{i,j}\mid t_{i,j}\in[t_k,t_{k+1}]\right\}
-\end{equation}
+\begin{align}
+\mathcal{P}_{f}(k) &= \bigcup_{i=1}^{2}\left\{\mathbf{p}^{b}_{i,j}\mid t_{i,j}\in[t_k,t_{k+1}]\right\} \\
+\mathcal{M}_{f}(k) &= \bigcup_{i=1}^{2}\left\{\mathbf{m}^{b}_{i,j}\mid t_{i,j}\in[t_k,t_{k+1}]\right\}
+\end{align}
 其中，$\mathcal{P}_{f}(k)$ 和 $\mathcal{M}_{f}(k)$ 分别为第 $k$ 个融合窗口输出的点云集合与IMU样本集合，下标 $f$ 表示融合（fusion）；$i$ 为传感器序号（$i=1,2$）；$\mathbf{p}^{b}_{i,j}$ 和 $\mathbf{m}^{b}_{i,j}$ 分别为第 $i$ 路雷达第 $j$ 个点与第 $i$ 路IMU第 $j$ 个样本经外参变换到 body坐标系后的观测向量，上标 $b$ 表示 body系；$t_{i,j}$ 为对应观测的绝对时间戳；$t_k$、$t_{k+1}$ 分别为当前窗口的起止时刻。该机制通过有限缓存维持稳定的输出频率，避免同一观测跨窗口重复发布或错配，点云与IMU完全共享此窗口策略。
 
 融合线程以$10\,\mathrm{Hz}$的目标频率运行，每个窗口触发一轮同步发布。点云输出包含标准PointCloud2及保留Livox时间字段的CustomMsg两种话题格式，供下游按需选择；IMU输出采用time\_sorted模式，将窗口内多路样本统一调度并按时间戳递增发布，形成单调连续的/merged\_imu话题序列，保留原始惯性时序结构以匹配LIO-SAM的连续输入流处理机制。在线阶段优先保留定位前端所需的结构信息，不在融合节点执行强体素下采样或统计离群点剔除，任务侧滤波留待第3.3章处理。系统通过限制缓存深度与历史保留时长，使端到端融合延迟保持稳定。
@@ -98,12 +96,10 @@ r_f=
 其中，$[\mathbf{k}]_{\times}$为$\mathbf{k}$的反对称矩阵。该校正建立了body系到body\_leveled系的重力一致姿态关系，消除横滚（roll）与俯仰（pitch）引起的整体倾斜，同时不引入额外的航向约束。
 
 调平完成后，旋转矩阵$\mathbf{R}_{\mathrm{level}}$统一应用于融合点云、Livox消息和融合IMU数据，其坐标与加速度的变换关系为
-\begin{equation}
-\mathbf{p}_{\mathrm{leveled}}=\mathbf{R}_{\mathrm{level}}\,\mathbf{p}_{\mathrm{body}}
-\end{equation}
-\begin{equation}
-\mathbf{a}_{\mathrm{leveled}}=\mathbf{R}_{\mathrm{level}}\,\mathbf{a}_{\mathrm{body}}
-\end{equation}
+\begin{align}
+\mathbf{p}_{\mathrm{leveled}} &= \mathbf{R}_{\mathrm{level}}\,\mathbf{p}_{\mathrm{body}} \\
+\mathbf{a}_{\mathrm{leveled}} &= \mathbf{R}_{\mathrm{level}}\,\mathbf{a}_{\mathrm{body}}
+\end{align}
 
 系统同步发布body至body\_leveled的TF静态变换。调平完成前，相关输出暂不发布，以保证后续模块输入数据的姿态一致性。
 
@@ -366,7 +362,7 @@ z_k=\alpha z_{k-1}+(1-\alpha)\tilde{z}_k
 
 上述生命周期由累计命中确认与失配或超时删除共同决定，其中$h_k$为累计命中次数，$m_k$为连续失配帧数。当前配置取$H_{\mathrm{conf}}=2$、$M_{\mathrm{miss}}=30$、$T_{\mathrm{miss}}=3.0\,\mathrm{s}$，在线更新流程见算法~\ref{alg:ch3_tracker_lifecycle}。
 
-\begin{algorithm}[htbp]
+\begin{algorithm}[H]
 \caption{短时目标跟踪生命周期更新（单帧）}
 \label{alg:ch3_tracker_lifecycle}
 \KwIn{上一时刻轨迹集合 $\mathcal{T}_{k-1}$；当前检测集合 $\mathcal{D}_k$；时间戳 $t_k$；参数 $H_{\mathrm{conf}},M_{\mathrm{miss}},T_{\mathrm{miss}},\delta_0,k_g,\alpha$}
@@ -422,9 +418,9 @@ z_k=\alpha z_{k-1}+(1-\alpha)\tilde{z}_k
 
 \section{本章小结}\label{sec:ch3_summary}
 
-本章围绕从双雷达融合输入到静态场景与动态目标感知输出的完整处理链路，在统一时空语义下实现了静态场景建图与动态目标运动状态估计，将多源点云转化为可被下游风险判定直接使用的基础信息。具体贡献如下：
+本章围绕从双雷达融合输入到静态场景与动态目标感知输出的完整处理链路，在统一时空语义下实现了静态场景建图与动态目标运动状态估计，将多源点云转化为可被下游风险判定直接使用的基础信息。具体完成了以下工作：
 
-（1）双雷达点云实时融合与自动调平方法。设计了基于统一外参的坐标变换与时间窗口同步机制，通过ring字段重映射将双4线雷达统一为8线观测流，实现了多雷达点云与IMU在时空维度上的对齐；引入基于IMU重力方向的自动调平，将融合点云校正至重力对齐坐标系，为后续定位与动态检测提供了稳定的几何基准。
+（1）双雷达点云实时融合与自动调平。设计了基于统一外参的坐标变换与时间窗口同步机制，通过ring字段重映射将双4线雷达统一为8线观测流，实现了多雷达点云与IMU在时空维度上的对齐；引入基于IMU重力方向的自动调平，将融合点云校正至重力对齐坐标系，为后续定位与动态检测提供了稳定的几何基准。
 
 （2）吊钩端位姿估计与静态场景输出。将双雷达融合观测流适配至LIO-SAM紧耦合定位框架，解决了扫描线拓扑扩展、双层时间语义保留与参考坐标对齐三类接口一致性约束；输出连续位姿轨迹与配准点云，前者定义跨时刻统一坐标映射，后者剥离平台自运动，共同为动态检测与雷视关联提供去畸变的静态场景表达。
 
