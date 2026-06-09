@@ -331,7 +331,7 @@ a=\pi(L_{\mathrm{act}},\sigma;\Theta)
 	\begin{tikzpicture}[
 		x=1cm,y=1cm,>=Latex,font=\scriptsize,
 		proc/.style={draw, rounded corners=2pt, thick, fill=gray!5, align=center, minimum width=3.0cm, minimum height=0.95cm},
-		judge/.style={draw, rounded corners=2pt, thick, dashed, fill=blue!12, align=center, minimum width=2.9cm, minimum height=0.95cm},
+		judge/.style={shape=diamond, draw, thick, fill=blue!12, align=center, minimum width=2.4cm, minimum height=1.1cm, aspect=2},
 		term/.style={draw, thick, fill=orange!15, align=center, minimum width=2.9cm, minimum height=0.95cm}
 	]
 		\node[proc] (recv) at (3.6,0) {接收风险状态};
@@ -373,7 +373,7 @@ a=\pi(L_{\mathrm{act}},\sigma;\Theta)
 		\node[font=\scriptsize\bfseries] at (-3,-9.6) {图例};
 		\node[draw, rounded corners=2pt, thick, fill=gray!5, minimum width=0.7cm, minimum height=0.25cm] at (-3.65,-10.2) {};
 		\node[font=\scriptsize, anchor=west] at (-3.25,-10.2) {处理节点};
-		\node[draw, rounded corners=2pt, thick, dashed, fill=blue!12, minimum width=0.7cm, minimum height=0.25cm] at (-3.65,-10.8) {};
+		\node[shape=diamond, draw, thick, fill=blue!12, minimum width=0.45cm, minimum height=0.25cm, aspect=2] at (-3.65,-10.8) {};
 		\node[font=\scriptsize, anchor=west] at (-3.25,-10.8) {判断节点};
 		\node[draw, thick, fill=orange!15, minimum width=0.7cm, minimum height=0.25cm] at (-3.65,-11.4) {};
 		\node[font=\scriptsize, anchor=west] at (-3.25,-11.4) {终结节点};
@@ -435,7 +435,7 @@ $\mathbf{u}\leftarrow\textsc{Pack}(a,\rho,h,e,\alpha,\mathbf{d}_{\mathrm{rec}},\
 
 \section{本章小结}\label{sec:ch5_summary}
 
-本章围绕吊装作业安全风险的分级量化与避障控制接口设计，在第4章三维对象状态估计的基础上，构建了从风险判定到控制建议的完整决策链路。具体贡献如下：
+本章围绕吊装作业安全风险的分级量化与避障控制接口设计，在第4章三维对象状态估计的基础上，构建了从风险判定到控制建议的完整决策链路。本章主要工作如下：
 
 （1）多层级风险分级预警机制与结构化接口设计。建立了基于三维净空的静态三级阈值判据，以及基于当前净空、预测净空与TTC协同判定的动态风险评估机制，涵盖相向运动等级升级规则与迟滞状态机以保障风险输出的时序稳定性；系统明确定义了静态净空、动态净空与预测净空三类几何量，并将风险状态组织为面向下游控制模块的结构化接口，支持风险归因追溯与系统就绪性诊断。
 

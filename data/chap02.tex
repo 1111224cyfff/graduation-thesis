@@ -60,7 +60,7 @@
 \begin{table}[htbp]
   \centering
   \caption{吊钩端感知系统关键硬件组件与作用}
-  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{5cm}>{\centering\arraybackslash}m{2cm}>{\centering\arraybackslash}m{6.3cm}}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\centering\arraybackslash}m{4.5cm}>{\centering\arraybackslash}m{2.5cm}>{\centering\arraybackslash}m{6.3cm}}
     \Xhline{1pt}
     \textbf{组件} & \textbf{作用} & \textbf{关键说明}\\
     \hline
@@ -137,7 +137,7 @@
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.78\textwidth]{双激光雷达竖直视场角示意.pdf}
+  \includegraphics[width=0.7\textwidth]{双激光雷达竖直视场角示意.pdf}
   \caption{双激光雷达竖直视场角示意}
   \label{fig:dual_LiDAR_fov_vertical}
 \end{figure}
@@ -238,8 +238,8 @@ T_q \approx (Q-1)\,T_p
     \textbf{数据类别} & \textbf{接口语义} & \textbf{输入频率} & \textbf{接口说明与作用} \\
     \midrule
     LiDAR观测 & \mbox{livox\_ros\_driver2/CustomMsg} & $10\,\mathrm{Hz}\times2$ & 点云接口，提供空间几何观测；用于融合、ROI建模与测距 \\
-    IMU观测 & \mbox{sensor\_msgs/Imu} & $200\,\mathrm{Hz}\times2$ & 惯性接口，提供角速度与加速度；用于状态估计与点云去畸变 \\
-    视觉观测 & \mbox{sensor\_msgs/CompressedImage} & $10\,\mathrm{Hz}$ & 图像接口，默认发布压缩相机帧；原始 RGB按需启用，用于目标识别与雷视关联 \\
+    IMU观测 & \mbox{sensor\_msgs/Imu} & $200\,\mathrm{Hz}\times2$ & 惯性接口，提供角速度/加速度；用于状态估计 \\
+    视觉观测 & \makebox[\linewidth][c]{sensor\_msgs/CompressedImage} & $10\,\mathrm{Hz}$ & 图像接口，默认发布压缩相机帧；原始 RGB按需启用，用于目标识别与雷视关联 \\
     视觉标定 & \mbox{sensor\_msgs/CameraInfo} & $10\,\mathrm{Hz}$ & 标定接口，提供内参与畸变参数；用于投影计算与几何一致性约束 \\
     \Xhline{1pt}
   \end{tabularx}
@@ -263,14 +263,11 @@ Livox激光雷达支持 PTP、gPTP、GPS等多种时间同步方式。就吊钩�
   \label{fig:ptp_timing}
 \end{figure}
 
-PTP时间同步原理如图\ref{fig:ptp_timing}所示，相应的传输路径延迟与时钟偏移计算式如下。
-\begin{equation}
-\text{Delay} = \frac{(t_4-t_1)-(t_3-t_2)}{2}
-\end{equation}
-
-\begin{equation}
+PTP时间同步原理如图\ref{fig:ptp_timing}所示，传输路径延迟与时钟偏移计算式如下。
+\begin{gather}
+\text{Delay} = \frac{(t_4-t_1)-(t_3-t_2)}{2} \\
 \text{Offset} = (t_2-t_1)-\text{Delay} = \frac{(t_2-t_1)+(t_3-t_4)}{2}
-\end{equation}
+\end{gather}
 
 当 Offset收敛并稳定在小幅波动区间时，可认为 LiDAR点云时间戳已与主时钟保持一致。
 
@@ -473,7 +470,7 @@ map                                    # 全局地图系
 
 相机内参标定旨在获取焦距、主点与畸变参数，以确保图像去畸变与点云到图像投影的几何一致性。本文采用平面棋盘格标定板采集多组不同距离、不同姿态的标定图像，并基于张正友标定法求解相机内参矩阵 $\mathbf{K}$ 及径向与切向畸变系数。标定完成后，使用重投影误差评价标定质量。
 
-相机内参标定以针孔成像模型描述三维点到像素点的投影关系。设空间点在相机坐标系下为 $\mathbf{P}_c=[X\;Y\;Z]^{\mathsf{T}}$，其在归一化成像平面上的坐标为 $\mathbf{p}_n=[x\;y]^{\mathsf{T}}$，则
+相机内参标定以针孔成像模型描述三维点到像素点的投影关系。设空间点在相机坐标系下为 $\mathbf{P}_c=[X\;Y\;Z]^{\mathsf{T}}$，其在归一化成像平面上的坐标为 $\mathbf{p}_n=[x\;y]^{\mathsf{T}}$，则针孔成像的归一化投影与像素变换可表示为
 \begin{equation}
 \label{eq:camera_projection}
 \begin{bmatrix}
@@ -553,7 +550,7 @@ e_{\mathrm{rms}}=\sqrt{\frac{1}{N}\sum_{i=1}^{M}\sum_{j=1}^{n_i}\left\lVert \mat
 \end{equation}
 其中，$M$ 为图像数量，$n_i$ 为第 $i$ 张图像可用角点数，$N=\sum_i n_i$ 为总角点数。
 
-MATLAB通常同时给出每张图像的重投影误差分布，便于发现离群样本并迭代剔除。误差统计与可视化结果在文中预留，如图\ref{fig:cam_calib_reproj}所示。
+MATLAB相机标定工具箱以多视图面板呈现标定过程与质量评估结果，如图\ref{fig:cam_calib_reproj}所示。左侧为待标定的原始图像，中间为识别出的棋盘格角点叠加图，右上方为各图像的像素平均重投影误差条形图，右下方为以相机为中心的视角可视化，展示相机与标定板之间的空间几何关系。
 
 \begin{figure}[htbp]
   \centering
@@ -668,13 +665,13 @@ d \\ 0 \\ 0
 \begin{verbatim}
 data
 │
-├── Base_LiDAR_Frames                # 基准激光雷达帧序列
-│   ├── 100000.pcd                    # PCD点云文件，按序号命名
+├── Base_LiDAR_Frames                  # 基准激光雷达帧序列
+│   ├── 100000.pcd                     # PCD点云文件，按序号命名
 │   ├── 100001.pcd
 │   ├── ...
 │
-├── Target_LiDAR_Frames               # 目标激光雷达帧序列
-│   ├── 100000.pcd                    # 与基准雷达帧对应的点云文件
+├── Target_LiDAR_Frames                # 目标激光雷达帧序列
+│   ├── 100000.pcd                     # 与基准雷达帧对应的点云文件
 │   ├── 100001.pcd
 │   ├── ...
 │
@@ -683,8 +680,8 @@ data
 ├── H_LiDAR_Map_data                   # 地图输出与缓存目录
 │   ├── H_LiDAR_Map.pcd                # mapping生成的激光雷达地图点云
 │
-├── T_Matrix.txt                        # mapping生成的每帧4x4位姿矩阵
-└── calib_data.txt                      # calibration生成的每帧标定日志
+├── T_Matrix.txt                       # mapping生成的每帧4x4位姿矩阵
+└── calib_data.txt                     # calibration生成的每帧标定日志
 \end{verbatim}
   \end{minipage}
   \caption{双雷达外参自动标定数据准备}
@@ -715,7 +712,7 @@ data
 
 基于逐帧配准获得的外参估计序列，采用稳健筛选与拟合方法得到最终外参 $\hat{\mathbf{T}}_{l_2}^{l_1}$。图\ref{fig:LiDAR_calib_result}展示了自动标定过程的输出结果。
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.88\textwidth]{自动标定过程与结果输出.png}
   \caption{自动标定过程与结果输出}
@@ -738,7 +735,7 @@ data
 
 \subsection{雷达-相机外参标定}\label{ux96f7ux8fbeux76f8ux673aux5916ux53c2ux6807ux5b9a}
 
-雷达—相机外参标定旨在建立激光雷达点云与相机图像之间的精确投影关系，为第4章的雷视数据关联奠定几何基础。本文基于 Livox开源标定工具\footnote{Livox\ Camera-LiDAR\ Calibration: \url{https://github.com/Livox-SDK/livox_camera_LiDAR_calibration}}，利用已知尺寸的立体靶标角点构建跨模态特征对应，通过非线性优化求解相机与雷达间的稳定刚体变换。
+雷达—相机外参标定旨在建立激光雷达点云与相机图像之间的精确投影关系，为第4章的雷视数据关联奠定几何基础。本文基于 Livox开源标定工具，利用已知尺寸的立体靶标角点构建跨模态特征对应，通过非线性优化求解相机与雷达间的稳定刚体变换。
 
 从数学形式上看，雷达-相机外参标定可表述为求解相机坐标系 $\{c\}$ 与基准雷达坐标系 $\{l_1\}$ 之间的刚体变换 $\mathbf{T}_{c}^{l_1} \in SE(3)$。本文采用统一的坐标变换记号：$\mathbf{T}_{b}^{a}$ 表示将坐标系 $\{b\}$ 下的点变换到坐标系 $\{a\}$。相机到雷达的变换矩阵定义为：
 \begin{equation}
@@ -807,6 +804,20 @@ data
   \label{fig:cam_LiDAR_corner_coordinate}
 \end{figure}
 
+通过上述标定流程，最终求得相机到基准雷达1的静态外参矩阵为：
+\begin{equation}
+\label{eq:cam_LiDAR_result}
+\mathbf{T}_{c}^{l_1}=
+\begin{bmatrix}
+0.785983 & -0.0208025 & -0.617898 & -0.0952186 \\
+0.0338731 & 0.999382 & 0.0094418 & 0.117529 \\
+0.617320 & -0.0283512 & 0.786201 & 0.0653585 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\end{equation}
+
+该矩阵完整描述了相机坐标系 $\{c\}$ 相对于基准雷达坐标系 $\{l_1\}$ 的刚体安装关系。在实际应用中，通过逆变换 $\mathbf{T}_{l_1}^{c} = (\mathbf{T}_{c}^{l_1})^{-1}$ 可将雷达点云转换至相机坐标系，进而实现点云到图像的精确投影。这一变换关系为后续的雷视数据关联、跨模态融合与一致性验证提供了统一的几何基础。
+
 \begin{figure}[htbp]
   \centering
   \begin{minipage}{0.88\textwidth}
@@ -847,7 +858,7 @@ data
   \label{fig:cam_LiDAR_calib_dataset}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
   \begin{subfigure}[t]{0.58\textwidth}
     \centering
@@ -865,20 +876,6 @@ data
   \caption{雷达-相机标定效果}
   \label{fig:cam_LiDAR_calib_effect}
 \end{figure}
-
-通过上述标定流程，最终求得相机到基准雷达1的静态外参矩阵为：
-\begin{equation}
-\label{eq:cam_LiDAR_result}
-\mathbf{T}_{c}^{l_1}=
-\begin{bmatrix}
-0.785983 & -0.0208025 & -0.617898 & -0.0952186 \\
-0.0338731 & 0.999382 & 0.0094418 & 0.117529 \\
-0.617320 & -0.0283512 & 0.786201 & 0.0653585 \\
-0 & 0 & 0 & 1
-\end{bmatrix}
-\end{equation}
-
-该矩阵完整描述了相机坐标系 $\{c\}$ 相对于基准雷达坐标系 $\{l_1\}$ 的刚体安装关系。在实际应用中，通过逆变换 $\mathbf{T}_{l_1}^{c} = (\mathbf{T}_{c}^{l_1})^{-1}$ 可将雷达点云转换至相机坐标系，进而实现点云到图像的精确投影。这一变换关系为后续的雷视数据关联、跨模态融合与一致性验证提供了统一的几何基础。
 
 \section{本章小结}\label{sec:ch2_summary}
 

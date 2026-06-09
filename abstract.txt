@@ -1,0 +1,23 @@
+中文摘要
+
+吊钩端近场空间是塔吊吊装过程中碰撞风险最集中的区域，实现其动态避障感知与实时预警对保障施工作业安全具有重要意义。现有塔臂端远距离观测方案受制于分辨率不足、遮挡频繁与近场盲区等固有局限，难以满足该区域的高可靠感知需求。将激光雷达与工业相机直接部署于吊钩端，可从物理层面缩短传感距离，提升近场感知精度。然而，吊钩端处于持续三维运动状态，传感器观测基准随之动态变化，使得在该高动态条件下通过异构传感器融合实现环境与吊物状态的一致感知，成为亟待解决的关键技术难点。围绕该难点，本文的核心科学问题可归纳为：动态吊装场景中多源传感信息的时空一致性表征与碰撞风险协同判定方法。
+
+为此，本文构建了一套部署于吊钩端的近场雷视融合感知系统，通过掩码投影回查的跨模态定位方法实现吊装构件的三维状态感知，并结合静动融合分级预警机制完成碰撞风险的提前判别。在感知层面，以双激光雷达与工业相机为核心，完成一体化防护设计与时空标定，采用扫描线拓扑重映射适配LIO-SAM紧耦合定位系统，实现连续位姿轨迹与静态地图输出；基于近场ROI裁剪与遮挡机理动态判别，结合YOLO26实例分割与点云投影回查，建立静态包络球与动态包络圆柱相结合的双基准安全包络模型。在预警层面，建立基于三维净空的静态分级判据与融合碰撞时间（TTC）的动态风险升级机制，结合迟滞状态机输出结构化预警等级与避障控制建议。相比于基于塔臂端远距观测或二维视觉推断的现有方案，本系统在吊钩端直接获取吊物的三维空间位置与几何包络，定位精度与预警提前量均有显著提升。
+
+实际施工场景实验结果表明，点云投影关联精确率达92.17%，验证了跨模态映射的准确性；动态风险分级准确率达86.65%，误报率5.35%，漏报率8.00%，相向接近工况下可实现0.70 s至1.60 s的提前预警；全链路端到端时延均值101.43 ms，在典型吊装作业接近速度下具备充分的时效裕量。研究结果表明，本文所提方法能够在施工吊装场景下实现稳定的吊钩端近场感知与可靠的风险分级预警，为塔吊吊装过程的动态避障与安全预警提供了具有工程可行性的技术方案。
+
+关键词：雷视融合，塔吊吊装，吊钩端感知，动态避障，风险预警
+
+
+================================================================================
+
+
+Abstract
+
+The near-field space around the hook end is the region with the highest collision risk during tower crane hoisting. Existing observation schemes deployed at the tower arm suffer from limited resolution, frequent occlusion, and near-field blind zones, creating a gap in high-reliability perception. Deploying LiDAR and industrial cameras directly at the hook end shortens the sensing distance and improves near-field accuracy, but the continuous three-dimensional motion of the hook end causes the sensor reference frame to change dynamically. The core scientific problem is therefore the spatiotemporally consistent representation of multi-source sensing information and a method for collaborative collision risk assessment in dynamic hoisting scenarios.
+
+To address this problem, a near-field LiDAR-vision fusion perception system is constructed at the hook end. It achieves three-dimensional state perception of hoisting components through cross-modal positioning via mask-based projection lookup, and enables early collision risk identification through a graded warning mechanism that fuses static and dynamic criteria. At the perception level, dual LiDARs and an industrial camera serve as the core sensors, with integrated protective housing and spatiotemporal calibration. Scan-line topology remapping interfaces with the LIO-SAM tightly-coupled localization system to produce continuous pose trajectories and static maps. Near-field ROI cropping and occlusion-based dynamic point discrimination, together with YOLO26 instance segmentation and point cloud projection lookup, yield a dual-baseline safety envelope model combining a static bounding sphere and a dynamic bounding cylinder. At the warning level, a static grading criterion based on three-dimensional clearance and a dynamic risk escalation mechanism incorporating time-to-collision (TTC) are established, outputting structured warning levels via a hysteresis state machine. Compared with existing long-range tower-arm observation or two-dimensional visual inference, this system directly acquires the three-dimensional position and geometric envelope of the hoisting object at the hook end, offering significant improvements in both positioning accuracy and warning lead time.
+
+Experimental results from actual construction scenarios show that point cloud projection association achieved a precision of 92.17%, confirming the accuracy of cross-modal mapping; dynamic risk grading reached 86.65% accuracy with a false-alarm rate of 5.35% and a miss rate of 8.00%, achieving early warning lead times of 0.70 s to 1.60 s in opposing approach scenarios; and the end-to-end pipeline latency averaged 101.43 ms, meeting real-time requirements. These results demonstrate that the proposed method provides stable near-field perception and reliable graded risk warning in construction hoisting scenarios, offering a practically feasible engineering solution for dynamic obstacle avoidance and safety warning in tower crane operations.
+
+Keywords: LiDAR-vision fusion, tower crane hoisting, hook-end perception, dynamic obstacle avoidance, risk early warning

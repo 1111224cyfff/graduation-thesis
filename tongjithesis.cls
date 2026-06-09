@@ -679,16 +679,12 @@
   \pagenumbering{Roman}
   \tongji@cabstract
   \vskip12bp
-  \setbox0=\hbox{{\bfseries\heiti\tongji@ckeyword@title}}
-  \noindent\hangindent\wd0\hangafter1
-    \box0\tongji@ckeywords
+  \par\noindent\hspace*{2em}{\bfseries\heiti\tongji@ckeyword@title}\tongji@ckeywords
   % \cleardoublepage % always openright for Abstract  
   \tongji@chapter*[]{\tongji@eabstractname}[\rmfamily\xparameter@heading@eother{\tongji@eabstractname}] % no tocline
   \tongji@eabstract
   \vskip12bp
-  \setbox0=\hbox{{\bfseries\tongji@ekeyword@title}}
-  \noindent\hangindent\wd0\hangafter1
-    \box0\tongji@ekeywords}
+  \par\noindent\hspace*{2em}{\bfseries\tongji@ekeyword@title}\tongji@ekeywords}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 符号列表设置 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
